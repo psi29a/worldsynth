@@ -13,13 +13,17 @@ class mapGen():
     def __init__(self):    
         """Called when the the Game object is initialized. Initializes
         pygame and sets up our pygame window and other pygame tools
-        that we will need for more complicated tutorials."""
- 
+        that we will need for more complicated tutorials.""" 
         pygame.init()
 
         # create our window
-        self.size = (512, 512)
+        self.height = 512
+        self.width = 512
+        self.size = (self.width, self.height)
         self.window = pygame.display.set_mode(self.size)
+
+        # world data
+        self.heightmap = empty((self.width,self.height)) 
 
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -31,6 +35,7 @@ class mapGen():
         # we want to know if the user hits the X on the window, and we
         # want keys so we can close the window with the esc key
         pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP, MOUSEBUTTONDOWN])
+                     
         
         # make background and blit the background onto the window
         self.background = pygame.Surface(self.window.get_size(), depth=32)
@@ -80,7 +85,7 @@ class mapGen():
             # blit the dirty areas of the screen
             pygame.display.update(dirty) # updates just the 'dirty' areas
 
-        print 'Quitting. Thanks for playing'
+        print 'Closing '
 
 
     def handleEvents(self):
@@ -117,19 +122,18 @@ class mapGen():
                     self.window.blit(self.background, (0,0))     
                     pygame.display.flip()
                 elif button.text == "Add MDA":
-                    width = self.size[0]
-                    height = self.size[1]
-                    size = width + height
+                    size = self.width + self.height
                     roughness = 8
                     c1 = random.random()
                     c2 = random.random()
                     c3 = random.random()
                     c4 = random.random()
-
-                    points = empty((512,512))                    
+                             
+                    print self.heightmap           
                     mda = MDA(size, roughness)
-                    mda.divideRect(points, 0, 0, width, height, c1, c2, c3, c4)
+                    mda.divideRect(self.heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
                     
+                    points = self.heightmap.copy()
                     points *= 255
                     points = points.astype('int')
                     
@@ -138,11 +142,14 @@ class mapGen():
                         for y in x:
                             hex = "0x%02x%02x%02x" % (y, y, y)
                             background.append(int(hex,0))
-                    background = array(background).reshape(512,512)
-
+                    background = array(background).reshape(self.width,self.height)
+                    
+                    currentBackground = pygame.surfarray.array2d(self.background)
+                    
                     pygame.surfarray.blit_array(self.background, background)
                     self.window.blit(self.background, (0,0))     
                     pygame.display.flip()               
+                    del points,background
 
                 print button.text
                 

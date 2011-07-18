@@ -2,11 +2,10 @@
 # Requirements: 
 #  - pyPNG @ http://pypng.googlecode.com
 
-import png
 import math, random, sys
 
 class MDA():
-    def __init__(self,size, roughness):
+    def __init__(self, size, roughness):
         self.size = size
         self.roughness = roughness
 
@@ -149,10 +148,11 @@ class MDA():
 
 # runs the program
 if __name__ == '__main__':
-
     if len(sys.argv) != 4:
         print "You must pass a width, height, and roughness!"
         sys.exit()
+    
+    import png
     
     width = int(sys.argv[1])
     height = int(sys.argv[2])
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     c4 = random.random()
 
     points = [ [0 for cols in range(0, width)] for rows in range(height) ]
-    mda = MDA()
+    mda = MDA(width*height, roughness)
 
     print "Thinking..."
     mda.divideRect(points, 0, 0, width, height, c1, c2, c3, c4)
