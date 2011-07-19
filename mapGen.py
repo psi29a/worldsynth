@@ -5,20 +5,21 @@ from numpy import *
 import pygame.display
 from pygame.locals import *
 from library.midpointDisplacement import MDA
+from library.sphere import Planet
 
 class mapGen():
     """Our game object! This is a fairly simple object that handles the
     initialization of pygame and sets up our game to run."""
     
-    def __init__(self):    
+    def __init__(self, width = 512, height = 512):    
         """Called when the the Game object is initialized. Initializes
         pygame and sets up our pygame window and other pygame tools
         that we will need for more complicated tutorials.""" 
         pygame.init()
 
         # create our window
-        self.height = 512
-        self.width = 512
+        self.height = width
+        self.width = height
         self.size = (self.width, self.height)
         self.window = pygame.display.set_mode(self.size)
 
@@ -41,15 +42,19 @@ class mapGen():
         self.background = pygame.Surface(self.window.get_size(), depth=32)
         self.background.fill((0, 0, 0))
         self.window.blit(self.background, (0,0))
-        # flip the display so the background is on there
-        pygame.display.flip()
+        # update the display so the background is on there
+        pygame.display.update()
         
         # create sprite group for everything else
         self.sprites = pygame.sprite.RenderUpdates()        
         # Load buttons
         self.buttons = (
-                Button((25,25), 'Clear'),
-                Button((100,25), 'Add MDA')
+                Button((25,25), 'Reset'),
+                Button((100,25), 'Add MDA'),
+                Button((200,25), 'Add Sphere'),
+                Button((25,self.window.get_height()-100), 'S'),
+                Button((25,self.window.get_height()-75), 'M'),
+                Button((25,self.window.get_height()-50), 'L')
                 )        
         map(self.sprites.add,self.buttons)
 
@@ -117,10 +122,9 @@ class mapGen():
         # check if the buttons are clicked
         for button in self.buttons:
             if button.rect.collidepoint(position):
-                if button.text == "Clear":
-                    self.background.fill((0, 0, 0))      
-                    self.window.blit(self.background, (0,0))     
-                    pygame.display.flip()
+                if button.text == "Reset":
+                    self.__init__()
+                    
                 elif button.text == "Add MDA":
                     size = self.width + self.height
                     roughness = 8
@@ -129,7 +133,6 @@ class mapGen():
                     c3 = random.random()
                     c4 = random.random()
                              
-                    print self.heightmap           
                     mda = MDA(size, roughness)
                     mda.divideRect(self.heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
                     
@@ -144,13 +147,25 @@ class mapGen():
                             background.append(int(hex,0))
                     background = array(background).reshape(self.width,self.height)
                     
-                    currentBackground = pygame.surfarray.array2d(self.background)
-                    
                     pygame.surfarray.blit_array(self.background, background)
-                    self.window.blit(self.background, (0,0))     
-                    pygame.display.flip()               
-                    del points,background
-
+                    self.window.blit(self.background, (0,0))
+                    pygame.display.update()
+                    
+                elif button.text == "Add Sphere":
+                    sphere = Planet()
+                    world = sphere.generatePlanet(sphere.createSphere(), 50)
+                    print world
+                    #sphere.finish(sphere.generatePlanet(sphere.createSphere(), 50))                        
+                    
+                elif button.text == "S":
+                    self.__init__(width=256,height=256)
+                   
+                elif button.text == "M":
+                    self.__init__(width=512,height=512)
+                    
+                elif button.text == "L":
+                    self.__init__(width=1024,height=1024)
+                    
                 print button.text
                 
         return
