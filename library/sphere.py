@@ -77,7 +77,7 @@ class Planet():
         return extremes[0]/255.0 if self.percentWater > .5 else 1-(extremes[1]/255.0)
 
     def createSphere(self):
-        pygame.init() #Need this to render the output
+        #pygame.init() #Need this to render the output
         sphere = Image.new('L', (self.mapSize,self.mapSize))
         img = ImageDraw.Draw(sphere)
         baseline = (256*(1.0-(self.percentWater)))
@@ -96,21 +96,21 @@ class Planet():
         extrema = self.highestPointOnSphere(sphere)
         i = 0
         picture = self.sphereToPicture(sphere)
-        pygame.display.set_mode(picture.get_size())
-        main_surface = pygame.display.get_surface()
+        #pygame.display.set_mode(picture.get_size())
+        #main_surface = pygame.display.get_surface()
         del picture
         while extrema > self.driftRate/(self.roughness*10*self.maxSize):
             sphere = self.cutOval(sphere, extrema)
             i = i+1
-            if displayInterval > 0 and i%displayInterval == 0:
-                picture = self.sphereToPicture(sphere)
-                main_surface.blit(picture, (0, 0))
-                pygame.display.update()
-                del picture
+            #if displayInterval > 0 and i%displayInterval == 0:
+            #    picture = self.sphereToPicture(sphere)
+            #    main_surface.blit(picture, (0, 0))
+            #    pygame.display.update()
+            #    del picture
 
-            for event in pygame.event.get(): #When people close the window
-                if event.type == pygame.QUIT:    
-                    return image
+            #for event in pygame.event.get(): #When people close the window
+            #    if event.type == pygame.QUIT:    
+            #        return image
             extrema = self.highestPointOnSphere(sphere)
         return sphere
         

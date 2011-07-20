@@ -6,6 +6,7 @@ import pygame.display
 from pygame.locals import *
 from library.midpointDisplacement import MDA
 from library.sphere import Planet
+from library.Utilities import *
 
 class mapGen():
     """Our game object! This is a fairly simple object that handles the
@@ -152,10 +153,14 @@ class mapGen():
                     pygame.display.update()
                     
                 elif button.text == "Add Sphere":
-                    sphere = Planet()
+                    sphere = Planet(self.width)
                     world = sphere.generatePlanet(sphere.createSphere(), 50)
-                    print world
-                    #sphere.finish(sphere.generatePlanet(sphere.createSphere(), 50))                        
+                    self.background = sphere.sphereToPicture(world)
+                    self.heightmap = PIL2array(world)
+                    print world,self.background,self.heightmap
+                    del world
+                    self.window.blit(self.background, (0,0))
+                    pygame.display.update()                       
                     
                 elif button.text == "S":
                     self.__init__(width=256,height=256)
