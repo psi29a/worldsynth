@@ -133,16 +133,16 @@ class mapGen():
                     c2 = random.random()
                     c3 = random.random()
                     c4 = random.random()
-                             
-                    mda = MDA(size, roughness)
-                    mda.divideRect(self.heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
                     
-                    points = self.heightmap.copy()
-                    points *= 255
-                    points = points.astype('int')
+                    heightmap = empty((self.width,self.height))         
+                    mda = MDA(size, roughness)
+                    mda.divideRect(heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
+                    heightmap *= 255
+                    heightmap = heightmap.astype('int')
+                    self.heightmap = heightmap
                     
                     background = []
-                    for x in points:
+                    for x in heightmap:
                         for y in x:
                             hex = "0x%02x%02x%02x" % (y, y, y)
                             background.append(int(hex,0))
@@ -157,7 +157,6 @@ class mapGen():
                     world = sphere.generatePlanet(sphere.createSphere(), 50)
                     self.background = sphere.sphereToPicture(world)
                     self.heightmap = PIL2array(world)
-                    print world,self.background,self.heightmap
                     del world
                     self.window.blit(self.background, (0,0))
                     pygame.display.update()                       
