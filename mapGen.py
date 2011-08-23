@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import random
-from numpy import *
 import pygame.display
+from numpy import *
 from pygame.locals import *
+from library.popup_menu import PopupMenu
 from library.midpointDisplacement import MDA
 from library.sphere import Planet
+
 
 class mapGen():
     """Our game object! This is a fairly simple object that handles the
@@ -37,30 +39,31 @@ class mapGen():
         # want keys so we can close the window with the esc key
         pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP, MOUSEBUTTONDOWN])
                      
-        
         # make background and blit the background onto the window
         self.background = pygame.Surface(self.window.get_size(), depth=32)
         self.background.fill((0, 0, 0))
         self.window.blit(self.background, (0,0))
         # update the display so the background is on there
         pygame.display.update()
-        
-        # create sprite group for everything else
-        self.sprites = pygame.sprite.RenderUpdates()        
-        # Load buttons
-        self.buttons = (
-                Button((25,25), 'Reset'),
-                Button((100,25), 'Add MDA'),
-                Button((200,25), 'Add Sphere'),
-                Button((25,self.window.get_height()-100), 'S'),
-                Button((25,self.window.get_height()-75), 'M'),
-                Button((25,self.window.get_height()-50), 'L')
-                )        
-        map(self.sprites.add,self.buttons)
 
-        # feedback sprite
-        self.feedback = TextSprite((25, 400), '')
-        self.sprites.add(self.feedback)        
+        # create menues
+        self.menu = (
+            'Menu',
+            (
+                'Add',
+                'Midpoint Displacment',
+                'Spherical Algorithm',
+            ),
+            (
+                'Size',
+                'Small',
+                'Medium',
+                'Large',
+            ),
+            'Save',
+            'Reset',      
+            'Quit',
+        )    
         
 
     def run(self):
@@ -83,12 +86,9 @@ class mapGen():
             # update the title bar with our frames per second
             pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
  
-            # render everything else
-            self.sprites.clear(self.window, self.background)
-            dirty = self.sprites.draw(self.window)
- 
             # blit the dirty areas of the screen
-            pygame.display.update(dirty) # updates just the 'dirty' areas
+            pygame.display.update()
+            #pygame.display.flip()
 
         print 'Closing '
 
@@ -107,73 +107,78 @@ class mapGen():
                 # if the user presses escape, quit the event loop.
                 if event.key == K_ESCAPE:
                     return False
-                    
-            # handle mouse clicks in self.mouseDown
-            elif event.type == MOUSEBUTTONDOWN:
-                self.mouseDown(event.pos, event.button)                    
+
+            elif event.type == MOUSEBUTTONUP:
+                print 'Show menu'
+                PopupMenu(self.menu)                               
+            
+            elif event.type == USEREVENT:
+                if event.code == 'MENU':
+                    self.handleMenu(event)  
                     
         return True
 
-    def mouseDown(self, position, button):
-        """Handles all the mouse clicks. We want left clicks
-        to add to a block or create one and right clicks to take away."""
-        posx, posy = position
- 
-        # check if the buttons are clicked
-        for button in self.buttons:
-            if button.rect.collidepoint(position):
-                if button.text == "Reset":
-                    self.__init__()
-                    
-                elif button.text == "Add MDA":
-                    size = self.width + self.height
-                    roughness = 8
-                    c1 = random.random()
-                    c2 = random.random()
-                    c3 = random.random()
-                    c4 = random.random()
-                    
-                    heightmap = empty((self.width,self.height))         
-                    mda = MDA(size, roughness)
-                    mda.divideRect(heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
-                    heightmap *= 255
-                    heightmap = heightmap.astype('int')
-                    self.heightmap = heightmap
-                    
-                    background = []
-                    for x in heightmap:
-                        for y in x:
-                            hex = "0x%02x%02x%02x" % (y, y, y)
-                            background.append(int(hex,0))
-                    background = array(background).reshape(self.width,self.height)
-                    
-                    pygame.surfarray.blit_array(self.background, background)
-                    self.window.blit(self.background, (0,0))
-                    pygame.display.update()
-                    
-                elif button.text == "Add Sphere":
-                    sphere = Planet(self.width)
-                    world = sphere.generatePlanet(sphere.createSphere(), 50)
-                    self.background = sphere.sphereToPicture(world)
-                    self.heightmap = array(world.getdata(),
-                                    uint8).reshape(world.size[1], 
-                                    world.size[0])
-                    del world
-                    self.window.blit(self.background, (0,0))
-                    pygame.display.update()                       
-                    
-                elif button.text == "S":
-                    self.__init__(width=256,height=256)
-                   
-                elif button.text == "M":
-                    self.__init__(width=512,height=512)
-                    
-                elif button.text == "L":
-                    self.__init__(width=1024,height=1024)
-                    
-                print button.text
+    def handleMenu(self,e):
+        print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
+        if e.name == 'Menu':
+            if e.text == 'Quit':
+                quit()
+            elif e.text == 'Reset':
+                self.__init__()
                 
-        return
+        elif e.name == 'Add...':
+            if e.text == 'Midpoint Displacment':
+                self.mda()
+            elif e.text == 'Spherical Algorithm':
+                self.sphere()
+                
+        elif e.name == 'Size...':
+            if e.text == 'Small':
+                self.__init__(width=256,height=256)
+            elif e.text == 'Medium':
+                self.__init__(width=512,height=512)
+            elif e.text == 'Large':
+                self.__init__(width=1024,height=1024)
+            
+        self.window.blit(self.background, (0,0)) # blit to screen our background    
+        pygame.display.update() # update our screen after event
+
+
+    def mda(self): # our midpoint displacement algorithm
+        size = self.width + self.height
+        roughness = 8
+        c1 = random.random()
+        c2 = random.random()
+        c3 = random.random()
+        c4 = random.random()
+        
+        heightmap = empty((self.width,self.height))         
+        mda = MDA(size, roughness)
+        mda.divideRect(heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
+        heightmap *= 255
+        heightmap = heightmap.astype('int')
+        self.heightmap = heightmap
+        
+        background = []
+        for x in heightmap:
+            for y in x:
+                hex = "0x%02x%02x%02x" % (y, y, y)
+                background.append(int(hex,0))
+        background = array(background).reshape(self.width,self.height)
+        
+        pygame.surfarray.blit_array(self.background, background)
+        
+        del mda, heightmap, background
+        
+    def sphere(self): # our spherical planet algorithm
+        sphere = Planet(self.width)
+        world = sphere.generatePlanet(sphere.createSphere(), 50)
+        self.background = sphere.sphereToPicture(world)
+        self.heightmap = array(world.getdata(),
+                        uint8).reshape(world.size[1], 
+                        world.size[0])
+        del world,sphere
+            
 
 
 class Button(pygame.sprite.Sprite):
