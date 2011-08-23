@@ -42,8 +42,16 @@ class mapGen():
         # make background and blit the background onto the window
         self.background = pygame.Surface(self.window.get_size(), depth=32)
         self.background.fill((0, 0, 0))
-        self.window.blit(self.background, (0,0))
+        
+        # Show are initial text
+        font = pygame.font.Font(None, 36)
+        text = font.render("Click for menu.", 1, (255, 255, 255))
+        textpos = text.get_rect()
+        textpos.centerx = self.background.get_rect().centerx
+        self.background.blit(text, textpos)        
+                
         # update the display so the background is on there
+        self.window.blit(self.background, (0,0))
         pygame.display.update()
 
         # create menues
