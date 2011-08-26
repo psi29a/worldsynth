@@ -55,8 +55,8 @@ class mapGen():
         pygame.display.update()
 
         # create menues
-        self.menu = (
-            'Menu',
+        self.actionMenu = (
+            'Action Menu',
             (
                 'Add',
                 'Midpoint Displacment',
@@ -71,7 +71,20 @@ class mapGen():
             'Save',
             'Reset',      
             'Quit',
-        )    
+        )
+        self.viewMenu = (
+            'View Menu',
+            (
+                'Heightmap',
+                'Normal',
+                'Sea Level',
+                'Sea and Land'
+            ),
+            'Rainfall',
+            'Heatmap',
+            'Biomes',
+            'Civilization',            
+        )                
         
 
     def run(self):
@@ -117,18 +130,25 @@ class mapGen():
                     return False
 
             elif event.type == MOUSEBUTTONUP:
-                print 'Show menu'
-                PopupMenu(self.menu)                               
-            
+                if event.button == 1:
+                    print 'Show action menu: '
+                    PopupMenu(self.actionMenu)
+                elif event.button == 3:
+                    print 'Show view menu: '                    
+                    PopupMenu(self.viewMenu)
+                                
             elif event.type == USEREVENT:
                 if event.code == 'MENU':
                     self.handleMenu(event)  
+        
+        self.window.blit(self.background, (0,0)) # blit to screen our background    
+        pygame.display.update() # update our screen after event        
                     
         return True
 
     def handleMenu(self,e):
         print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
-        if e.name == 'Menu':
+        if e.name == 'Action Menu':
             if e.text == 'Quit':
                 quit()
             elif e.text == 'Reset':
@@ -147,10 +167,40 @@ class mapGen():
                 self.__init__(width=512,height=512)
             elif e.text == 'Large':
                 self.__init__(width=1024,height=1024)
-            
-        self.window.blit(self.background, (0,0)) # blit to screen our background    
-        pygame.display.update() # update our screen after event
 
+        elif e.name == 'Heightmap...':
+            if e.text == 'Sea Level':
+                self.showSeaLevel()
+            if e.text == 'Sea and Land':
+                self.showSeaAndLand()                
+            
+
+    def showSeaLevel(self): # display what heightmap would look like with a constant sea level
+        background = []
+        for x in self.heightmap:
+            for y in x:
+                if y < 75: # sealevel?
+                    hexified = "0x46696F"                
+                else:
+                    hexified = "0x%02x%02x%02x" % (y, y, y)
+                background.append(int(hexified,0))
+        background = array(background).reshape(self.width,self.height)    
+        pygame.surfarray.blit_array(self.background, background)
+    
+    def showSeaAndLand(self): # display what heightmap would look like with a constant sea level
+        background = []
+        for x in self.heightmap:
+            for y in x:
+                if y < 75: # sealevel?
+                    hexified = "0x46696F"
+                elif y < 200: # land and hills?
+                    hexified = "0x608038"                    
+                else: # mountains
+                    hexified = "0xA09F9C"
+                background.append(int(hexified,0))
+        background = array(background).reshape(self.width,self.height)    
+        pygame.surfarray.blit_array(self.background, background) 
+    
 
     def mda(self): # our midpoint displacement algorithm
         size = self.width + self.height
