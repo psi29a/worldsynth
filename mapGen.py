@@ -26,8 +26,13 @@ class mapGen():
         self.window = pygame.display.set_mode(self.size)
 
         # world data
-        self.heightmap = empty((self.width,self.height)) 
-
+        self.elevation = empty((self.width,self.height)) 
+        self.wind = empty((self.width,self.height))        
+        self.rainfall = empty((self.width,self.height)) 
+        self.temperature = empty((self.width,self.height))
+        self.rivers = empty((self.width,self.height))
+        self.contiguous = empty((self.width,self.height))        
+        
         # clock for ticking
         self.clock = pygame.time.Clock()
 
@@ -177,7 +182,7 @@ class mapGen():
 
     def showSeaLevel(self): # display what heightmap would look like with a constant sea level
         background = []
-        for x in self.heightmap:
+        for x in self.elevation:
             for y in x:
                 if y < 75: # sealevel?
                     hexified = "0x46696F"                
@@ -189,7 +194,7 @@ class mapGen():
     
     def showSeaAndLand(self): # display what heightmap would look like with a constant sea level
         background = []
-        for x in self.heightmap:
+        for x in self.elevation:
             for y in x:
                 if y < 75: # sealevel?
                     hexified = "0x46696F"
@@ -205,17 +210,13 @@ class mapGen():
     def mda(self): # our midpoint displacement algorithm
         size = self.width + self.height
         roughness = 8
-        c1 = random.random()
-        c2 = random.random()
-        c3 = random.random()
-        c4 = random.random()
-        
-        heightmap = empty((self.width,self.height))         
-        mda = MDA(size, roughness)
-        mda.divideRect(heightmap, 0, 0, self.width, self.height, c1, c2, c3, c4)
-        heightmap *= 255
+                  
+        mda = MDA(self.width, self.height, roughness)
+        mda.run()
+        self.elevation = mda.heightmap
+
+        heightmap = self.elevation * 255
         heightmap = heightmap.astype('int')
-        self.heightmap = heightmap
         
         background = []
         for x in heightmap:
@@ -232,7 +233,7 @@ class mapGen():
         sphere = Planet(self.width)
         world = sphere.generatePlanet(sphere.createSphere(), 50)
         self.background = sphere.sphereToPicture(world)
-        self.heightmap = array(world.getdata(),
+        self.elevation = array(world.getdata(),
                         uint8).reshape(world.size[1], 
                         world.size[0])
         del world,sphere

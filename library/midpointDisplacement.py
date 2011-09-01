@@ -3,11 +3,22 @@
 #  - pyPNG @ http://pypng.googlecode.com
 
 import math, random, sys
+from numpy import *
 
 class MDA():
-    def __init__(self, size, roughness):
-        self.size = size
+    def __init__(self, width, height, roughness):
+        self.size = width+height
+        self.width = width
+        self.height = height
         self.roughness = roughness
+        self.heightmap = empty((self.width,self.height))
+
+    def run(self):
+        c1 = random.random()
+        c2 = random.random()
+        c3 = random.random()
+        c4 = random.random()
+        self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)            
 
     def normalize(self, point): # +/- infinity are reset to 1 and 1 values
         if point < 0.0:
@@ -20,7 +31,7 @@ class MDA():
         maxd = small_size / self.size * self.roughness
         return (random.random() - 0.5) * maxd
         
-    def divideRect(self, points, x, y, width, height, c1, c2, c3, c4):
+    def divideRect(self, x, y, width, height, c1, c2, c3, c4):
         new_width = math.floor(width / 2)
         new_height = math.floor(height / 2)
         
@@ -35,10 +46,10 @@ class MDA():
             edge4 = self.normalize((c4 + c1) / 2)
             
             # recursively go down the rabbit hole
-            self.divideRect(points, x, y, new_width, new_height, c1, edge1, mid, edge4)
-            self.divideRect(points, x + new_width, y, new_width, new_height, edge1, c2, edge2, mid)
-            self.divideRect(points, x + new_width, y + new_height, new_width, new_height, mid, edge2, c3, edge3)
-            self.divideRect(points, x, y + new_height, new_width, new_height, edge4, mid, edge3, c4)
+            self.divideRect(x, y, new_width, new_height, c1, edge1, mid, edge4)
+            self.divideRect(x + new_width, y, new_width, new_height, edge1, c2, edge2, mid)
+            self.divideRect(x + new_width, y + new_height, new_width, new_height, mid, edge2, c3, edge3)
+            self.divideRect(x, y + new_height, new_width, new_height, edge4, mid, edge3, c4)
             
         else:
             c = (c1 + c2 + c3 + c4) / 4
@@ -46,35 +57,35 @@ class MDA():
             x = int(x)
             y = int(y)
 
-            points[x][y] = c
+            self.heightmap[x][y] = c
             
             if (width == 2):
-                points[x + 1][y] = c
+                self.heightmap[x + 1][y] = c
             if (height == 2):
-                points[x][y + 1] = c
+                self.heightmap[x][y + 1] = c
             if (width == 2 and height == 2):
-                points[x + 1][y + 1] = c
+                self.heightmap[x + 1][y + 1] = c
                 
-    def savePNG(self, width, height, points):
+    def savePNG(self):
         colors = []
         row = []
-        for x in range(0, width):
-            for y in range(0, height):
-                row.append(int(points[x][y] * 255))
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                row.append(int(self.heightmap[x][y] * 255))
             colors.append(tuple(row))
             row = []
 
         f = open('terrain.png', 'wb')
-        w = png.Writer(width, height, greyscale=True)
+        w = png.Writer(self.width, self.height, greyscale=True)
         w.write(f, colors)
         f.close()
 
-    def savecPNG(self, width, height, points):
+    def savecPNG(self):
         colors = []
         row = []
-        for x in range(0, width):
-            for y in range(0, height):
-                rgb = self.map_to_terraing(int(points[x][y] * 255))
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                rgb = self.map_to_terraing(int(self.heightmap[x][y] * 255))
                 row.append(rgb[0])
                 row.append(rgb[1])
                 row.append(rgb[2])            
@@ -82,7 +93,7 @@ class MDA():
             row = []
 
         f = open('terrain.png', 'wb')
-        w = png.Writer(width, height)
+        w = png.Writer(self.width, self.height)
         w.write(f, colors)
         f.close()
 
@@ -158,16 +169,9 @@ if __name__ == '__main__':
     height = int(sys.argv[2])
     roughness = int(sys.argv[3])
 
-    size = width + height
-    c1 = random.random()
-    c2 = random.random()
-    c3 = random.random()
-    c4 = random.random()
-
-    points = [ [0 for cols in range(0, width)] for rows in range(height) ]
-    mda = MDA(width*height, roughness)
-
+    print "Setting things up..."
+    mda = MDA(width, height, roughness)
     print "Thinking..."
-    mda.divideRect(points, 0, 0, width, height, c1, c2, c3, c4)
-    mda.savecPNG(width, height, points)
+    mda.run()
+    mda.savecPNG()
     print "done!"
