@@ -6,7 +6,8 @@ from numpy import *
 from pygame.locals import *
 from library.popup_menu import PopupMenu
 from library.midpointDisplacement import MDA
-from library.sphere import Planet
+from library.temperature import Temperature
+from library.windAndRain import WindAndRain
 
 
 class mapGen():
@@ -63,10 +64,11 @@ class mapGen():
         self.actionMenu = (
             'Action Menu',
             (
-                'Add',
-                'Midpoint Displacment',
-                'Spherical Algorithm',
-            ),
+                'Actions',
+                'Heightmap',
+                'Temperature',
+                'WindAndRain',
+            ),           
             (
                 'Size',
                 'Small',
@@ -85,8 +87,8 @@ class mapGen():
                 'Sea Level',
                 'Sea and Land'
             ),
+            'Heatmap',            
             'Rainfall',
-            'Heatmap',
             'Biomes',
             'Civilization',            
         )                
@@ -159,11 +161,13 @@ class mapGen():
             elif e.text == 'Reset':
                 self.__init__()
                 
-        elif e.name == 'Add...':
-            if e.text == 'Midpoint Displacment':
-                self.mda()
-            elif e.text == 'Spherical Algorithm':
-                self.sphere()
+        elif e.name == 'Actions...':
+            if e.text == 'Heightmap':      
+                self.createHeightmap()
+            elif e.text == 'Temperature':       
+                self.createTemperature()
+            elif e.text == 'WindAndRain':         
+                self.createWindAndRain()
                 
         elif e.name == 'Size...':
             if e.text == 'Small':
@@ -176,18 +180,24 @@ class mapGen():
         elif e.name == 'Heightmap...':
             if e.text == 'Sea Level':
                 self.showSeaLevel()
-            if e.text == 'Sea and Land':
-                self.showSeaAndLand()                
+            elif e.text == 'Sea and Land':
+                self.showSeaAndLand()        
+
+        elif e.name == 'View Menu':
+            if e.text == 'Heatmap':
+                print "help"
+                self.showTemperature()
             
 
     def showSeaLevel(self): # display what heightmap would look like with a constant sea level
         background = []
         for x in self.elevation:
             for y in x:
-                if y < 75: # sealevel?
+                colour = y*255
+                if y < 0.33: # sealevel?
                     hexified = "0x46696F"                
                 else:
-                    hexified = "0x%02x%02x%02x" % (y, y, y)
+                    hexified = "0x%02x%02x%02x" % (colour, colour, colour)
                 background.append(int(hexified,0))
         background = array(background).reshape(self.width,self.height)    
         pygame.surfarray.blit_array(self.background, background)
@@ -196,9 +206,10 @@ class mapGen():
         background = []
         for x in self.elevation:
             for y in x:
-                if y < 75: # sealevel?
+                colour = y*255
+                if y < 0.33: # sealevel?
                     hexified = "0x46696F"
-                elif y < 200: # land and hills?
+                elif y < 0.80: # land and hills?
                     hexified = "0x608038"                    
                 else: # mountains
                     hexified = "0xA09F9C"
@@ -206,8 +217,20 @@ class mapGen():
         background = array(background).reshape(self.width,self.height)    
         pygame.surfarray.blit_array(self.background, background) 
     
+    def showTemperature(self):
+        tempMap = self.temperature * 255
+        tempMap = tempMap.astype('int')    
+        background = []
+        for x in tempMap:
+            for y in x:
+                hex = "0x%02x%02x%02x" % (y, y, y)
+                background.append(int(hex,0))
+        background = array(background).reshape(self.width,self.height)
+        
+        pygame.surfarray.blit_array(self.background, background)    
 
-    def mda(self): # our midpoint displacement algorithm
+
+    def createHeightmap(self): # our midpoint displacement algorithm
         size = self.width + self.height
         roughness = 8
                   
@@ -224,21 +247,29 @@ class mapGen():
                 hex = "0x%02x%02x%02x" % (y, y, y)
                 background.append(int(hex,0))
         background = array(background).reshape(self.width,self.height)
+        pygame.surfarray.blit_array(self.background, background)
+        del mda, heightmap, background
+
+    def createTemperature(self): # our midpoint displacement algorithm
+        tempObject = Temperature(self.elevation,1)
+        tempObject.run()
+        
+        self.temperature = tempObject.temperature
+
+        tempMap = self.temperature * 255
+        tempMap = tempMap.astype('int')
+        
+        background = []
+        for x in tempMap:
+            for y in x:
+                hex = "0x%02x%02x%02x" % (y, y, y)
+                background.append(int(hex,0))
+        background = array(background).reshape(self.width,self.height)
         
         pygame.surfarray.blit_array(self.background, background)
         
-        del mda, heightmap, background
+        del tempObject, tempMap, background
         
-    def sphere(self): # our spherical planet algorithm
-        sphere = Planet(self.width)
-        world = sphere.generatePlanet(sphere.createSphere(), 50)
-        self.background = sphere.sphereToPicture(world)
-        self.elevation = array(world.getdata(),
-                        uint8).reshape(world.size[1], 
-                        world.size[0])
-        del world,sphere
-            
-
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
