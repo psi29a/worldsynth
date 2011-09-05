@@ -81,16 +81,13 @@ class mapGen():
         )
         self.viewMenu = (
             'View Menu',
-            (
-                'Heightmap',
-                'Normal',
-                'Sea Level',
-                'Sea and Land'
-            ),
-            'Heatmap',            
-            'Rainfall',
-            'Biomes',
-            'Civilization',            
+            'Height Map',
+            'Sea Level',
+            'Elevation',            
+            'Heat Map',            
+            'Raw Heat Map',                
+            'Wind Map',               
+            'Rain Map',
         )                
         
 
@@ -175,101 +172,94 @@ class mapGen():
             elif e.text == 'Medium':
                 self.__init__(width=512,height=512)
             elif e.text == 'Large':
-                self.__init__(width=1024,height=1024)
-
-        elif e.name == 'Heightmap...':
-            if e.text == 'Sea Level':
-                self.showSeaLevel()
-            elif e.text == 'Sea and Land':
-                self.showSeaAndLand()        
+                self.__init__(width=1024,height=1024)  
 
         elif e.name == 'View Menu':
-            if e.text == 'Heatmap':
-                print "help"
-                self.showTemperature()
+            if e.text == 'Height Map':
+                self.showMap('heightmap')
+            elif e.text == 'Sea Level':
+                self.showMap('sealevel') 
+            elif e.text == 'Elevation':
+                self.showMap('elevation')                                              
+            elif e.text == 'Heat Map':
+                self.showMap('heatmap')   
+            elif e.text == 'Raw Heat Map':
+                self.showMap('rawheatmap')                                
+            elif e.text == 'Wind Map':
+                self.showMap('windmap')                
+            elif e.text == 'Rain Map':
+                self.showMap('rainmap')                                                                 
             
 
-    def showSeaLevel(self): # display what heightmap would look like with a constant sea level
+    def showMap(self,mapType):
         background = []
-        for x in self.elevation:
-            for y in x:
-                colour = y*255
-                if y < 0.33: # sealevel?
-                    hexified = "0x46696F"                
-                else:
+            
+        if mapType == "heightmap":    
+            for x in self.elevation:
+                for y in x:
+                    colour = int(y*255)
                     hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-                background.append(int(hexified,0))
+                    background.append(int(hexified,0))
+                    
+        elif mapType == "sealevel":
+            for x in self.elevation:
+                for y in x:
+                    colour = int(y*255)
+                    if y < 0.33: # sealevel 
+                        hexified = "0x%02x%02x%02x" % (0, 0, 255*y)
+                    else:
+                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
+                    background.append(int(hexified,0))                            
+                
+        elif mapType == "elevation":
+            for x in self.elevation:
+                for y in x:
+                    if y < 0.33: # sealevel 
+                        hexified = "0x%02x%02x%02x" % (0, 0, 128)
+                    elif y < 0.666: # grasslands
+                        hexified = "0x%02x%02x%02x" % (128, 255, 0)
+                    elif y < 0.900: # mountains
+                        hexified = "0x%02x%02x%02x" % (90, 128, 90)                        
+                    else:
+                        hexified = "0x%02x%02x%02x" % (255, 255, 255)
+                    
+                    background.append(int(hexified,0))
+
+        elif mapType == "heatmap":    
+            for x in self.temperature:
+                for y in x:
+                    hexified = "0x%02x%02x%02x" % (255*y,128*y,255*(1-y))
+                    background.append(int(hexified,0))
+
+        elif mapType == "rawheatmap":    
+            for x in self.temperature:
+                for y in x:
+                    colour = int(y*255)
+                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
+                    background.append(int(hexified,0))
+                                    
         background = array(background).reshape(self.width,self.height)    
         pygame.surfarray.blit_array(self.background, background)
     
-    def showSeaAndLand(self): # display what heightmap would look like with a constant sea level
-        background = []
-        for x in self.elevation:
-            for y in x:
-                colour = y*255
-                if y < 0.33: # sealevel?
-                    hexified = "0x46696F"
-                elif y < 0.80: # land and hills?
-                    hexified = "0x608038"                    
-                else: # mountains
-                    hexified = "0xA09F9C"
-                background.append(int(hexified,0))
-        background = array(background).reshape(self.width,self.height)    
-        pygame.surfarray.blit_array(self.background, background) 
+ 
     
-    def showTemperature(self):
-        tempMap = self.temperature * 255
-        tempMap = tempMap.astype('int')    
-        background = []
-        for x in tempMap:
-            for y in x:
-                hex = "0x%02x%02x%02x" % (y, y, y)
-                background.append(int(hex,0))
-        background = array(background).reshape(self.width,self.height)
-        
-        pygame.surfarray.blit_array(self.background, background)    
 
 
-    def createHeightmap(self): # our midpoint displacement algorithm
+    def createHeightmap(self):
         size = self.width + self.height
-        roughness = 8
-                  
+        roughness = 8                  
         mda = MDA(self.width, self.height, roughness)
         mda.run()
         self.elevation = mda.heightmap
+        del mda        
+        self.showMap('heightmap')
 
-        heightmap = self.elevation * 255
-        heightmap = heightmap.astype('int')
-        
-        background = []
-        for x in heightmap:
-            for y in x:
-                hex = "0x%02x%02x%02x" % (y, y, y)
-                background.append(int(hex,0))
-        background = array(background).reshape(self.width,self.height)
-        pygame.surfarray.blit_array(self.background, background)
-        del mda, heightmap, background
-
-    def createTemperature(self): # our midpoint displacement algorithm
+    def createTemperature(self):
         tempObject = Temperature(self.elevation,1)
         tempObject.run()
-        
         self.temperature = tempObject.temperature
-
-        tempMap = self.temperature * 255
-        tempMap = tempMap.astype('int')
-        
-        background = []
-        for x in tempMap:
-            for y in x:
-                hex = "0x%02x%02x%02x" % (y, y, y)
-                background.append(int(hex,0))
-        background = array(background).reshape(self.width,self.height)
-        
-        pygame.surfarray.blit_array(self.background, background)
-        
-        del tempObject, tempMap, background
-        
+        del tempObject
+        self.showMap('rawheatmap')
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
