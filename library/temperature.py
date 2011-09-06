@@ -75,12 +75,20 @@ class Temperature():
                 for y in range(0,self.worldH):
                     if self.heightmap[x,y] < self.WGEN_SEA_LEVEL: # typical temp at sea level
                         if y > band[x]: 
-                            self.temperature[x,y] = bandtemp * 0.7
+                            self.temperature[x,y] = bandtemp * 0.7                           
                     else: # typical temp at elevation
                         if y > band[x]: 
-                            self.temperature[x,y] = bandtemp * (1.0 - (self.heightmap[x,y]-self.WGEN_SEA_LEVEL)) 
+                            self.temperature[x,y] = bandtemp * (1.0 - (self.heightmap[x,y]-self.WGEN_SEA_LEVEL))
             pbar.update(i)
         pbar.finish()
+        
+        # ugly fix cleanup
+        for x in range(0,self.worldW):
+            for y in range(0,self.worldH):
+                if self.temperature[x,y] > 1.0 or self.temperature[x,y] < 0.0:
+                    print "fixme:"+str(self.temperature[x,y])
+                    self.temperature[x,y] = min(max(self.temperature[x,y],1),0)
+            
         
 if __name__ == '__main__':
     heightmap = empty((128,128))

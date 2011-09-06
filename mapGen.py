@@ -88,8 +88,51 @@ class mapGen():
             'Raw Heat Map',                
             'Wind Map',               
             'Rain Map',
+            'Wind and Rain Map',
         )                
         
+
+    def handleMenu(self,e):
+        print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
+        if e.name == 'Action Menu':
+            if e.text == 'Quit':
+                quit()
+            elif e.text == 'Reset':
+                self.__init__()
+                
+        elif e.name == 'Actions...':
+            if e.text == 'Heightmap':      
+                self.createHeightmap()
+            elif e.text == 'Temperature':       
+                self.createTemperature()
+            elif e.text == 'WindAndRain':         
+                self.createWindAndRain()
+                
+        elif e.name == 'Size...':
+            if e.text == 'Small':
+                self.__init__(width=256,height=256)
+            elif e.text == 'Medium':
+                self.__init__(width=512,height=512)
+            elif e.text == 'Large':
+                self.__init__(width=1024,height=1024)  
+
+        elif e.name == 'View Menu':
+            if e.text == 'Height Map':
+                self.showMap('heightmap')
+            elif e.text == 'Sea Level':
+                self.showMap('sealevel') 
+            elif e.text == 'Elevation':
+                self.showMap('elevation')                                              
+            elif e.text == 'Heat Map':
+                self.showMap('heatmap')   
+            elif e.text == 'Raw Heat Map':
+                self.showMap('rawheatmap')                                
+            elif e.text == 'Wind Map':
+                self.showMap('windmap')                
+            elif e.text == 'Rain Map':
+                self.showMap('rainmap')      
+            elif e.text == 'Wind and Rain Map':
+                self.showMap('windrainmap')                    
 
     def run(self):
         """Runs the game. Contains the game loop that computes and renders
@@ -148,47 +191,7 @@ class mapGen():
         self.window.blit(self.background, (0,0)) # blit to screen our background    
         pygame.display.update() # update our screen after event        
                     
-        return True
-
-    def handleMenu(self,e):
-        print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
-        if e.name == 'Action Menu':
-            if e.text == 'Quit':
-                quit()
-            elif e.text == 'Reset':
-                self.__init__()
-                
-        elif e.name == 'Actions...':
-            if e.text == 'Heightmap':      
-                self.createHeightmap()
-            elif e.text == 'Temperature':       
-                self.createTemperature()
-            elif e.text == 'WindAndRain':         
-                self.createWindAndRain()
-                
-        elif e.name == 'Size...':
-            if e.text == 'Small':
-                self.__init__(width=256,height=256)
-            elif e.text == 'Medium':
-                self.__init__(width=512,height=512)
-            elif e.text == 'Large':
-                self.__init__(width=1024,height=1024)  
-
-        elif e.name == 'View Menu':
-            if e.text == 'Height Map':
-                self.showMap('heightmap')
-            elif e.text == 'Sea Level':
-                self.showMap('sealevel') 
-            elif e.text == 'Elevation':
-                self.showMap('elevation')                                              
-            elif e.text == 'Heat Map':
-                self.showMap('heatmap')   
-            elif e.text == 'Raw Heat Map':
-                self.showMap('rawheatmap')                                
-            elif e.text == 'Wind Map':
-                self.showMap('windmap')                
-            elif e.text == 'Rain Map':
-                self.showMap('rainmap')                                                                 
+        return True                                                        
             
 
     def showMap(self,mapType):
@@ -234,15 +237,36 @@ class mapGen():
         elif mapType == "rawheatmap":    
             for x in self.temperature:
                 for y in x:
-                    colour = int(y*255)
+                    colour = int(y*255)  
+                    if y < 0.0 or y > 1.0: # fuck, how did that happen?
+                        print "fixme error: "+str(colour)+" temp: "+str(y)                    
+                        colour = 0                        
                     hexified = "0x%02x%02x%02x" % (colour,colour,colour)
                     background.append(int(hexified,0))
+                    
+        elif mapType == 'windmap':
+            for x in self.wind:
+                for y in x:
+                    hexified = "0x%02x%02x%02x" % (0,255*y,0)
+                    background.append(int(hexified,0))
+        
+        elif mapType == 'rainmap':
+            for x in self.rainfall:
+                for y in x:
+                    hexified = "0x%02x%02x%02x" % (100*y,100*y,255*y)
+                    background.append(int(hexified,0))
+                    print y
+        
+        elif mapType == 'windandrainmap':
+            for x in range(0,self.width):
+                for y in range(0,self.height):
+                    wind = int(255*self.wind[x,y])
+                    rain = int(255*self.rainfall[x,y])
+                    hexified = "0x%02x%02x%02x" % (0,wind,rain)
+                    background.append(int(hexified,0))                       
                                     
         background = array(background).reshape(self.width,self.height)    
         pygame.surfarray.blit_array(self.background, background)
-    
- 
-    
 
 
     def createHeightmap(self):
@@ -255,11 +279,19 @@ class mapGen():
         self.showMap('heightmap')
 
     def createTemperature(self):
-        tempObject = Temperature(self.elevation,1)
+        tempObject = Temperature(self.elevation,2)
         tempObject.run()
         self.temperature = tempObject.temperature
         del tempObject
         self.showMap('rawheatmap')
+        
+    def createWindAndRain(self):
+        warObject = WindAndRain(self.elevation, self.temperature)    
+        warObject.run()
+        self.wind = warObject.windMap
+        self.rainfall = warObject.rainMap
+        del warObject
+        self.showMap('windmap')
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
