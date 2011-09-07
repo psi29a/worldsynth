@@ -10,7 +10,7 @@ class Temperature():
         self.hemisphere = hemisphere
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])        
-        self.temperature = empty((self.worldW,self.worldH))
+        self.temperature = zeros((self.worldW,self.worldH))
         self.TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
         self.WGEN_HEMISPHERE_NORTH   = 1 # export
         self.WGEN_HEMISPHERE_EQUATOR = 2 # export
@@ -50,7 +50,7 @@ class Temperature():
             bandtemp = max(bandtemp, 0.075) 
 
             # Initialise at bandy
-            band = empty(self.worldW)
+            band = zeros(self.worldW)
             for x in range(0,self.worldW):
                 band[x] = bandy
             
@@ -91,7 +91,7 @@ class Temperature():
             
         
 if __name__ == '__main__':
-    heightmap = empty((128,128))
+    heightmap = zeros((128,128))
     tempObject = Temperature(heightmap,1)
     print tempObject.temperature
     tempObject.run()

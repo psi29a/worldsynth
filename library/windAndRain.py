@@ -21,8 +21,8 @@ class WindAndRain():
         self.rainFall = 1.0            
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
-        self.windMap = empty((self.worldW,self.worldH))
-        self.rainMap = empty((self.worldW,self.worldH))            
+        self.windMap = zeros((self.worldW,self.worldH))
+        self.rainMap = zeros((self.worldW,self.worldH))            
         self.worldWindDir = random.randint(0, 360)
         self.WIND_OFFSET = 180
         self.WIND_PARITY = -1 # -1 or 1
@@ -38,11 +38,9 @@ class WindAndRain():
         sinT1 = math.sin(theta1)
         sinT2 = math.sin(theta2)    
         mapsqrt = math.sqrt(self.worldW*self.worldW + self.worldH*self.worldH)
-        
-        # init wind and rain
-        for x in range(0,self.worldW):
-            for y in range(0,self.worldH):
-                self.rainMap[x,y] = ((self.rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF
+        rainAmount = ((self.rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF
+        rainMap = zeros((self.worldW,self.worldH))
+        rainMap.fill(rainAmount)
 
         # cast wind and rain
         widgets = ['Generating wind and rain: ', Percentage(), ' ', ETA() ]
@@ -61,24 +59,28 @@ class WindAndRain():
                             self.windMap[x,y] = max(self.windMap[x,y] * self.WGEN_WIND_GRAVITY, windz)
                             
                             # calculate how much rain is remaining
-                            rainRemaining = self.rainMap[x,y] / (((self.rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF) * (1.0-(self.temperature[x,y]/2.0))
-                            
+                            rainRemaining = rainMap[x,y] / rainAmount * (1.0-(self.temperature[x,y]/2.0))
+
                             # calculate our rainfall
-                            rlost = self.windMap[x,y] * rainRemaining
+                            rlost = (self.windMap[x,y]) * rainRemaining
                             if rlost < 0: 
                                 rlost = 0
-                            self.rainMap[x,y] = self.rainMap[x,y] - rlost                       
-                            if self.rainMap[x,y] <= 0: 
-                                self.rainMap[x,y] = 0
+                            rainMap[x,y] = rainMap[x,y] - rlost                       
+                            if rainMap[x,y] <= 0: 
+                                rainMap[x,y] = 0
                              
                             self.rainMap[int(windx+x),int(windy+y)] = rlost
+                            
+                            #print x,y,rainRemaining,rlost,self.windMap[x,y],self.rainMap[x,y]
             #print int(r)-d
             pbar.update(int(r)-d)
         pbar.finish()
+
+        print len(self.rainMap),len(self.windMap)
         
 if __name__ == '__main__':
-    heightMap = empty((128,128))
-    tempMap = empty((128,128))
+    heightMap = zeros((128,128))
+    tempMap = zeros((128,128))
     warObject = WindAndRain(heightMap,tempMap)    
     warObject.run()
 
