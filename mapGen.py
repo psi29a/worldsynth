@@ -14,7 +14,7 @@ class mapGen():
     """Our game object! This is a fairly simple object that handles the
     initialization of pygame and sets up our game to run."""
     
-    def __init__(self, width = 512, height = 512):    
+    def __init__(self, width = 128, height = 128):    
         """Called when the the Game object is initialized. Initializes
         pygame and sets up our pygame window and other pygame tools
         that we will need for more complicated tutorials.""" 
@@ -27,12 +27,12 @@ class mapGen():
         self.window = pygame.display.set_mode(self.size)
 
         # world data
-        self.elevation = empty((self.width,self.height)) 
-        self.wind = empty((self.width,self.height))        
-        self.rainfall = empty((self.width,self.height)) 
-        self.temperature = empty((self.width,self.height))
-        self.rivers = empty((self.width,self.height))
-        self.contiguous = empty((self.width,self.height))        
+        self.elevation = zeros((self.width,self.height)) 
+        self.wind = zeros((self.width,self.height))        
+        self.rainfall = zeros((self.width,self.height)) 
+        self.temperature = zeros((self.width,self.height))
+        self.rivers = zeros((self.width,self.height))
+        self.contiguous = zeros((self.width,self.height))        
         
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -71,6 +71,7 @@ class mapGen():
             ),           
             (
                 'Size',
+                'Tiny',
                 'Small',
                 'Medium',
                 'Large',
@@ -109,6 +110,8 @@ class mapGen():
                 self.createWindAndRain()
                 
         elif e.name == 'Size...':
+            if e.text == 'Tiny':
+                self.__init__(width=128,height=128)        
             if e.text == 'Small':
                 self.__init__(width=256,height=256)
             elif e.text == 'Medium':
@@ -237,10 +240,7 @@ class mapGen():
         elif mapType == "rawheatmap":    
             for x in self.temperature:
                 for y in x:
-                    colour = int(y*255)  
-                    if y < 0.0 or y > 1.0: # fuck, how did that happen?
-                        print "fixme error: "+str(colour)+" temp: "+str(y)                    
-                        colour = 0                        
+                    colour = int(y*255)                       
                     hexified = "0x%02x%02x%02x" % (colour,colour,colour)
                     background.append(int(hexified,0))
                     
@@ -255,17 +255,17 @@ class mapGen():
                 for y in x:
                     hexified = "0x%02x%02x%02x" % (100*y,100*y,255*y)
                     background.append(int(hexified,0))
-                    print y
+                    #print y,hexified
         
         elif mapType == 'windandrainmap':
             for x in range(0,self.width):
                 for y in range(0,self.height):
-                    wind = int(255*self.wind[x,y])
-                    rain = int(255*self.rainfall[x,y])
+                    wind = int(255*min(self.wind[x,y],1.0))
+                    rain = int(255*min(self.rainfall[x,y],1.0))
                     hexified = "0x%02x%02x%02x" % (0,wind,rain)
-                    background.append(int(hexified,0))                       
+                    background.append(int(hexified,0))
                                     
-        background = array(background).reshape(self.width,self.height)    
+        background = array(background).reshape(self.width,self.height)
         pygame.surfarray.blit_array(self.background, background)
 
 
@@ -291,7 +291,7 @@ class mapGen():
         self.wind = warObject.windMap
         self.rainfall = warObject.rainMap
         del warObject
-        self.showMap('windmap')
+        self.showMap('windandrainmap')
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
