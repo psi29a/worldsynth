@@ -9,24 +9,24 @@ class Temperature():
         self.heightmap = heightmap
         self.hemisphere = hemisphere
         self.worldW = len(self.heightmap)
-        self.worldH = len(self.heightmap[0])        
+        self.worldH = len(self.heightmap[0])
         self.temperature = zeros((self.worldW,self.worldH))
         self.TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
         self.WGEN_HEMISPHERE_NORTH   = 1 # export
         self.WGEN_HEMISPHERE_EQUATOR = 2 # export
         self.WGEN_HEMISPHERE_SOUTH   = 3 # export
-        self.WGEN_SEA_LEVEL = 0.333   
+        self.WGEN_SEA_LEVEL = 0.333
 
     def run(self):
         # setup or local variables
         widgets = ['Generating temperature map: ', Percentage(), ' ', ETA() ]
-        pbar = ProgressBar(widgets=widgets, maxval=self.worldH)            
+        pbar = ProgressBar(widgets=widgets, maxval=self.worldH)
         for i in range(0, self.worldH+1, self.TEMPERATURE_BAND_RESOLUTION):
-            
+
             # Generate band
             bandy = i
             bandrange = 7
-            
+
             if self.hemisphere == self.WGEN_HEMISPHERE_NORTH:
                     # 0, 0.5, 1
                     bandtemp = float(i)/self.worldH
@@ -44,20 +44,20 @@ class Temperature():
             else:
                 print "Whoops: no hemisphere choosen."
                 exit()
-            
+
             #print bandtemp,i,self.worldH
-            
-            bandtemp = max(bandtemp, 0.075) 
+
+            bandtemp = max(bandtemp, 0.075)
 
             # Initialise at bandy
             band = zeros(self.worldW)
             for x in range(0,self.worldW):
                 band[x] = bandy
-            
+
             # Randomise
             direction = 1.0
             diradj = 1
-            dirsin = random.randint(1,8)         
+            dirsin = random.randint(1,8)
             for x in range (0,self.worldW):
                 band[x] = band[x] + direction
                 direction = direction + random.uniform(0.0, sin(dirsin*x)*diradj)
@@ -67,38 +67,24 @@ class Temperature():
                 if direction < -bandrange:
                     diradj = 1
                     dirsin = random.randint(1,8)
-        
-            
-            
-            # create tempature map       
+
+
+
+            # create tempature map
             for x in range(0,self.worldW):
                 for y in range(0,self.worldH):
                     if self.heightmap[x,y] < self.WGEN_SEA_LEVEL: # typical temp at sea level
-                        if y > band[x]: 
-                            self.temperature[x,y] = bandtemp * 0.7                           
+                        if y > band[x]:
+                            self.temperature[x,y] = bandtemp * 0.7
                     else: # typical temp at elevation
-                        if y > band[x]: 
+                        if y > band[x]:
                             self.temperature[x,y] = bandtemp * (1.0 - (self.heightmap[x,y]-self.WGEN_SEA_LEVEL))
             pbar.update(i)
         pbar.finish()
-        
-        # ugly fix cleanup
-        for x in range(0,self.worldW):
-            for y in range(0,self.worldH):
-                if self.temperature[x,y] > 1.0 or self.temperature[x,y] < 0.0:
-                    print "fixme:"+str(self.temperature[x,y])
-                    self.temperature[x,y] = min(max(self.temperature[x,y],1),0)
-            
-        
+
 if __name__ == '__main__':
     heightmap = zeros((128,128))
     tempObject = Temperature(heightmap,1)
     print tempObject.temperature
     tempObject.run()
     print tempObject.temperature
-    
-  
-    
-
-    
-
