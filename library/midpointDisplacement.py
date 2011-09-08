@@ -7,7 +7,7 @@ from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
 
 class MDA():
-    def __init__(self, width, height, roughness):
+    def __init__(self, width, height, roughness=8):
         self.size = width+height
         self.width = width
         self.height = height
@@ -72,96 +72,6 @@ class MDA():
 
             self.pbar.update(x+y)
 
-    def savePNG(self):
-        colors = []
-        row = []
-        for x in range(0, self.width):
-            for y in range(0, self.height):
-                row.append(int(self.heightmap[x][y] * 255))
-            colors.append(tuple(row))
-            row = []
-
-        f = open('terrain.png', 'wb')
-        w = png.Writer(self.width, self.height, greyscale=True)
-        w.write(f, colors)
-        f.close()
-
-    def savecPNG(self):
-        colors = []
-        row = []
-        for x in range(0, self.width):
-            for y in range(0, self.height):
-                rgb = self.map_to_terraing(int(self.heightmap[x][y] * 255))
-                row.append(rgb[0])
-                row.append(rgb[1])
-                row.append(rgb[2])
-            colors.append(tuple(row))
-            row = []
-
-        f = open('terrain.png', 'wb')
-        w = png.Writer(self.width, self.height)
-        w.write(f, colors)
-        f.close()
-
-    def map_to_terrain(self, h):
-        if h > 200:
-            r = h
-            g = h
-            b = h
-        elif h <= 200 and h > 100:
-            r = 86
-            g = 150
-            b = 17
-        elif h <= 100 and h > 70:
-            r = 0
-            g = 100
-            b = 0
-        elif h <= 70 and h > 50:
-            r = 96
-            g = 51
-            b = 17
-        elif h <= 50 and h > 20:
-            r = 0
-            g = 128
-            b = 255
-        else:
-            r = 0
-            g = 0
-            b = 200
-        return r,g,b
-
-    def map_to_terraing(self, h):
-        if h >= 200:
-            height = (h - 200) / 55.0
-            r = int(height * (255 - 86) + 86)
-            g = int(height * (255 - 150) + 150)
-            b = int(height * (255 - 15) + 15)
-        elif h < 200 and h >= 100:
-            height = (h - 100) / 100.0
-            r = int(height * 86)
-            g = int(height * (150 - 100) + 100)
-            b = int(height * 17)
-        elif h < 100 and h >= 70:
-            height = (h - 70) / 30.0
-            r = int((1.0 - height) * 96)
-            g = int(height * (100 - 51) + 51)
-            b = int((1.0 - height) * 17)
-        elif h < 70 and h >= 50:
-            height = (h - 50) / 20.0;
-            r = int(height * 96)
-            g = int((1.0 - height) * (128 - 51) + 51)
-            b = int((1.0 - height) * (255 - 17) + 17)
-        elif h < 50 and h > 20:
-            height = (h - 20) / 30.0
-            r = 0
-            g = int(height * 128)
-            b = 255
-        else:
-            r = 0
-            g = 0
-            b = 255
-        return r,g,b
-
 
 # runs the program
 if __name__ == '__main__':
@@ -179,5 +89,4 @@ if __name__ == '__main__':
     mda = MDA(width, height, roughness)
     print "Thinking..."
     mda.run()
-    mda.savecPNG()
     print "done!"

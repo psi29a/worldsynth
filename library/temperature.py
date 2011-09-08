@@ -4,33 +4,35 @@ import math, random
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
 
+# constants
+WGEN_HEMISPHERE_NORTH   = 1
+WGEN_HEMISPHERE_EQUATOR = 2
+WGEN_HEMISPHERE_SOUTH   = 3
+WGEN_SEA_LEVEL = 0.333
+
 class Temperature():
-    def __init__(self, heightmap, hemisphere):
+    def __init__(self, heightmap=zeros(1), hemisphere=2):
         self.heightmap = heightmap
         self.hemisphere = hemisphere
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.temperature = zeros((self.worldW,self.worldH))
-        self.TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
-        self.WGEN_HEMISPHERE_NORTH   = 1 # export
-        self.WGEN_HEMISPHERE_EQUATOR = 2 # export
-        self.WGEN_HEMISPHERE_SOUTH   = 3 # export
-        self.WGEN_SEA_LEVEL = 0.333
+        self.tempBandResolution = 2 # 1 is perfect, higher = rougher
 
     def run(self):
         # setup or local variables
         widgets = ['Generating temperature map: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH)
-        for i in range(0, self.worldH+1, self.TEMPERATURE_BAND_RESOLUTION):
+        for i in range(0, self.worldH+1, self.tempBandResolution):
 
             # Generate band
             bandy = i
             bandrange = 7
 
-            if self.hemisphere == self.WGEN_HEMISPHERE_NORTH:
+            if self.hemisphere == WGEN_HEMISPHERE_NORTH:
                     # 0, 0.5, 1
                     bandtemp = float(i)/self.worldH
-            elif self.hemisphere == self.WGEN_HEMISPHERE_EQUATOR:
+            elif self.hemisphere == WGEN_HEMISPHERE_EQUATOR:
                     # 0, 1, 0
                     if i < (self.worldH/2):
                         bandtemp = float(i)/self.worldH
@@ -38,7 +40,7 @@ class Temperature():
                     else:
                         bandtemp = 1.0 - float(i)/self.worldH
                         bandtemp = bandtemp * 2.0
-            elif self.hemisphere == self.WGEN_HEMISPHERE_SOUTH:
+            elif self.hemisphere == WGEN_HEMISPHERE_SOUTH:
                     # 1, 0.5, 0
                     bandtemp = 1.0 - float(i)/self.worldH
             else:
@@ -73,18 +75,17 @@ class Temperature():
             # create tempature map
             for x in range(0,self.worldW):
                 for y in range(0,self.worldH):
-                    if self.heightmap[x,y] < self.WGEN_SEA_LEVEL: # typical temp at sea level
+                    if self.heightmap[x,y] < WGEN_SEA_LEVEL: # typical temp at sea level
                         if y > band[x]:
                             self.temperature[x,y] = bandtemp * 0.7
                     else: # typical temp at elevation
                         if y > band[x]:
-                            self.temperature[x,y] = bandtemp * (1.0 - (self.heightmap[x,y]-self.WGEN_SEA_LEVEL))
+                            self.temperature[x,y] = bandtemp * (1.0 - (self.heightmap[x,y]-WGEN_SEA_LEVEL))
             pbar.update(i)
         pbar.finish()
 
 if __name__ == '__main__':
     heightmap = zeros((128,128))
-    tempObject = Temperature(heightmap,1)
-    print tempObject.temperature
+    tempObject = Temperature(heightmap)
     tempObject.run()
     print tempObject.temperature
