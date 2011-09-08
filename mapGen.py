@@ -271,7 +271,7 @@ class mapGen():
 
     def createHeightmap(self):
         size = self.width + self.height
-        roughness = 8
+        roughness = 20
         mda = MDA(self.width, self.height, roughness)
         mda.run()
         self.elevation = mda.heightmap
