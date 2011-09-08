@@ -15,15 +15,9 @@ from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
 
 class WindAndRain():
-    def __init__(self, heightmap, temperature):
+    def __init__(self, heightmap=zeros(1), temperature=zeros(1)):
         self.heightmap = heightmap
         self.temperature = temperature
-        self.rainFall = 1.0
-        self.worldW = len(self.heightmap)
-        self.worldH = len(self.heightmap[0])
-        self.windMap = zeros((self.worldW,self.worldH))
-        self.rainMap = zeros((self.worldW,self.worldH))
-        self.worldWindDir = random.randint(0, 360)
         self.WIND_OFFSET = 180
         self.WIND_PARITY = -1 # -1 or 1
         self.WGEN_WIND_RESOLUTION = 4 # 1 is perfect, higher = rougher
@@ -32,14 +26,20 @@ class WindAndRain():
 
     def run(self):
         # setup or local variables
-        r = math.sqrt(self.worldW*self.worldW + self.worldH*self.worldH)
-        theta1 = self.worldWindDir * self.WIND_PARITY + self.WIND_OFFSET
-        theta2 = 180 - 90 - (self.worldWindDir * self.WIND_PARITY + self.WIND_OFFSET)
+        rainFall = 1.0
+        worldW = len(self.heightmap)
+        worldH = len(self.heightmap[0])
+        self.windMap = zeros((worldW,worldH))
+        self.rainMap = zeros((worldW,worldH))
+        worldWindDir = random.randint(0, 360)
+        r = math.sqrt(worldW*worldW + worldH*worldH)
+        theta1 = worldWindDir * self.WIND_PARITY + self.WIND_OFFSET
+        theta2 = 180 - 90 - (worldWindDir * self.WIND_PARITY + self.WIND_OFFSET)
         sinT1 = math.sin(theta1)
         sinT2 = math.sin(theta2)
-        mapsqrt = math.sqrt(self.worldW*self.worldW + self.worldH*self.worldH)
-        rainAmount = ((self.rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF
-        rainMap = zeros((self.worldW,self.worldH))
+        mapsqrt = math.sqrt(worldW*worldW + worldH*worldH)
+        rainAmount = ((rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF
+        rainMap = zeros((worldW,worldH))
         rainMap.fill(rainAmount)
 
         # cast wind and rain
@@ -49,10 +49,10 @@ class WindAndRain():
             windx = d * sinT1
             windy = d * sinT2
 
-            for x in range(0,self.worldW):
-                for y in range(0,self.worldH):
+            for x in range(0,worldW):
+                for y in range(0,worldH):
                     if (int(windx + x) > -1) and (int(windy + y) > -1):
-                        if (int(windx + x) < (self.worldW)) and (int(windy + y) < (self.worldH)):
+                        if (int(windx + x) < (worldW)) and (int(windy + y) < (worldH)):
 
                             # set our wind
                             windz = self.heightmap[int(windx+x),int(windy+y)]
@@ -71,12 +71,8 @@ class WindAndRain():
 
                             self.rainMap[int(windx+x),int(windy+y)] = rlost
 
-                            #print x,y,rainRemaining,rlost,self.windMap[x,y],self.rainMap[x,y]
-            #print int(r)-d
             pbar.update(int(r)-d)
         pbar.finish()
-
-        print len(self.rainMap),len(self.windMap)
 
 if __name__ == '__main__':
     heightMap = zeros((128,128))

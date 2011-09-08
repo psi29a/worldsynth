@@ -5,10 +5,10 @@ import pygame.display
 from numpy import *
 from pygame.locals import *
 from library.popup_menu import PopupMenu
-from library.midpointDisplacement import MDA
-from library.temperature import Temperature
-from library.windAndRain import WindAndRain
-
+from library.midpointDisplacement import *
+from library.temperature import *
+from library.windAndRain import *
+from library.drainage import *
 
 class mapGen():
     """Our game object! This is a fairly simple object that handles the
@@ -68,6 +68,7 @@ class mapGen():
                 'Heightmap',
                 'Temperature',
                 'WindAndRain',
+                'Drainage',
             ),
             (
                 'Size',
@@ -90,6 +91,7 @@ class mapGen():
             'Wind Map',
             'Rain Map',
             'Wind and Rain Map',
+            'River Map'
         )
 
 
@@ -108,6 +110,8 @@ class mapGen():
                 self.createTemperature()
             elif e.text == 'WindAndRain':
                 self.createWindAndRain()
+            elif e.text == 'Drainage':
+                self.createDrainage()
 
         elif e.name == 'Size...':
             if e.text == 'Tiny':
@@ -136,6 +140,8 @@ class mapGen():
                 self.showMap('rainmap')
             elif e.text == 'Wind and Rain Map':
                 self.showMap('windrainmap')
+            elif e.text == 'River Map':
+                self.showMap('rivermap')
 
     def run(self):
         """Runs the game. Contains the game loop that computes and renders
@@ -211,7 +217,7 @@ class mapGen():
             for x in self.elevation:
                 for y in x:
                     colour = int(y*255)
-                    if y < 0.33: # sealevel
+                    if y < WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*y)
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
@@ -220,7 +226,7 @@ class mapGen():
         elif mapType == "elevation":
             for x in self.elevation:
                 for y in x:
-                    if y < 0.33: # sealevel
+                    if y < WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 128)
                     elif y < 0.666: # grasslands
                         hexified = "0x%02x%02x%02x" % (128, 255, 0)
@@ -255,7 +261,6 @@ class mapGen():
                 for y in x:
                     hexified = "0x%02x%02x%02x" % (100*y,100*y,255*y)
                     background.append(int(hexified,0))
-                    #print y,hexified
 
         elif mapType == 'windandrainmap':
             for x in range(0,self.width):
@@ -263,6 +268,16 @@ class mapGen():
                     wind = int(255*min(self.wind[x,y],1.0))
                     rain = int(255*min(self.rainfall[x,y],1.0))
                     hexified = "0x%02x%02x%02x" % (0,wind,rain)
+                    background.append(int(hexified,0))
+
+        elif mapType == 'rivermap':
+            for x in range(0,self.width):
+                for y in range(0,self.height):
+                    if self.rivers[x,y] == 1:
+
+                        hexified = "0x%02x%02x%02x" % (0,0,255*self.rivers[x,y])
+                    else:
+                        hexified = "0x%02x%02x%02x" % (0,128*self.elevation[x,y],0)
                     background.append(int(hexified,0))
 
         background = array(background).reshape(self.width,self.height)
@@ -292,6 +307,13 @@ class mapGen():
         self.rainfall = warObject.rainMap
         del warObject
         self.showMap('windandrainmap')
+
+    def createDrainage(self):
+        drainObject = Drainage(self.elevation, self.rainfall)
+        drainObject.run()
+        self.rivers = drainObject.riverMap
+        del drainObject
+        self.showMap('rivermap')
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
