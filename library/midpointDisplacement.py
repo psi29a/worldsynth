@@ -5,6 +5,7 @@
 import math, random, sys
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
+from temperature import *
 
 class MDA():
     def __init__(self, width, height, roughness=8):
@@ -12,16 +13,23 @@ class MDA():
         self.width = width
         self.height = height
         self.roughness = roughness
-        self.heightmap = empty((self.width,self.height))
+        self.heightmap = zeros((self.width,self.height))
         widgets = ['Generating heightmap: ', Percentage(), ' ', ETA() ]
         self.pbar = ProgressBar(widgets=widgets, maxval=self.width*self.height)
 
     def run(self):
-        c1 = random.random()
-        c2 = random.random()
-        c3 = random.random()
-        c4 = random.random()
-        self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)
+        while True: # loop until we have something workable
+            c1 = random.random()
+            c2 = random.random()
+            c3 = random.random()
+            c4 = random.random()
+            self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)
+            if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8:
+                print "Rejecting map: retrying..."
+                self.heightmap = zeros((self.width,self.height))
+            else:
+                print "We have a winner!"
+                break
         self.pbar.finish()
 
     def normalize(self, point): # +/- infinity are reset to 1 and 1 values
@@ -72,6 +80,11 @@ class MDA():
 
             self.pbar.update(x+y)
 
+    def landMassPercent(self):
+        return self.heightmap.sum() / (self.width * self.height)
+
+    def averageElevation(self):
+        return average(self.heightmap)
 
 # runs the program
 if __name__ == '__main__':
