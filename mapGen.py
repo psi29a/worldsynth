@@ -6,6 +6,7 @@ from numpy import *
 from pygame.locals import *
 from library.popup_menu import PopupMenu
 from library.midpointDisplacement import *
+from library.diamondSquare import *
 from library.temperature import *
 from library.windAndRain import *
 from library.drainage import *
@@ -14,7 +15,7 @@ class mapGen():
     """Our game object! This is a fairly simple object that handles the
     initialization of pygame and sets up our game to run."""
 
-    def __init__(self, width = 128, height = 128):
+    def __init__(self, width = 512, height = 512):
         """Called when the the Game object is initialized. Initializes
         pygame and sets up our pygame window and other pygame tools
         that we will need for more complicated tutorials."""
@@ -91,6 +92,7 @@ class mapGen():
             'Wind Map',
             'Rain Map',
             'Wind and Rain Map',
+            'Drainage Map',
             'River Map'
         )
 
@@ -140,6 +142,8 @@ class mapGen():
                 self.showMap('rainmap')
             elif e.text == 'Wind and Rain Map':
                 self.showMap('windrainmap')
+            elif e.text == 'Drainage Map':
+                self.showMap('drainagemap')
             elif e.text == 'River Map':
                 self.showMap('rivermap')
 
@@ -209,6 +213,7 @@ class mapGen():
         if mapType == "heightmap":
             for x in self.elevation:
                 for y in x:
+                    #print y
                     colour = int(y*255)
                     hexified = "0x%02x%02x%02x" % (colour, colour, colour)
                     background.append(int(hexified,0))
@@ -270,6 +275,13 @@ class mapGen():
                     hexified = "0x%02x%02x%02x" % (0,wind,rain)
                     background.append(int(hexified,0))
 
+        elif mapType == 'drainagemap':
+            for x in self.drainage:
+                for y in x:
+                    colour = int(y*255)
+                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
+                    background.append(int(hexified,0))
+
         elif mapType == 'rivermap':
             for x in range(0,self.width):
                 for y in range(0,self.height):
@@ -280,14 +292,22 @@ class mapGen():
                         hexified = "0x%02x%02x%02x" % (0,128*self.elevation[x,y],0)
                     background.append(int(hexified,0))
 
+        else: # something bad happened...
+            print "did not get a map type, check your bindings programmer man!"
+            print len(background),background
+            background = zeros((self.width,self.height),dtype="int32")
+
+        #print len(background),len(self.elevation)
+
         background = array(background).reshape(self.width,self.height)
         pygame.surfarray.blit_array(self.background, background)
-
+        print len(background),background
 
     def createHeightmap(self):
-        size = self.width + self.height
-        roughness = 20
-        mda = MDA(self.width, self.height, roughness)
+        #size = self.width + self.height
+        #roughness = 20
+        mda = DS()
+        #mda = MDA(self.width, self.height, roughness)
         mda.run()
         self.elevation = mda.heightmap
         del mda
@@ -311,9 +331,10 @@ class mapGen():
     def createDrainage(self):
         drainObject = Drainage(self.elevation, self.rainfall)
         drainObject.run()
+        self.drainage = drainObject.drainageMap
         self.rivers = drainObject.riverMap
         del drainObject
-        self.showMap('rivermap')
+        self.showMap('drainagemap')
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""
