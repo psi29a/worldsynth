@@ -5,7 +5,6 @@
 import math, random, sys
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
-from temperature import *
 
 class MDA():
     def __init__(self, width, height, roughness=8):

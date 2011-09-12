@@ -3,12 +3,7 @@
 import math, random
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
-
-# constants
-WGEN_HEMISPHERE_NORTH   = 1
-WGEN_HEMISPHERE_EQUATOR = 2
-WGEN_HEMISPHERE_SOUTH   = 3
-WGEN_SEA_LEVEL = 0.333
+from constants import *
 
 class Temperature():
     def __init__(self, heightmap=zeros(1), hemisphere=2):
@@ -17,13 +12,12 @@ class Temperature():
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.temperature = zeros((self.worldW,self.worldH))
-        self.tempBandResolution = 2 # 1 is perfect, higher = rougher
 
     def run(self):
         # setup or local variables
         widgets = ['Generating temperature map: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH)
-        for i in range(0, self.worldH+1, self.tempBandResolution):
+        for i in range(0, self.worldH+1, TEMPERATURE_BAND_RESOLUTION):
 
             # Generate band
             bandy = i

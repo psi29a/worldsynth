@@ -13,16 +13,12 @@
 import math, random
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
+from constants import *
 
 class WindAndRain():
     def __init__(self, heightmap=zeros(1), temperature=zeros(1)):
         self.heightmap = heightmap
         self.temperature = temperature
-        self.WIND_OFFSET = 180
-        self.WIND_PARITY = -1 # -1 or 1
-        self.WGEN_WIND_RESOLUTION = 4 # 1 is perfect, higher = rougher
-        self.WGEN_RAIN_FALLOFF = 0.2 # Default 0.2 - less for less rain, more for more rain
-        self.WGEN_WIND_GRAVITY = 0.975
 
     def run(self):
         # setup or local variables
@@ -33,19 +29,19 @@ class WindAndRain():
         self.rainMap = zeros((worldW,worldH))
         worldWindDir = random.randint(0, 360)
         r = math.sqrt(worldW*worldW + worldH*worldH)
-        theta1 = worldWindDir * self.WIND_PARITY + self.WIND_OFFSET
-        theta2 = 180 - 90 - (worldWindDir * self.WIND_PARITY + self.WIND_OFFSET)
+        theta1 = worldWindDir * WIND_PARITY + WIND_OFFSET
+        theta2 = 180 - 90 - (worldWindDir * WIND_PARITY + WIND_OFFSET)
         sinT1 = math.sin(theta1)
         sinT2 = math.sin(theta2)
         mapsqrt = math.sqrt(worldW*worldW + worldH*worldH)
-        rainAmount = ((rainFall * mapsqrt) / self.WGEN_WIND_RESOLUTION) * self.WGEN_RAIN_FALLOFF
+        rainAmount = ((rainFall * mapsqrt) / WGEN_WIND_RESOLUTION) * WGEN_RAIN_FALLOFF
         rainMap = zeros((worldW,worldH))
         rainMap.fill(rainAmount)
 
         # cast wind and rain
         widgets = ['Generating wind and rain: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=int(r))
-        for d in range(int(r),-1,-self.WGEN_WIND_RESOLUTION):
+        for d in range(int(r),-1,-WGEN_WIND_RESOLUTION):
             windx = d * sinT1
             windy = d * sinT2
 
@@ -56,7 +52,7 @@ class WindAndRain():
 
                             # set our wind
                             windz = self.heightmap[int(windx+x),int(windy+y)]
-                            self.windMap[x,y] = max(self.windMap[x,y] * self.WGEN_WIND_GRAVITY, windz)
+                            self.windMap[x,y] = max(self.windMap[x,y] * WGEN_WIND_GRAVITY, windz)
 
                             # calculate how much rain is remaining
                             rainRemaining = rainMap[x,y] / rainAmount * (1.0-(self.temperature[x,y]/2.0))
