@@ -52,7 +52,7 @@ class Drainage():
                             else:
                                 drainage += elevationDifferences[i,j]
 
-                print drainage
+                #print drainage
                 self.drainageMap[x,y] = drainage
                 pbar.update(x+y)
         pbar.finish()

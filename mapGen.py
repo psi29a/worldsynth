@@ -141,7 +141,7 @@ class mapGen():
             elif e.text == 'Rain Map':
                 self.showMap('rainmap')
             elif e.text == 'Wind and Rain Map':
-                self.showMap('windrainmap')
+                self.showMap('windandrainmap')
             elif e.text == 'Drainage Map':
                 self.showMap('drainagemap')
             elif e.text == 'River Map':
@@ -301,15 +301,22 @@ class mapGen():
 
         background = array(background).reshape(self.width,self.height)
         pygame.surfarray.blit_array(self.background, background)
-        print len(background),background
+        pygame.display.update()
+        #print len(background),background
 
     def createHeightmap(self):
-        #size = self.width + self.height
-        #roughness = 20
-        mda = DS()
-        #mda = MDA(self.width, self.height, roughness)
-        mda.run()
-        self.elevation = mda.heightmap
+        #mda = DS(math.log(self.width,2))
+        mda = MDA(self.width, self.height, 10)
+        while True: # loop until we have something workable
+            mda.run()
+            self.elevation = mda.heightmap
+            self.showMap('heightmap')
+            if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8 or self.landTouchesEastWest():
+                print "Rejecting map: retrying..."
+
+            else:
+                print "We have a winner!"
+                break
         del mda
         self.showMap('heightmap')
 
@@ -335,6 +342,38 @@ class mapGen():
         self.rivers = drainObject.riverMap
         del drainObject
         self.showMap('drainagemap')
+
+    def landMassPercent(self):
+        return self.elevation.sum() / (self.width * self.height)
+
+    def averageElevation(self):
+        return average(self.elevation)
+
+    def landTouchesEastWest(self):
+        result = False
+
+        for x in range(0,4):
+            for y in range(0,self.height):
+                if self.elevation[x,y] > WGEN_SEA_LEVEL or self.elevation[self.width-1-x,y] > WGEN_SEA_LEVEL:
+                    result = True
+                    break
+
+        return result
+
+    def landTouchesMapEdge(self):
+        result = False
+
+        for x in range(4,self.width-4):
+            if self.elevation[x,4] > WGEN_SEA_LEVEL or self.elevation[x,self.height-4] > WGEN_SEA_LEVEL:
+                result = True
+                break
+
+        for y in range(4,self.height-4):
+            if self.elevation[4,y] > WGEN_SEA_LEVEL or self.elevation[self.width-4,y] > WGEN_SEA_LEVEL:
+                result = True
+                break
+
+        return result
 
 class Button(pygame.sprite.Sprite):
     """An extremely simple button sprite."""

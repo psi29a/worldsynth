@@ -3,9 +3,6 @@
 # random terrain generation.
 #   depth - level of detail of terrain, where grid size is 2^depth+1
 #   roughness - a roughness constant for how rough the terrain should be
-#   waterlevel - the height level to render water at
-#   sizex - the x size of the geometry
-#   sizey - the z size of the geometry
 #   scale - a scaling factor for the maximum y height of the geometry
 
 import math, random, sys
@@ -13,13 +10,10 @@ from numpy import *
 from progressbar import ProgressBar, Percentage, ETA
 
 class DS():
-    def __init__( self, depth=9, roughness=0.6, waterlevel=0.0, sizex=10.0, sizey=10.0, scale=1.0):
+    def __init__( self, depth=9, roughness=0.5, scale=1.0):
         # initialise arguments to constructor
         self.depth = int(depth)
         self.roughness = float(roughness)
-        self.waterlevel = float(waterlevel)
-        self.sizex=float(sizex)
-        self.sizey=float(sizey)
         self.scale=float(scale)
         self.size = (1 << self.depth)+1         # grid size, 2^depth+1
         self.heightmap = zeros((self.size,self.size))
@@ -30,10 +24,10 @@ class DS():
     # Itterative terrain deformer using classic diamond-square algorithm.
     def run(self):
         # Seeds an initial random altitude for the four corners of the dataset.
-        self.heightmap[0,0]                     = self.scale*(random.random()-0.5)
-        self.heightmap[0,self.size-1]           = self.scale*(random.random()-0.5)
-        self.heightmap[self.size-1,0]           = self.scale*(random.random()-0.5)
-        self.heightmap[self.size-1,self.size-1] = self.scale*(random.random()-0.5)
+        self.heightmap[0,0]                     = self.scale*(random.random()-self.roughness)
+        self.heightmap[0,self.size-1]           = self.scale*(random.random()-self.roughness)
+        self.heightmap[self.size-1,0]           = self.scale*(random.random()-self.roughness)
+        self.heightmap[self.size-1,self.size-1] = self.scale*(random.random()-self.roughness)
 
         rough = self.roughness
         r = self.size-1
@@ -86,7 +80,7 @@ class DS():
                     self.heightmap[x][y+step] +
                     self.heightmap[x+step][y] +
                     self.heightmap[x+step][y+step] ) / 4
-            h = avg + self.scale * c * (random.random()-0.5)
+            h = avg + self.scale * c * (random.random()-self.roughness)
             self.heightmap[x+half][y+half] = h
 
     def square( self, c, x, y, step ):
@@ -106,7 +100,7 @@ class DS():
               avg=avg+self.heightmap[x+half][y+step]
               num=num+1
 
-        h = avg/num + self.scale * c * (random.random()-0.5)
+        h = avg/num + self.scale * c * (random.random()-self.roughness)
         self.heightmap[x+half][y+half] = h
 
 #            if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8:
