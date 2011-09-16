@@ -20,7 +20,7 @@ class Biomes():
         # calculate biome -- from scale of 0-400 ((oldValue-0) * (100-0)) / (400-0) + 0
         for x in range(0,self.worldW):
             for y in range(0,self.worldH):
-                if self.heightmap[x,y] < 0.25:    # Water: e0-99, rany, dany
+                if self.heightmap[x,y] <= WGEN_SEA_LEVEL:    # Water: e0-99, rany, dany # 0.25 converted
                     self.biome[x,y] = BIOME_TYPE_WATER
                     self.biomeColourCode[x,y] = 0x0000ff
                 elif self.heightmap[x,y] < 0.75 and self.rainmap[x,y] < 0.10 and self.drainmap[x,y] < 0.33:    # Desert (Sand): e100-299, r0-9, d0-32
