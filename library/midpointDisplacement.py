@@ -13,17 +13,23 @@ class MDA():
         self.height = height
         self.roughness = roughness
         self.heightmap = zeros((self.width,self.height))
+
+    def run(self, globe=False, seaLevel=0.33):
         widgets = ['Generating heightmap: ', Percentage(), ' ', ETA() ]
         self.pbar = ProgressBar(widgets=widgets, maxval=self.width*self.height)
-
-    def run(self):
         self.heightmap = zeros((self.width,self.height))
-        c1 = random.random()
-        c2 = random.random()
-        c3 = random.random()
-        c4 = random.random()
+
+        c1 = random.random()        # top
+        c3 = random.random()        # bottom
+        if globe: # try to create world that wraps around on a globe/sphere
+            c2 = random.uniform(0.00, seaLevel)    # right
+            c4 = random.uniform(0.00, seaLevel)    # left
+        else:
+            c2 = random.random()    # right
+            c4 = random.random()    # left
         self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)
         self.pbar.finish()
+        del self.pbar
 
     def normalize(self, point): # +/- infinity are reset to 1 and 1 values
         if point < 0.0:
@@ -37,6 +43,7 @@ class MDA():
         return (random.random() - 0.5) * maxd
 
     def divideRect(self, x, y, width, height, c1, c2, c3, c4):
+        self.pbar.update(x+y)
         new_width = math.floor(width / 2)
         new_height = math.floor(height / 2)
 
@@ -70,8 +77,6 @@ class MDA():
                 self.heightmap[x][y + 1] = c
             if (width == 2 and height == 2):
                 self.heightmap[x + 1][y + 1] = c
-
-            self.pbar.update(x+y)
 
 # runs the program
 if __name__ == '__main__':
