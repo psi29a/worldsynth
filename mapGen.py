@@ -9,7 +9,8 @@ from library.midpointDisplacement import *
 from library.diamondSquare import *
 from library.temperature import *
 from library.windAndRain import *
-from library.drainage import *
+from library.riversAndLakes import *
+from library.biomes import *
 
 class mapGen():
     """Our game object! This is a fairly simple object that handles the
@@ -34,6 +35,8 @@ class mapGen():
         self.temperature = zeros((self.width,self.height))
         self.rivers = zeros((self.width,self.height))
         self.contiguous = zeros((self.width,self.height))
+        self.biome = zeros((self.width,self.height))
+        self.biomeColour = zeros((self.width,self.height))
 
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -70,6 +73,7 @@ class mapGen():
                 'Temperature',
                 'WindAndRain',
                 'Drainage',
+                'Biomes',
             ),
             (
                 'Size',
@@ -94,6 +98,7 @@ class mapGen():
             'Wind and Rain Map',
             'Drainage Map',
             'River Map'
+            'Biome Map'
         )
 
 
@@ -114,6 +119,8 @@ class mapGen():
                 self.createWindAndRain()
             elif e.text == 'Drainage':
                 self.createDrainage()
+            elif e.text == 'Biomes':
+                self.createBiomes()
 
         elif e.name == 'Size...':
             if e.text == 'Tiny':
@@ -146,6 +153,8 @@ class mapGen():
                 self.showMap('drainagemap')
             elif e.text == 'River Map':
                 self.showMap('rivermap')
+            elif e.text == 'Biome Map':
+                self.showMap('biomemap')
 
     def run(self):
         """Runs the game. Contains the game loop that computes and renders
@@ -213,7 +222,6 @@ class mapGen():
         if mapType == "heightmap":
             for x in self.elevation:
                 for y in x:
-                    #print y
                     colour = int(y*255)
                     hexified = "0x%02x%02x%02x" % (colour, colour, colour)
                     background.append(int(hexified,0))
@@ -292,6 +300,14 @@ class mapGen():
                         hexified = "0x%02x%02x%02x" % (0,128*self.elevation[x,y],0)
                     background.append(int(hexified,0))
 
+        elif mapType == 'biomemap':
+            for x in range(0,self.width):
+                for y in range(0,self.height):
+                    hexified = self.biomeColour[x,y]
+                    background.append(hexified)
+
+            print len(background)
+
         else: # something bad happened...
             print "did not get a map type, check your bindings programmer man!"
             print len(background),background
@@ -299,16 +315,16 @@ class mapGen():
 
         #print len(background),len(self.elevation)
 
-        background = array(background).reshape(self.width,self.height)
+        background = array(background,dtype="int32").reshape(self.width,self.height)
         pygame.surfarray.blit_array(self.background, background)
         pygame.display.update()
         #print len(background),background
+        del background
 
     def createHeightmap(self):
-        #mda = DS(math.log(self.width,2))
-        mda = MDA(self.width, self.height, 10)
+        mda = MDA(self.width, self.height, roughness=10)
         while True: # loop until we have something workable
-            mda.run()
+            mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL)
             self.elevation = mda.heightmap
             self.showMap('heightmap')
             if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8 or self.landTouchesEastWest():
@@ -336,12 +352,20 @@ class mapGen():
         self.showMap('windandrainmap')
 
     def createDrainage(self):
-        drainObject = Drainage(self.elevation, self.rainfall)
+        drainObject = MDA(self.width, self.height, 10)
         drainObject.run()
-        self.drainage = drainObject.drainageMap
-        self.rivers = drainObject.riverMap
+        self.drainage = drainObject.heightmap
         del drainObject
         self.showMap('drainagemap')
+
+    def createBiomes(self):
+        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
+        biomeObject.run()
+        self.biome = biomeObject.biome
+        self.biomeColour = biomeObject.biomeColourCode
+        del biomeObject
+        self.showMap('biomemap')
+
 
     def landMassPercent(self):
         return self.elevation.sum() / (self.width * self.height)

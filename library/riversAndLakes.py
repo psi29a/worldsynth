@@ -10,13 +10,12 @@ class Bunch(dict): # be careful to delete after use, circular references are bad
         dict.__init__(self,kw)
         self.__dict__ = self
 
-class Drainage():
+class Rivers():
     def __init__(self, heightmap, rainmap):
         self.heightmap = heightmap
         self.rainmap = rainmap
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
-        self.drainageMap = zeros((self.worldW,self.worldH))
         self.riverMap = zeros((self.worldW,self.worldH))
         self.riverList = []
 
