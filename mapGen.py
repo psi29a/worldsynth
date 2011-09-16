@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import random
+import random, sys, os, getopt
 import pygame.display
 from numpy import *
 from pygame.locals import *
@@ -16,27 +16,29 @@ class mapGen():
     """Our game object! This is a fairly simple object that handles the
     initialization of pygame and sets up our game to run."""
 
-    def __init__(self, width = 512, height = 512):
+    def __init__(self, size=512, debug=False):
         """Called when the the Game object is initialized. Initializes
         pygame and sets up our pygame window and other pygame tools
         that we will need for more complicated tutorials."""
         pygame.init()
 
         # create our window
-        self.height = width
-        self.width = height
-        self.size = (self.width, self.height)
-        self.window = pygame.display.set_mode(self.size)
+        self.height = size
+        self.width = size
+        self.window = pygame.display.set_mode((self.width, self.height))
+
+        # do some defines
+        self.debug = debug
 
         # world data
-        self.elevation = zeros((self.width,self.height))
-        self.wind = zeros((self.width,self.height))
-        self.rainfall = zeros((self.width,self.height))
-        self.temperature = zeros((self.width,self.height))
-        self.rivers = zeros((self.width,self.height))
-        self.contiguous = zeros((self.width,self.height))
-        self.biome = zeros((self.width,self.height))
-        self.biomeColour = zeros((self.width,self.height))
+        self.elevation = None
+        self.wind = None
+        self.rainfall = None
+        self.temperature = None
+        self.rivers = None
+        self.contiguous = None
+        self.biome = None
+        self.biomeColour = None
 
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -97,7 +99,7 @@ class mapGen():
             'Rain Map',
             'Wind and Rain Map',
             'Drainage Map',
-            'River Map'
+            'River Map',
             'Biome Map'
         )
 
@@ -160,8 +162,16 @@ class mapGen():
         """Runs the game. Contains the game loop that computes and renders
         each frame."""
 
-        print 'Starting Event Loop'
+        # check for debugging
+        if self.debug:
+            print "Going on full autopilot..."
+            self.createHeightmap()
+            self.createTemperature()
+            self.createWindAndRain()
+            self.createDrainage()
+            self.createBiomes()            
 
+        print 'Starting Event Loop'
         running = True
         # run until something tells us to stop
         while running:
@@ -306,8 +316,6 @@ class mapGen():
                     hexified = self.biomeColour[x,y]
                     background.append(hexified)
 
-            print len(background)
-
         else: # something bad happened...
             print "did not get a map type, check your bindings programmer man!"
             print len(background),background
@@ -323,20 +331,34 @@ class mapGen():
 
     def createHeightmap(self):
         mda = MDA(self.width, self.height, roughness=10)
-        while True: # loop until we have something workable
-            mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL)
+        found = False
+        while not found: # loop until we have something workable
+            mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL-0.1)
             self.elevation = mda.heightmap
             self.showMap('heightmap')
-            if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8 or self.landTouchesEastWest():
-                print "Rejecting map: retrying..."
-
+            if self.landMassPercent() < 0.15:
+                print "Rejecting map: to little landmass" 
+            elif self.landMassPercent() > 0.85:
+                print "Rejecting map: to much landmass"
+            elif self.averageElevation() < 0.2:
+                print "Rejecting map: average elevation is too low"
+            elif self.averageElevation() > 0.8:
+                print "Rejecting map: average elevation is too high"
+            elif self.landTouchesEastWest():
+                print "Rejecting map: cannot wrap around a sphere."
             else:
-                print "We have a winner!"
-                break
+                print "Success! We have found an usable map."
+                found = True
+            pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
+            self.window.blit(self.background, (0,0))
+            pygame.display.update()                
         del mda
         self.showMap('heightmap')
 
     def createTemperature(self):
+        if self.elevation == None:
+            print "Error: You have not yet generated a heightmap."
+            return
         tempObject = Temperature(self.elevation,2)
         tempObject.run()
         self.temperature = tempObject.temperature
@@ -344,6 +366,12 @@ class mapGen():
         self.showMap('rawheatmap')
 
     def createWindAndRain(self):
+        if self.elevation == None:
+            print "Error: No heightmap!"
+            return
+        if self.temperature == None:
+            print "Error: No temperature map!"
+            return    
         warObject = WindAndRain(self.elevation, self.temperature)
         warObject.run()
         self.wind = warObject.windMap
@@ -359,6 +387,18 @@ class mapGen():
         self.showMap('drainagemap')
 
     def createBiomes(self):
+        if self.elevation == None:
+            print "Error: No heightmap!"
+            return
+        if self.temperature == None:
+            print "Error: No temperature map!"
+            return
+        if self.drainage == None:
+            print "Error: No drainage map!"
+            return
+        if self.rainfall == None:
+            print "Error: No rainfall map!"
+            return            
         biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
         biomeObject.run()
         self.biome = biomeObject.biome
@@ -376,7 +416,7 @@ class mapGen():
     def landTouchesEastWest(self):
         result = False
 
-        for x in range(0,4):
+        for x in range(0,2):
             for y in range(0,self.height):
                 if self.elevation[x,y] > WGEN_SEA_LEVEL or self.elevation[self.width-1-x,y] > WGEN_SEA_LEVEL:
                     result = True
@@ -438,5 +478,25 @@ class TextSprite(pygame.sprite.Sprite):
 
 # runs the program
 if __name__ == '__main__':
-    world = mapGen()
+    debug = False
+    size = 512
+    # parse our options and arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hds:")
+    except getopt.GetoptError:
+        #usage()
+        print "Unable to parse arguments"
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-d"):
+            debug = True
+            print "Debugging turned on."
+        elif opt in ("-s"):
+            size = int(arg)
+        elif opt in ("-h", "--help"):
+            #usage()
+            print "No help for you..."
+            sys.exit()
+                      
+    world = mapGen(size=size,debug=debug)
     world.run()

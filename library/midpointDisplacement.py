@@ -84,8 +84,6 @@ if __name__ == '__main__':
         print "You must pass a width, height, and roughness!"
         sys.exit()
 
-    import png
-
     width = int(sys.argv[1])
     height = int(sys.argv[2])
     roughness = int(sys.argv[3])
