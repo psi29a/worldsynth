@@ -20,74 +20,34 @@ class Rivers():
         self.riverList = []
 
     def run(self):
-        # setup or local variables
-        steps = 0
-        maxSteps = int(math.sqrt((self.worldW*self.worldW) + (self.worldH*self.worldH)) / 2)
-        # maxSteps = self.worldW / 2
-
-        widgets = ['Generating drainage map: ', Percentage(), ' ', ETA() ]
+        widgets = ['Generating river sources: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH*self.worldH)
-        # create drainage map
-        for x in range(0,self.worldW):
-            for y in range(0,self.worldH):
-
-                # find the differences in elevation
-                # postive number means it is of lower elvation (which is what we want for drainage)
-                # now we sum all the positive numbers and create our drainage factor for that point
-                elevationDifferences = zeros((3,3))
-                drainage = 0.0
-                for i in range(0,3):
-                    for j in range(0,3):
-                        if x-i < 0 or y-j < 0:
-                            pass
-                        elif x-i > self.worldW or y-j > self.worldH:
-                            pass
-                        else:
-                            elevationDifferences[i,j] = self.heightmap[x,y] - self.heightmap[x-i,y-j]
-                            if elevationDifferences[i,j] < 0:
-                                pass
-                            elif elevationDifferences[i,j] > 1:
-                                drainage += 1
-                            else:
-                                drainage += elevationDifferences[i,j]
-
-                #print drainage
-                self.drainageMap[x,y] = drainage
-                pbar.update(x+y)
-        pbar.finish()
-
-
-        # Init rivers
-        for i in range(0, (maxSteps*8)+1):
-            x = random.randint(1, self.worldW-2)
-            y = random.randint(1, self.worldH-2)
-            if self.heightmap[x,y] > WGEN_SEA_LEVEL and self.heightmap[x,y] < 1.0:
-                if random.uniform(0, self.rainmap[x,y]) > 0.125:
+        # iterate through map and mark river sources
+            # chance of river if rainfall is high and elevation around base of mountains
+                # no rivers in 3x3 areas
+                    # begin of a river
                     river = Bunch()
                     river.x = x
                     river.y = y
                     self.riverList.append(river)
                     del river
 
-        print len(self.riverList),maxSteps
+            pbar.update(x+y)
+        pbar.finish()
 
-        widgets = ['Generating rivers and lakes: ', Percentage(), ' ', ETA() ]
+        #print len(self.riverList),maxSteps
+
+        widgets = ['Generating river paths: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=maxSteps)
 
-        # find rivers
-        while True:
-            moves = 0
-            steps += 1
-
-            # Water physics
-            for river in self.riverList:
-                x = river.x
-                y = river.y
-
-                if self.heightmap[x,y] > WGEN_SEA_LEVEL and x > 0 and y > 0 and x < self.worldW-1 and y < self.worldH-1:
+        # iterate through river sources
+        for river in self.riverList:
+            while self.heightmap[river.x,river.y] > WGEN_SEA_LEVEL:             # begin a river route until it reaches sea level
+                # loop prevention checker
+                    # if loop: break
+                # find path of least resistance and flow there
                     # Water flows based on cost, seeking the higest elevation difference
                     # biggest difference = lower (negative) cost
-
                     # Cost
                     # 0,0 1,0 2,0
                     # 0,1 *** 2,1
@@ -125,21 +85,10 @@ class Rivers():
                     highestCost = min(cost[0,0], cost[1,0], cost[2,0],
                         cost[0,1], cost[2,1], cost[0,2], cost[1,2], cost[2,2])
 
-                    for i in range(0, 3):
-                        for j in range(0,3):
-                            if (i == 1 and j == 1) == False: #and (cost[i,j] < 0) then
-
-                                # Divide water up...
-                                if cost[i,j] == highestCost:
-                                    river.x = x+(i-1)
-                                    river.y = y+(j-1)
-                                    self.riverMap[x,y] = 1
-                                    moves+=1
-
-            pbar.update(steps)
-
-            if moves == 0 or steps > maxSteps-1: # our exit strategy
-                break
+                # no path found, find the lowest difference
+                    # mark as river
+                    # mark as lake
+                    # increment loop
 
         pbar.finish()
 

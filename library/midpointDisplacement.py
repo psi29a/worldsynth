@@ -14,7 +14,7 @@ class MDA():
         self.roughness = roughness
         self.heightmap = zeros((self.width,self.height))
 
-    def run(self, globe=False, seaLevel=0.33):
+    def run(self, globe=False, seaLevel=0.25):
         widgets = ['Generating heightmap: ', Percentage(), ' ', ETA() ]
         self.pbar = ProgressBar(widgets=widgets, maxval=self.width*self.height)
         self.heightmap = zeros((self.width,self.height))
