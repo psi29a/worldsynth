@@ -330,7 +330,7 @@ class mapGen():
         del background
 
     def createHeightmap(self):
-        mda = MDA(self.width, self.height, roughness=10)
+        mda = MDA(self.width, self.height, roughness=15)
         found = False
         while not found: # loop until we have something workable
             mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL-0.1)
@@ -407,9 +407,9 @@ class mapGen():
         self.showMap('biomemap')
 
     def createRiversAndLakes(self):
-        riversObject = Rivers(self.elvation)
+        riversObject = Rivers(self.elevation, None)
         riversObject.run()
-        self.riverMap = riversObject.riverMap
+        self.rivers = riversObject.riverMap
         del riversObject
         self.showMap('rivermap')
 
