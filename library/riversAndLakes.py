@@ -23,26 +23,32 @@ class Rivers():
         widgets = ['Generating river sources: ', Percentage(), ' ', ETA() ]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH*self.worldH)
         # iterate through map and mark river sources
-            # chance of river if rainfall is high and elevation around base of mountains
+        for x in range(2,self.worldW-2):
+            for y in range(2,self.worldH-2):                        
+                # chance of river if rainfall is high and elevation around base of mountains
                 # no rivers in 3x3 areas
-                    # begin of a river
-                    river = Bunch()
-                    river.x = x
-                    river.y = y
-                    self.riverList.append(river)
-                    del river
-
+                if self.heightmap[x,y] > BIOME_ELEVATION_MOUNTAIN_LOW and self.heightmap[x,y] < BIOME_ELEVATION_MOUNTAIN:
+                    if random.randint(0,100) < 5: # 5% chance of river source
+                        # begin of a river
+                        river = Bunch()
+                        river.x = x
+                        river.y = y
+                        self.riverList.append(river)
+                        del river
+                        self.riverMap[x,y] = 1
+                        print x,y
             pbar.update(x+y)
         pbar.finish()
 
         #print len(self.riverList),maxSteps
 
-        widgets = ['Generating river paths: ', Percentage(), ' ', ETA() ]
-        pbar = ProgressBar(widgets=widgets, maxval=maxSteps)
+        #widgets = ['Generating river paths: ', Percentage(), ' ', ETA() ]
+        #pbar = ProgressBar(widgets=widgets, maxval=maxSteps)
 
         # iterate through river sources
         for river in self.riverList:
-            while self.heightmap[river.x,river.y] > WGEN_SEA_LEVEL:             # begin a river route until it reaches sea level
+            # begin a river route until it reaches sea level
+            while False and self.heightmap[river.x,river.y] > WGEN_SEA_LEVEL:
                 # loop prevention checker
                     # if riverLoop > MAX_RIVER_LOOP: break
                 # find path of least resistance and flow there
@@ -92,7 +98,7 @@ class Rivers():
                     # else
                         #mark as river and keep going
 
-        pbar.finish()
+        #pbar.finish()
 
 if __name__ == '__main__':
     print "hello!"
