@@ -166,10 +166,11 @@ class mapGen():
         if self.debug:
             print "Going on full autopilot..."
             self.createHeightmap()
-            self.createTemperature()
-            self.createWindAndRain()
-            self.createDrainage()
-            self.createBiomes()            
+            #self.createTemperature()
+            #self.createWindAndRain()
+            self.createRiversAndLakes()
+            #self.createDrainage()
+            #self.createBiomes()
 
         print 'Starting Event Loop'
         running = True
@@ -304,7 +305,6 @@ class mapGen():
             for x in range(0,self.width):
                 for y in range(0,self.height):
                     if self.rivers[x,y] == 1:
-
                         hexified = "0x%02x%02x%02x" % (0,0,255*self.rivers[x,y])
                     else:
                         hexified = "0x%02x%02x%02x" % (0,128*self.elevation[x,y],0)
@@ -337,7 +337,7 @@ class mapGen():
             self.elevation = mda.heightmap
             self.showMap('heightmap')
             if self.landMassPercent() < 0.15:
-                print "Rejecting map: to little landmass" 
+                print "Rejecting map: to little landmass"
             elif self.landMassPercent() > 0.85:
                 print "Rejecting map: to much landmass"
             elif self.averageElevation() < 0.2:
@@ -351,7 +351,7 @@ class mapGen():
                 found = True
             pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
             self.window.blit(self.background, (0,0))
-            pygame.display.update()                
+            pygame.display.update()
         del mda
         self.showMap('heightmap')
 
@@ -371,7 +371,7 @@ class mapGen():
             return
         if self.temperature == None:
             print "Error: No temperature map!"
-            return    
+            return
         warObject = WindAndRain(self.elevation, self.temperature)
         warObject.run()
         self.wind = warObject.windMap
@@ -398,7 +398,7 @@ class mapGen():
             return
         if self.rainfall == None:
             print "Error: No rainfall map!"
-            return            
+            return
         biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
         biomeObject.run()
         self.biome = biomeObject.biome
@@ -406,6 +406,12 @@ class mapGen():
         del biomeObject
         self.showMap('biomemap')
 
+    def createRiversAndLakes(self):
+        riversObject = Rivers(self.elvation)
+        riversObject.run()
+        self.riverMap = riversObject.riverMap
+        del riversObject
+        self.showMap('rivermap')
 
     def landMassPercent(self):
         return self.elevation.sum() / (self.width * self.height)
@@ -497,6 +503,6 @@ if __name__ == '__main__':
             #usage()
             print "No help for you..."
             sys.exit()
-                      
+
     world = mapGen(size=size,debug=debug)
     world.run()
