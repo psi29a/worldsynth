@@ -44,7 +44,7 @@ class Rivers():
         for river in self.riverList:
             while self.heightmap[river.x,river.y] > WGEN_SEA_LEVEL:             # begin a river route until it reaches sea level
                 # loop prevention checker
-                    # if loop: break
+                    # if riverLoop > MAX_RIVER_LOOP: break
                 # find path of least resistance and flow there
                     # Water flows based on cost, seeking the higest elevation difference
                     # biggest difference = lower (negative) cost
@@ -86,9 +86,11 @@ class Rivers():
                         cost[0,1], cost[2,1], cost[0,2], cost[1,2], cost[2,2])
 
                 # no path found, find the lowest difference
-                    # mark as river
-                    # mark as lake
-                    # increment loop
+                    # if lowest difference already a river
+                        # mark as lake
+                        # increment riverLoop
+                    # else
+                        #mark as river and keep going
 
         pbar.finish()
 
