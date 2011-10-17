@@ -56,7 +56,7 @@ class Temperature():
             dirsin = random.randint(1,8)
             for x in range (0,self.worldW):
                 band[x] = band[x] + direction
-                direction = direction + random.uniform(0.0, sin(dirsin*x)*diradj)
+                direction = direction + random.uniform(0.0, math.sin(dirsin*x)*diradj)
                 if direction > bandrange:
                     diradj = -1
                     dirsin = random.randint(1,8)

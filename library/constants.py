@@ -29,7 +29,10 @@ BIOME_ELEVATION_MOUNTAIN = 0.91
 BIOME_ELEVATION_MOUNTAIN_HIGH = 1.00
 BIOME_ELEVATION_MOUNTAIN_PEAK = 1.00
 
-#World contants
+# MOVEMENT
+DIAGONAL_COST = 1.41
+
+# World contants
 WGEN_HEMISPHERE_NORTH   = 1
 WGEN_HEMISPHERE_EQUATOR = 2
 WGEN_HEMISPHERE_SOUTH   = 3
@@ -40,6 +43,43 @@ WGEN_WIND_RESOLUTION = 4 # 1 is perfect, higher = rougher
 WGEN_RAIN_FALLOFF = 0.2 # Default 0.2 - less for less rain, more for more rain
 WGEN_WIND_GRAVITY = 0.975
 TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
+
+
+# used by path finding
+XOFFSET   = (0, 1, 0, -1)
+YOFFSET   = (-1, 0, 1, 0)
+DAXOFFSET = (1, 1, -1, -1)
+DAYOFFSET = (-1, 1, 1, -1)
+DBXOFFSET = (-1, 1, 1, -1) 
+DBYOFFSET = (-1, -1, 1, 1)
+
+NORMAL  = '0'
+BLOCKED = '1'
+SOURCE  = 'S'
+TARGET  = 'T'
+
+OPENED = 'P'
+CLOSED = 'C'
+
+SCALE = 10
+DIST  = 10
+DDIST = 14 # diagonal distance
+INF   = int(1e9)
+
+MANHATTAN = 0
+EUCLIDEAN = 1
+CHEBYSHEV = 2
+
+ASTARM   = 0
+ASTARE   = 1
+ASTARC   = 2
+DIJKSTRA = 3
+BDBFS    = 4
+
+OSOURCE = 1
+OTARGET = 2
+CSOURCE = 1
+CTARGET = 2
 
 #Colour contant
 # http://df.magmawiki.com/index.php/Colour (as reference)

@@ -75,6 +75,7 @@ class mapGen():
                 'Temperature',
                 'WindAndRain',
                 'Drainage',
+                'Rivers',
                 'Biomes',
             ),
             (
@@ -121,18 +122,20 @@ class mapGen():
                 self.createWindAndRain()
             elif e.text == 'Drainage':
                 self.createDrainage()
+            elif e.text == 'Rivers':
+                self.createRiversAndLakes()
             elif e.text == 'Biomes':
                 self.createBiomes()
 
         elif e.name == 'Size...':
             if e.text == 'Tiny':
-                self.__init__(width=128,height=128)
+                self.__init__(size=128)
             if e.text == 'Small':
-                self.__init__(width=256,height=256)
+                self.__init__(size=256)
             elif e.text == 'Medium':
-                self.__init__(width=512,height=512)
+                self.__init__(size=512)
             elif e.text == 'Large':
-                self.__init__(width=1024,height=1024)
+                self.__init__(size=1024)
 
         elif e.name == 'View Menu':
             if e.text == 'Height Map':
@@ -304,10 +307,15 @@ class mapGen():
         elif mapType == 'rivermap':
             for x in range(0,self.width):
                 for y in range(0,self.height):
-                    if self.rivers[x,y] == 1:
-                        hexified = "0x%02x%02x%02x" % (0,0,255*self.rivers[x,y])
+                    colour = int(self.elevation[x,y]*255)
+
+                    if self.elevation[x,y] < WGEN_SEA_LEVEL: # sealevel
+                        hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
+                    elif self.rivers[x,y] > 0:
+                        hexified = "0x%02x%02x%02x" % (0, 0, 255)
                     else:
-                        hexified = "0x%02x%02x%02x" % (0,128*self.elevation[x,y],0)
+                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
+
                     background.append(int(hexified,0))
 
         elif mapType == 'biomemap':
@@ -344,8 +352,8 @@ class mapGen():
                 print "Rejecting map: average elevation is too low"
             elif self.averageElevation() > 0.8:
                 print "Rejecting map: average elevation is too high"
-            elif self.landTouchesEastWest():
-                print "Rejecting map: cannot wrap around a sphere."
+            #elif self.landTouchesEastWest():
+            #    print "Rejecting map: cannot wrap around a sphere."
             else:
                 print "Success! We have found an usable map."
                 found = True
