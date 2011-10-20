@@ -21,6 +21,7 @@ class mapGen():
         pygame and sets up our pygame window and other pygame tools
         that we will need for more complicated tutorials."""
         pygame.init()
+        pygame.display.set_icon(pygame.image.load("data/images/icon.png"))
 
         # create our window
         self.height = size
@@ -244,7 +245,7 @@ class mapGen():
             for x in self.elevation:
                 for y in x:
                     colour = int(y*255)
-                    if y < WGEN_SEA_LEVEL: # sealevel
+                    if y <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*y)
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
@@ -253,7 +254,7 @@ class mapGen():
         elif mapType == "elevation":
             for x in self.elevation:
                 for y in x:
-                    if y < WGEN_SEA_LEVEL: # sealevel
+                    if y <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 128)
                     elif y < 0.666: # grasslands
                         hexified = "0x%02x%02x%02x" % (128, 255, 0)
@@ -309,10 +310,10 @@ class mapGen():
                 for y in range(0,self.height):
                     colour = int(self.elevation[x,y]*255)
 
-                    if self.elevation[x,y] < WGEN_SEA_LEVEL: # sealevel
+                    if self.elevation[x,y] <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
                     elif self.rivers[x,y] > 0:
-                        hexified = "0x%02x%02x%02x" % (0, 0, 255)
+                        hexified = "0x%02x%02x%02x" % (255, 0, 0) # R,G,B
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
 
@@ -338,7 +339,7 @@ class mapGen():
         del background
 
     def createHeightmap(self):
-        mda = MDA(self.width, self.height, roughness=15)
+        mda = MDA(self.width, self.height, roughness=5)
         found = False
         while not found: # loop until we have something workable
             mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL-0.1)
