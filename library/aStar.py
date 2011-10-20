@@ -2,28 +2,33 @@ from constants import *
 
 # Version 1.1
 #
-# Changes in 1.1: 
-# In order to optimize the list handling I implemented the location id (lid) attribute.
+# Changes in 1.1:
+# In order to optimize the list handling I implemented the location id (lid)
+# attribute.
 # This will make the all list serahces to become extremely more optimized.
 
 class Path:
-    def __init__(self,nodes, totalCost):
-        self.nodes = nodes;
-        self.totalCost = totalCost;
 
-    def getNodes(self): 
-        return self.nodes    
+    def __init__(self, nodes, totalCost):
+
+        self.nodes = nodes
+        self.totalCost = totalCost
+
+    def getNodes(self):
+        return self.nodes
 
     def getTotalMoveCost(self):
         return self.totalCost
 
+
 class Node:
-    def __init__(self,location,mCost,lid,parent=None):
+
+    def __init__(self, location, mCost, lid, parent=None):
         self.location = location # where is this node located
-        self.mCost = mCost # total move cost to reach this node
+        self.mCost = mCost  # total move cost to reach this node
         self.parent = parent # parent node
         self.score = 0 # calculated score for this node
-        self.lid = lid # set the location id - unique for each location in the map
+        self.lid = lid # location id unique for each location in the map
 
     def __eq__(self, n):
         if n.lid == self.lid:
@@ -31,13 +36,14 @@ class Node:
         else:
             return 0
 
+
 class AStar:
 
     def __init__(self, maphandler):
         self.mh = maphandler
-                
+
     def _getBestOpenNode(self):
-        bestNode = None        
+        bestNode = None
         for n in self.on:
             if not bestNode:
                 bestNode = n
@@ -46,29 +52,29 @@ class AStar:
                     bestNode = n
         return bestNode
 
-    def _tracePath(self,n):
-        nodes = [];
-        totalCost = n.mCost;
-        p = n.parent;
-        nodes.insert(0,n);       
-        
+    def _tracePath(self, n):
+        nodes = []
+        totalCost = n.mCost
+        p = n.parent
+        nodes.insert(0, n)
+
         while 1:
-            if p.parent is None: 
+            if p.parent is None:
                 break
 
-            nodes.insert(0,p)
+            nodes.insert(0, p)
             p=p.parent
-        
-        return Path(nodes,totalCost)
 
-    def _handleNode(self,node,end):        
+        return Path(nodes, totalCost)
+
+    def _handleNode(self, node, end):
         i = self.o.index(node.lid)
         self.on.pop(i)
         self.o.pop(i)
         self.c.append(node.lid)
 
-        nodes = self.mh.getAdjacentNodes(node,end)
-                   
+        nodes = self.mh.getAdjacentNodes(node, end)
+
         for n in nodes:
             if n.location == end:
                 # reached the destination
@@ -79,16 +85,16 @@ class AStar:
             elif n.lid in self.o:
                 # already in open, check if better score
                 i = self.o.index(n.lid)
-                on = self.on[i];
+                on = self.on[i]
                 if n.mCost<on.mCost:
-                    self.on.pop(i);
-                    self.o.pop(i);
-                    self.on.append(n);
-                    self.o.append(n.lid);
+                    self.on.pop(i)
+                    self.o.pop(i)
+                    self.on.append(n)
+                    self.o.append(n.lid)
             else:
                 # new node, append to open list
-                self.on.append(n);                
-                self.o.append(n.lid);
+                self.on.append(n)
+                self.o.append(n.lid)
 
         return None
 
@@ -103,19 +109,27 @@ class AStar:
             return None
         self.on.append(fnode)
         self.o.append(fnode.lid)
-        nextNode = fnode 
-               
-        while nextNode is not None: 
-            finish = self._handleNode(nextNode,end)
-            if finish:                
+        nextNode = fnode
+
+        # need to build in a bail-out counter
+        counter = 0
+
+        while nextNode is not None:
+            if counter > 10000:
+                break # no path found under limit
+            finish = self._handleNode(nextNode, end)
+            if finish:
                 return self._tracePath(finish)
             nextNode=self._getBestOpenNode()
-                
+            counter += 1
+
         return None
-      
+
+
 class SQ_Location:
     """A simple Square Map Location implementation"""
-    def __init__(self,x,y):
+
+    def __init__(self, x, y):
         self.x = x
         self.y = y
 
@@ -125,10 +139,11 @@ class SQ_Location:
         else:
             return 0
 
+
 class SQ_MapHandler:
     """A simple Square Map implementation"""
 
-    def __init__(self,mapdata,width,height):
+    def __init__(self, mapdata, width, height):
         self.m = mapdata
         self.w = width
         self.h = height
@@ -139,38 +154,44 @@ class SQ_MapHandler:
         if x<0 or x>=self.w or y<0 or y>=self.h:
             return None
         d = self.m[(y*self.w)+x]
-        if d > BIOME_ELEVATION_MOUNTAIN :
+
+        #d += 1 # we need to modify this for best effect (0s make a* crazy)
+        # we make higher elevations have more cost
+        #if d > WGEN_SEA_LEVEL + 1:
+        #    d *= d
+
+        if d >= (BIOME_ELEVATION_MOUNTAIN_LOW): # not over mountains
             return None
 
-        return Node(location,d,((y*self.w)+x));                
+        return Node(location, d, ((y*self.w)+x))
 
-    def getAdjacentNodes(self, curnode, dest):      
+    def getAdjacentNodes(self, curnode, dest):
         result = []
-       
+
         cl = curnode.location
         dl = dest
-        
-        n = self._handleNode(cl.x+1,cl.y,curnode,dl.x,dl.y)
+
+        n = self._handleNode(cl.x+1, cl.y, curnode, dl.x, dl.y)
         if n: result.append(n)
-        n = self._handleNode(cl.x-1,cl.y,curnode,dl.x,dl.y)
+        n = self._handleNode(cl.x-1, cl.y, curnode, dl.x, dl.y)
         if n: result.append(n)
-        n = self._handleNode(cl.x,cl.y+1,curnode,dl.x,dl.y)
+        n = self._handleNode(cl.x, cl.y+1, curnode, dl.x, dl.y)
         if n: result.append(n)
-        n = self._handleNode(cl.x,cl.y-1,curnode,dl.x,dl.y)
+        n = self._handleNode(cl.x, cl.y-1, curnode, dl.x, dl.y)
         if n: result.append(n)
-                
+
         return result
 
-    def _handleNode(self,x,y,fromnode,destx,desty):
-        n = self.getNode(SQ_Location(x,y))
+    def _handleNode(self, x, y, fromnode, destx, desty):
+        n = self.getNode(SQ_Location(x, y))
         if n is not None:
-            dx = max(x,destx) - min(x,destx)
-            dy = max(y,desty) - min(y,desty)
+            dx = max(x, destx) - min(x, destx)
+            dy = max(y, desty) - min(y, desty)
             emCost = dx+dy
-            n.mCost += fromnode.mCost                                   
+            n.mCost += fromnode.mCost
             n.score = n.mCost+emCost
-            n.parent=fromnode
+            n.parent = fromnode
             #print dx,dy,emCost,fromnode.mCost,n.mCost,n.score
             return n
 
-        return None    
+        return None

@@ -5,6 +5,17 @@
 #
 #
 
+# Direction
+NORTH = [0,1]
+NORTH_EAST = [1,-1]
+EAST = [1,0]
+SOUTH_EAST = [1,1]
+SOUTH = [0,-1]
+SOUTH_WEST = [-1,-1]
+WEST = [-1,0]
+NORTH_WEST = [-1,1]
+
+
 #Biomes
 BIOME_TYPE_UNDEFINED       = 0
 BIOME_TYPE_WATER           = 1
@@ -24,6 +35,7 @@ BIOME_TYPE_MOUNTAIN        = 14
 BIOME_TYPE_MOUNTAIN_PEAK   = 15
 
 # BIOME_ELEVATION
+BIOME_ELEVATION_HILLS = 0.75
 BIOME_ELEVATION_MOUNTAIN_LOW = 0.84
 BIOME_ELEVATION_MOUNTAIN = 0.91
 BIOME_ELEVATION_MOUNTAIN_HIGH = 1.00
@@ -43,43 +55,6 @@ WGEN_WIND_RESOLUTION = 4 # 1 is perfect, higher = rougher
 WGEN_RAIN_FALLOFF = 0.2 # Default 0.2 - less for less rain, more for more rain
 WGEN_WIND_GRAVITY = 0.975
 TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
-
-
-# used by path finding
-XOFFSET   = (0, 1, 0, -1)
-YOFFSET   = (-1, 0, 1, 0)
-DAXOFFSET = (1, 1, -1, -1)
-DAYOFFSET = (-1, 1, 1, -1)
-DBXOFFSET = (-1, 1, 1, -1) 
-DBYOFFSET = (-1, -1, 1, 1)
-
-NORMAL  = '0'
-BLOCKED = '1'
-SOURCE  = 'S'
-TARGET  = 'T'
-
-OPENED = 'P'
-CLOSED = 'C'
-
-SCALE = 10
-DIST  = 10
-DDIST = 14 # diagonal distance
-INF   = int(1e9)
-
-MANHATTAN = 0
-EUCLIDEAN = 1
-CHEBYSHEV = 2
-
-ASTARM   = 0
-ASTARE   = 1
-ASTARC   = 2
-DIJKSTRA = 3
-BDBFS    = 4
-
-OSOURCE = 1
-OTARGET = 2
-CSOURCE = 1
-CTARGET = 2
 
 #Colour contant
 # http://df.magmawiki.com/index.php/Colour (as reference)
