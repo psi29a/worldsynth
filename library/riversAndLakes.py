@@ -120,7 +120,7 @@ class Rivers():
                     break
 
             else:
-                print "A river got stuck...", currentLocation, direction
+                print "A river became stuck...", currentLocation, direction
                 break
 
 
@@ -156,67 +156,6 @@ class Rivers():
 
         #print newPath, lowestDirection, elevation
         #sys.exit()
-        # now try diagnals and find/digout/erode linking tile
-        # top left
-#        if lowestDirection == NORTH_WEST:
-#
-#
-#            topLeft = currentElevation - self.heightmap[river['x']-1, river['y']-1]
-#            if topLeft > 0.0 and topLeft > bottom:
-#                # find linking tile
-#                if top > left:
-#                    self.riverMap[river['x'], river['y']-1] = 0.1
-#                    self.heightmap[river['x'], river['y']-1] = currentElevation
-#                else:
-#                    self.riverMap[river['x']-1, river['y']] = 0.1
-#                    self.heightmap[river['x']-1, river['y']] = currentElevation
-#                newPath = {'x': river['x']-1, 'y': river['y']-1}
-#        else:
-#            topLeft = bottom
-
-#        # top right
-#        if river['x']+1 < self.worldW and river['x']-1 >= 0:
-#            topRight = currentElevation - self.heightmap[river['x']+1, river['y']-1]
-#            if topRight > 0.0 and topRight > topLeft:
-#                if top > right:
-#                    self.riverMap[river['x'], river['y']-1] = 0.1
-#                    self.heightmap[river['x'], river['y']-1] = currentElevation
-#                else:
-#                    self.riverMap[river['x']+1, river['y']] = 0.1
-#                    self.heightmap[river['x']+1, river['y']] = currentElevation
-#                newPath = {'x': river['x']+1, 'y': river['y']-1}
-#        else:
-#            topRight = topLeft
-
-#        # bottom left
-#        if river['y']-1 >= 0 and river['y']+1 < self.worldH >= 0:
-#            bottomLeft = currentElevation - self.heightmap[river['x']-1, river['y']+1]
-#            if bottomLeft > 0.0 and bottomLeft > topRight:
-#                if left > bottom:
-#                    self.riverMap[river['x']-1, river['y']] = 0.1
-#                    self.heightmap[river['x']-1, river['y']] = currentElevation
-#                else:
-#                    self.riverMap[river['x'], river['y']+1] = 0.1
-#                    self.heightmap[river['x'], river['y']+1] = currentElevation
-#                newPath = {'x': river['x']-1, 'y': river['y']+1}
-#        else:
-#            bottomLeft = topRight
-
-#        # bottom right
-#        if river['x']+1 < self.worldW and river['y']+1 < self.worldH:
-#            bottomRight = currentElevation - self.heightmap[river['x']+1, river['y']+1]
-#            if bottomRight > 0.0 and bottomRight > bottomLeft:
-#                if right > bottom:
-#                    self.riverMap[river['x']+1, river['y']] = 0.1
-#                    self.heightmap[river['x']+1, river['y']] = currentElevation
-#                else:
-#                    self.riverMap[river['x'], river['y']+1] = 0.1
-#                    self.heightmap[river['x'], river['y']+1] = currentElevation
-#                newPath = {'x': river['x']+1, 'y': river['y']+1}
-#        else:
-#            bottomRight = bottomLeft
-
-        #print river, newPath, top, left, right, bottom, topLeft, topRight, bottomLeft, bottomRight
 
         return newPath
 
@@ -227,6 +166,35 @@ class Rivers():
             return True
 
         return False
+
+    def findLowerElevation(self, source, radius):
+        '''Try to find a lower elevation with in a range of an increasing
+        circle's radius and try to find the best path and return it'''
+
+        currentRadius = 1
+        lowestElevation = self.heightmap[source['x'], source['y']]
+        destination = []
+
+        while currentRadius <= radius:
+            for x in range(-currentRadius, currentRadius+1):
+                for y in range(-currentRadius, currentRadius+1):
+
+                    # are we within bounds?
+                    if self.isOutOfBounds({'x': source['x']+x, 'y': source['y']+y}):
+                        continue
+
+                    # are we within a circle?
+                    if not self.inCircle(currentRadius, source['x'], source['y'], source['x']+x, source['y']+y):
+                        continue
+
+                    # have we found a lower elevation?
+                    elevation = self.heightmap[source['x']+x, source['y']+y]
+                    if elevation < lowestElevation:
+                        lowestElevation = elevation
+                        destination = {'x': source['x']+x, 'y': source['y']+y}
+
+
+             currentRadius += 1
 
 
 
