@@ -256,9 +256,9 @@ class mapGen():
                 for y in x:
                     if y <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 128)
-                    elif y < 0.666: # grasslands
+                    elif y < BIOME_ELEVATION_HILLS: # grasslands
                         hexified = "0x%02x%02x%02x" % (128, 255, 0)
-                    elif y < 0.900: # mountains
+                    elif y < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
                         hexified = "0x%02x%02x%02x" % (90, 128, 90)
                     else:
                         hexified = "0x%02x%02x%02x" % (255, 255, 255)
