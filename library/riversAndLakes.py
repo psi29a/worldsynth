@@ -23,6 +23,9 @@ class Rivers():
 
         for source in sources:
 
+            #self.riverMap[source['x'], source['y']] = 0.1
+            #continue
+
             print "Finding path for river: ", source
             river = self.simulateFluid(source)
             print 'River path:', river
@@ -34,37 +37,47 @@ class Rivers():
             #break
         return
 
-
     def riverSources(self):
         widgets = ['Finding river sources: ', Percentage(), ' ', ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH*self.worldH)
 
         riverSourceList = []
 
+        square = 64
+
         # iterate through map and mark river sources
-        for x in range(1, self.worldW-1):
-            for y in range(1, self.worldH-1):
+        for x in range(1, self.worldW-1, square):
+            for y in range(1, self.worldH-1, square):
 
                 # rivers are sourced at the base of mountains
-                if self.heightmap[x, y] < BIOME_ELEVATION_HILLS or \
-                    self.heightmap[x, y] > BIOME_ELEVATION_MOUNTAIN_LOW:
+                squareRegion = self.heightmap[x:square, y:square]
+                avg = self.averageElevation(squareRegion)
+                if avg < BIOME_ELEVATION_HILLS or \
+                    avg > BIOME_ELEVATION_MOUNTAIN_LOW:
                     continue
 
                 # chance of river if rainfall is high and elevation around base of mountains
+                # TODO
 
-                # based on size of map, we check if there are any rivers in the area
-                if self.isRiverNearby(20, x, y):
-                    continue
+                sourceX = random.randint(x,x+square-1)
+                sourceY = random.randint(y,y+square-1)
 
-                if random.random() <= 0.01:
-                    # chance of river source
-                    riverSource = {'x': x, 'y': y}
-                    print riverSource
-                    riverSourceList.append(riverSource)
+                riverSource = {'x': sourceX, 'y': sourceY}
+                print riverSource
+                riverSourceList.append(riverSource)
+
+#                if random.random() <= 0.01:
+#                    # chance of river source
+#                    riverSource = {'x': x, 'y': y}
+#                    print riverSource
+#                    riverSourceList.append(riverSource)
 
             pbar.update(x+y)
         pbar.finish()
         return riverSourceList
+
+    def averageElevation(self, elevation):
+        return average(elevation)
 
     def isRiverNearby(self, radius, tryX, tryY):
         ''' return true if there is a river in the range of radius from
@@ -121,8 +134,21 @@ class Rivers():
 
             else:
                 print "A river became stuck...", currentLocation, direction
-                break
-
+                lowerElevation = self.findLowerElevation(currentLocation, 20)
+                if lowerElevation:
+                    print 'Found lower elevation: ', lowerElevation
+                    lowerPath = self.findPath(currentLocation, lowerElevation)
+                    if lowerPath:
+                        print 'Lower path found: ', lowerPath
+                        path += lowerPath
+                        currentLocation = lowerPath[-1]
+                        currentElevation = self.heightmap[currentLocation['x'], currentLocation['y']]
+                    else:
+                        print 'No path to lower elevation found.'
+                        break
+                else:
+                    print 'This river goes nowhere'
+                    return []
 
         return path
 
@@ -136,9 +162,9 @@ class Rivers():
 
         newPath = {}
         lowestElevation = self.heightmap[river['x'], river['y']]
-        lowestDirection = [0,0]
+        lowestDirection = [0, 0]
 
-        for direction in DIRECTIONS:
+        for direction in DIR_ALL:
             tempPath = {'x': river['x']+direction[0], 'y': river['y']+direction[1]}
 
             if self.isOutOfBounds(tempPath):
@@ -189,103 +215,14 @@ class Rivers():
 
                     # have we found a lower elevation?
                     elevation = self.heightmap[source['x']+x, source['y']+y]
+
                     if elevation < lowestElevation:
                         lowestElevation = elevation
                         destination = {'x': source['x']+x, 'y': source['y']+y}
 
+            currentRadius += 1
 
-             currentRadius += 1
-
-
-
-
-
-
-
-
-
-    def floodArea(self, currentLocation):
-        '''begin flooding area until we find a lower elevation or until we
-        reach saturation of begin of mountain range'''
-
-        river = currentLocation
-
-        # check radius around location if we can find a lower elevation
-        radius = 2
-        startElevation = self.heightmap[river.x, river.y]
-        elevation = self.heightmap[river.x, river.y]
-        pressure = 0.01
-
-        #floodMap = zeros((self.worldW, self.worldH))
-
-        while pressure > 0:
-            newPaths = []
-            # increase our water elevation
-            elevation += 0.001
-            pressure -= 0.001
-
-            for x in range(-radius, radius+1):
-                for y in range(-radius, radius+1):
-
-                    # ignore ourselves
-                    if x == 0 and y == 0:
-                        continue
-
-                    # verify that we do not go over the edge of map
-                    if river.x+x < 0 or river.y+y < 0 or \
-                    river.x+x > self.worldW-1 or river.y+y > self.worldH-1:
-                        continue # is out of bounds, ignore
-
-                    # check that we are in circle
-                    if not self.in_circle(river.x, river.y, radius, river.x+x, river.y+y):
-                        continue
-
-                    # are we in the mountains?
-                    if self.heightmap[river.x+x, river.y+y] > BIOME_ELEVATION_MOUNTAIN_LOW:
-                        continue
-
-                    # is an increase in water elevation enough to find a way out?
-                    if self.heightmap[river.x+x, river.y+y] < elevation:
-                        newPaths.append({'x': river.x+x, 'y': river.y+y})
-                        #floodMap[river.x+x, river.y+y] = 0.1
-
-
-
-        print startElevation, elevation, newPaths
-        #sys.exit()
-        return newPaths
-
-    def findLowerElevation(self, river, radius):
-        '''Try to find a lower elevation with in a range of a circle's radius
-        and try to find the best path and return it'''
-
-        #TODO: perhaps flooding algo is better?
-
-        lowestElevation = self.heightmap[river.x, river.y]
-        lowestRiver = river
-        foundLowerElevation = False
-
-        for x in range(-radius, radius+1):
-            for y in range(-radius, radius+1):
-                # verify that we do not go over the edge of map
-                if river.x+x < 0 or river.y+y < 0 or \
-                river.x+x > self.worldW-1 or river.y+y > self.worldH-1:
-                    continue # is out of bounds, ignore
-
-                # check that we are in circle
-                if not self.in_circle(river.x, river.y, radius, river.x+x, river.y+y):
-                    continue
-
-                if self.heightmap[river.x+x, river.y+y] < lowestElevation:
-                    foundLowerElevation = True
-                    lowestElevation = self.heightmap[river.x+x, river.y+y]
-                    lowestRiver.x = river.x+x
-                    lowestRiver.y = river.y+y
-
-        if foundLowerElevation:
-            return self.findPath(river, lowestRiver)
-        else:
-            return None
+        return destination
 
 
     def findPath(self, source, destination):
@@ -297,8 +234,8 @@ class Rivers():
         heightmap = self.heightmap.reshape(self.worldW * self.worldH) # flatton array
 
         pathFinder = AStar(SQ_MapHandler(heightmap, self.worldW, self.worldH))
-        start = SQ_Location(source.x, source.y)
-        end = SQ_Location(destination.x, destination.x)
+        start = SQ_Location(source['x'], source['y'])
+        end = SQ_Location(destination['x'], destination['y'])
 
         s = time()
         p = pathFinder.findPath(start, end)
@@ -319,6 +256,8 @@ class Rivers():
                     break
 
         return path
+
+
 
 
 
@@ -348,7 +287,6 @@ class Rivers():
                     break #TODO: add more river strength
                 self.riverMap[n.location.x, n.location.y] = 0.1
             return {'x': newPath['x'], 'y': newPath['y']}
-
 
     def findClosestSea(self, river):
         '''Try to find the closest sea by avoiding watersheds, the returned
