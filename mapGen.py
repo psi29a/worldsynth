@@ -353,8 +353,10 @@ class mapGen():
                 print "Rejecting map: average elevation is too low"
             elif self.averageElevation() > 0.8:
                 print "Rejecting map: average elevation is too high"
-            #elif self.landTouchesEastWest():
-            #    print "Rejecting map: cannot wrap around a sphere."
+            elif self.hasNoMountains():
+                print "Rejecting map: not enough mountains"
+            elif self.landTouchesEastWest():
+                print "Rejecting map: cannot wrap around a sphere."
             else:
                 print "Success! We have found an usable map."
                 found = True
@@ -428,16 +430,19 @@ class mapGen():
     def averageElevation(self):
         return average(self.elevation)
 
+    def hasNoMountains(self):
+        if self.elevation.max() > BIOME_ELEVATION_MOUNTAIN:
+            return False
+        return True
+
     def landTouchesEastWest(self):
-        result = False
-
-        for x in range(0,2):
+        for x in range(0,1):
             for y in range(0,self.height):
-                if self.elevation[x,y] > WGEN_SEA_LEVEL or self.elevation[self.width-1-x,y] > WGEN_SEA_LEVEL:
-                    result = True
-                    break
+                if self.elevation[x,y] > WGEN_SEA_LEVEL or \
+                    self.elevation[self.width-1-x,y] > WGEN_SEA_LEVEL:
+                    return True
 
-        return result
+        return False
 
     def landTouchesMapEdge(self):
         result = False

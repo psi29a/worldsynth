@@ -160,7 +160,7 @@ class SQ_MapHandler:
         #if d > WGEN_SEA_LEVEL + 1:
         #    d *= d
 
-        if d >= (BIOME_ELEVATION_MOUNTAIN_LOW): # not over mountains
+        if d >= (BIOME_ELEVATION_MOUNTAIN): # not over mountains
             return None
 
         return Node(location, d, ((y*self.w)+x))

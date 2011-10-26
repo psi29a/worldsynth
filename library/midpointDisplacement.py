@@ -19,12 +19,14 @@ class MDA():
         self.pbar = ProgressBar(widgets=widgets, maxval=self.width*self.height)
         self.heightmap = zeros((self.width,self.height))
 
-        c1 = random.random()        # top
-        c3 = random.random()        # bottom
         if globe: # try to create world that wraps around on a globe/sphere
+            c1 = random.uniform(0.00, seaLevel)     # top
+            c3 = random.uniform(0.00, seaLevel)     # bottom
             c2 = random.uniform(0.00, seaLevel)    # right
             c4 = random.uniform(0.00, seaLevel)    # left
         else:
+            c1 = random.random()    # top
+            c3 = random.random()    # bottom
             c2 = random.random()    # right
             c4 = random.random()    # left
         self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)
