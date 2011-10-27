@@ -16,7 +16,8 @@ class Rivers():
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.riverMap = zeros((self.worldW, self.worldH))
-        self.riverList = []
+        self.lakeMap = zeros((self.worldW, self.worldH))
+        self.lakeList = []
 
     def run(self):
         sources = self.riverSources()
@@ -28,13 +29,18 @@ class Rivers():
 
             print "Finding path for river: ", source
             river = self.simulateFluid(source)
-            print 'River path:', river
+            #print 'River path:', river
 
             for water in river:
                 self.riverMap[water['x'], water['y']] = 0.1
 
             #self.riverMap[source['x'], source['y']] = 0.1
             #break
+
+        for lake in self.lakeList:
+            print "Found a lake here: ", lake
+            lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
+
         return
 
     def riverSources(self):
@@ -66,11 +72,14 @@ class Rivers():
                         if self.heightmap[sourceX, sourceY] < BIOME_ELEVATION_HILLS or \
                             self.heightmap[sourceX, sourceY] > BIOME_ELEVATION_MOUNTAIN_LOW:
                             continue
+
                         sources.append([sourceX, sourceY])
+
+                #print len(sources), sources
 
                 if sources:
                     #print "Possible sources: ", len(sources)
-                    source = sources[random.randint(0, len(sources)-1)]
+                    source = sources[random.randint(0, len(sources))]
                     #print "River source: ", source
 
                     riverSource = {'x': source[0], 'y': source[1]}
@@ -81,10 +90,7 @@ class Rivers():
         pbar.finish()
         return riverSourceList
 
-    def averageElevation(self, elevation):
-        return average(elevation)
-
-    def inCircle(self, center_x, center_y, radius, x, y):
+    def inCircle(self, radius, center_x, center_y, x, y):
         square_dist = (center_x - x) ** 2 + (center_y - y) ** 2
         return square_dist <= radius ** 2
 
@@ -119,10 +125,10 @@ class Rivers():
                 #currentElevation = self.heightmap[currentLocation['x'], currentLocation['y']]
 
             else:
-                print "  A river became stuck...", currentLocation, direction
+                #print "  A river became stuck...", currentLocation, direction
                 lowerElevation = self.findLowerElevation(currentLocation)
                 if lowerElevation:
-                    print '    Found a lower elevation here: ', lowerElevation
+                    #print '    Found a lower elevation here: ', lowerElevation
                     lowerPath = self.findPath(currentLocation, lowerElevation)
                     if lowerPath:
                         #print '      Lower path found: ', lowerPath
@@ -130,11 +136,11 @@ class Rivers():
                         currentLocation = lowerPath[-1]
                         #currentElevation = self.heightmap[currentLocation['x'], currentLocation['y']]
                     else:
-                        print '      No path to lower elevation found.'
+                        #print '      No path to lower elevation found.'
                         break
                 else:
-                    print '    This river goes nowhere'
-                    #return []
+                    #print '    This river flows into a lake!'
+                    self.lakeList.append(currentLocation)
                     break
 
         return path
@@ -230,9 +236,10 @@ class Rivers():
         e = time()
 
         if not p:
-            print "      No path found! It took %f seconds." % (e-s)
+            #print "      No path found! It took %f seconds." % (e-s)
+            pass
         else:
-            print "      Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
+            #print "      Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
             for n in p.nodes:
                 path.append({'x': n.location.x, 'y': n.location.y})
                 if self.riverMap[n.location.x, n.location.y] > 0.0:
@@ -245,8 +252,56 @@ class Rivers():
 
         return path
 
+    def simulateFloodi(self, x, y, elevation):
+        '''Flood fill area based on elevation.
+        The recursive algorithm. Starting at x and y, changes and marks any
+        adjacent area that is under the elevation.'''
+
+        # are we in bounds of world
+        if self.isOutOfBounds({'x': x, 'y': y}):
+            return
+
+        # Base case. If the current [x, y] elevation is greater then do nothing.
+        if self.heightmap[x,y] > elevation:   
+            return
+
+        # Flood area and mark on map
+        self.lakeMap[x,y] = 1
+        print 'lake at: ', x, y
+
+        # Recursive calls.
+        self.simulateFlood(x-1, y, elevation) # left
+        self.simulateFlood(x, y-1, elevation) # up
+        self.simulateFlood(x+1, y, elevation) # right
+        self.simulateFlood(x, y+1, elevation) # down
 
 
+    def simulateFlood(self, x, y, elevation):
+        '''Flood fill area based on elevation.
+        The iterative algorithm. Starting at x and y, changes and marks any
+        adjacent area that is under the elevation.'''
+
+        theStack = [ (x, y) ]
+        
+        while len(theStack) > 0:
+            x, y = theStack.pop()
+
+            # are we in bounds of world
+            if self.isOutOfBounds({'x': x, 'y': y}):
+                continue
+
+            # Base case. If the current [x, y] elevation is greater then do nothing.
+            if self.heightmap[x,y] > elevation:   
+                continue
+            
+            # Flood area and mark on map
+            self.lakeMap[x,y] = 1
+            print 'lake at: ', x, y
+
+            theStack.append( (x-1, y) ) # left
+            theStack.append( (x, y-1) ) # up
+            theStack.append( (x+1, y) ) # right
+            theStack.append( (x, y+1) ) # down
 
 
 
@@ -313,61 +368,6 @@ class Rivers():
         print "Could not find sea."
         return {}
 
-    def pathFindToLocation(self, river, depth=20): # 10 = 10x10 area is -10 to 10
-        temp = delta = 0.0
-        currentElevation = self.heightmap[river.x, river.y]
-        newPath = {}
-
-        # find out next lowest point in range
-        for x in range(-depth, depth+1):
-            for y in range(-depth, depth+1):
-                if river.x+x >= 0 and river.y+y >= 0 and \
-                river.x+x < self.worldW and river.y+y < self.worldH:
-                    temp = currentElevation - self.heightmap[river.x+x, river.y+y]
-                    if temp > delta and temp >= WGEN_SEA_LEVEL:
-                        newPath = {'x': river.x+x, 'y': river.y+y}
-                        delta = temp
-
-        if newPath:
-            print "Found a possible lowest point..."
-#            pathFinder = AStar(self.heightmap, (river.x, river.y), (newPath['x'],newPath['y']), EUCLIDEAN)
-#            for i in pathFinder.step():
-#                pass
-
-            # flatten heightmap
-            heightmap = self.heightmap.reshape(self.worldW * self.worldH)
-
-            pathFinder = AStar(SQ_MapHandler(heightmap, self.worldW, self.worldH))
-            start = SQ_Location(river.x, river.y)
-            end = SQ_Location(newPath['x'], newPath['y'])
-            s = time()
-            p = pathFinder.findPath(start, end)
-            e = time()
-
-            if not p:
-                print "No path found!"
-                return {}
-            else:
-                print "Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
-                for n in p.nodes:
-                    #self.pathlines.append((n.location.x*16+8,n.location.y*16+8))
-                    #print river.x, river.y, n.location.x, n.location.y, newPath['x'], newPath['y']
-                    self.riverMap[n.location.x, n.location.y] = 0.1
-
-#            if pathFinder.path:
-#                print "Found path: ", pathFinder.path
-#            else:
-#                print "Could not find a new path."
-#                return {}
-
-#            for path in pathFinder.path:
-#                self.riverMap[path[0],path[1]] = 0.1
-#                if self.heightmap[path[0],path[1]] > currentElevation:
-#                   self.heightmap[path[0],path[1]] = currentElevation
-#                else:
-#                    currentElevation = self.heightmap[path[0],path[1]]
-#
-#            return newPath
 
 
 if __name__ == '__main__':
