@@ -27,7 +27,7 @@ class Biomes():
                     self.biomeColourCode[x, y] = COLOR_BLUE
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.10 and self.drainmap[x, y] < 0.33:    # Desert (Sand): e100-299, r0-9, d0-32
                     self.biome[x, y] = BIOME_TYPE_DESERT_SAND
-                    self.biomeColourCode[x, y] = COLOR_FLAX
+                    self.biomeColourCode[x, y] = COLOR_TAUPE_SANDY
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.10 and self.drainmap[x, y] < 0.50:    # Desert (Rock): e100-299, r0-9, d33-49
                     self.biome[x, y] = BIOME_TYPE_DESERT_ROCK
                     self.biomeColourCode[x, y] = COLOR_DARK_CHESTNUT

@@ -37,6 +37,7 @@ class mapGen():
         self.rainfall = None
         self.temperature = None
         self.rivers = None
+        self.lakes = None
         self.contiguous = None
         self.biome = None
         self.biomeColour = None
@@ -313,11 +314,17 @@ class mapGen():
                     if self.elevation[x,y] <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
                     elif self.rivers[x,y] > 0:
-                        hexified = "0x%02x%02x%02x" % (255, 0, 0) # R,G,B
+                        hexified = COLOR_COBALT
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
 
-                    background.append(int(hexified,0))
+                    if self.lakes[x,y] > 0:
+                        hexified = COLOR_AZURE
+
+                    if isinstance(hexified,int):
+                        background.append(hexified)
+                    else:
+                        background.append(int(hexified,0))
 
         elif mapType == 'biomemap':
             for x in range(0,self.width):
@@ -421,6 +428,7 @@ class mapGen():
         riversObject = Rivers(self.elevation, None)
         riversObject.run()
         self.rivers = riversObject.riverMap
+        self.lakes = riversObject.lakeMap
         del riversObject
         self.showMap('rivermap')
 
