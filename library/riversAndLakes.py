@@ -100,14 +100,14 @@ class Rivers():
     def riverFlow(self, source):
         '''simulate fluid dynamics by using starting point and flowing to the
         lowest available point'''
-        x, y = source
-        currentLocation =  source
+        currentLocation = source
         #currentElevation = self.heightmap[x, y]
         path = [source]
         direction = []
 
         # start the flow
         while True:
+            x, y = currentLocation
 
             # found another river?
             if self.riverMap[x, y] > 0.0:
@@ -172,14 +172,13 @@ class Rivers():
         # 0,1 *** 2,1
         # *** 1,2 ***
         x, y = river
-        newPath = {}
+        newPath = []
         lowestElevation = self.heightmap[x, y]
         #lowestDirection = [0, 0]
 
-        for direction in DIR_ALL:
-            tempDir = [x+direction[0], y+direction[1]]
+        for dx,dy in DIR_ALL:
+            tempDir = [x+dx, y+dy]
             tx, ty = tempDir
-
 
             if self.isOutOfBounds(tempDir):
                 continue
@@ -252,16 +251,16 @@ class Rivers():
         start = SQ_Location(sx, sy)
         end = SQ_Location(dx, dy)
 
-        #s = time()
+        s = time()
         p = pathFinder.findPath(start, end)
-        #e = time()
+        e = time()
 
         if not p:
             #print "      No path found! It took %f seconds." % (e-s)
             pass
         else:
             #print "      Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
-            for n in p.nodes:
+            for n in p.nodes:                
                 path.append([n.location.x, n.location.y])
                 if self.riverMap[n.location.x, n.location.y] > 0.0:
                     #print "aStar: A river found another river"
