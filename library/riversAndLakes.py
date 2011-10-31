@@ -157,9 +157,30 @@ class Rivers():
             * sides of river are also eroded to slope into riverbed.
             '''
 
+        # clean up river route
+        celevation = 1.0
         for r in river:
-            x,y = r
+            rx, ry = r
+            relevation = self.heightmap[rx,ry]
+            if relevation < celevation:
+                celevation = relevation
+            elif relevation > celevation:
+                #print 'river cleanup: ', relevation, celevation
+                self.heightmap[rx,ry] = celevation
 
+        # erosion of riverbed
+        x, y = river[0]
+        maxElevation = self.heightmap[x, y]
+        x, y = river[-1]
+        minElevation = self.heightmap[x, y]
+        print 'river min/max: ', maxElevation, minElevation
+        relevation = maxElevation
+        for r in river:
+            rx, ry = r
+            ranElevation = random.uniform(minElevation,relevation)
+            if ranElevation < relevation:
+                relevation = ranElevation
+                self.heightmap[rx,ry] = relevation
 
         return
 
@@ -260,7 +281,7 @@ class Rivers():
             pass
         else:
             #print "      Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
-            for n in p.nodes:                
+            for n in p.nodes:
                 path.append([n.location.x, n.location.y])
                 if self.riverMap[n.location.x, n.location.y] > 0.0:
                     #print "aStar: A river found another river"
@@ -281,7 +302,7 @@ class Rivers():
             return
 
         # Base case. If the current [x, y] elevation is greater then do nothing.
-        if self.heightmap[x, y] > elevation:   
+        if self.heightmap[x, y] > elevation:
             return
 
         # Flood area and mark on map
