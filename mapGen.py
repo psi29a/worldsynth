@@ -313,10 +313,11 @@ class mapGen():
 
                     if self.elevation[x,y] <= WGEN_SEA_LEVEL: # sealevel
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
-                    elif self.rivers[x,y] > 0:
-                        hexified = COLOR_COBALT
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
+
+                    if self.rivers[x,y] > 0:
+                        hexified = COLOR_COBALT
 
                     if self.lakes[x,y] > 0:
                         hexified = COLOR_AZURE
