@@ -10,16 +10,19 @@ from aStar import *
 
 class Rivers():
 
-    def __init__(self, heightmap, rainmap):
+    def __init__(self, heightmap, rainmap=None):
         self.heightmap = heightmap
         self.rainmap = rainmap
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.riverMap = zeros((self.worldW, self.worldH))
         self.lakeMap = zeros((self.worldW, self.worldH))
+        self.waterPath = zeros((self.worldW, self.worldH), dtype=int)        
         self.lakeList = []
 
     def run(self):
+        self.waterPath = self.findWaterPath()
+        
         riverSources = self.riverSources()
 
         for source in riverSources:
@@ -47,50 +50,76 @@ class Rivers():
 
         return
 
+    def findWaterPath(self):
+        '''Find the flow direction for each cell that is above the waterline'''
+        # iterate through each cell
+        for x in range(0, self.worldW-1):
+            for y in range(0, self.worldH-1):
+                # search around cell for a direction
+                path = self.findQuickPath([x,y])
+                if path:
+                    tx,ty = path
+                    flowDir = [tx-x,ty-y]
+                    key = 0
+                    for dir in DIR_GRID:
+                        if dir == flowDir:
+                            self.waterPath[x,y] = key
+                        key += 1
+                else:
+                    self.waterPath[0,0] = 0
+                print DIR_GRID[self.waterPath[x,y]]
+        exit('hah')
+                    
+        
+
     def riverSources(self):
-        '''Find places on map where sources of river can be found '''
+        '''Find places on map where sources of river can be found'''
         widgets = ['Finding river sources: ', Percentage(), ' ', ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=self.worldH*self.worldH)
 
         riverSourceList = []
-
-        square = 32
-        #square = int(math.log(self.worldH, 2)**2)
-
-        # iterate through map and mark river sources
-        for x in range(0, self.worldW-1, square):
-            for y in range(0, self.worldH-1, square):
-
-                #print 'Ranges: ', x, y, square+x, square+y
-
-                # chance of river if rainfall is high and
-                # elevation around base of mountains
-                # TODO
-
-                # find random location
-                sources = []
-                for sx in range(x, x+square):
-                    for sy in range(y, y+square):
-
-                        if self.isOutOfBounds([sx, sy]):
-                            continue
-
-                        if self.heightmap[sx, sy] < BIOME_ELEVATION_HILLS or \
-                            self.heightmap[sx, sy] > BIOME_ELEVATION_MOUNTAIN_LOW:
-                            continue
-
-                        sources.append([sx, sy])
-
-                #print len(sources), sources
-
-                if sources:
-                    #print "Possible sources: ", len(sources)
-                    source = sources[random.randint(0, len(sources))]
-                    #print "River source: ", source
-                    riverSourceList.append(source)
-
-            pbar.update(x+y)
-        pbar.finish()
+        
+        if self.rainmap == None:
+            # Version 1, is good 'enough' but we can do better.          
+            square = 32
+            #square = int(math.log(self.worldH, 2)**2)
+            # iterate through map and mark river sources
+            for x in range(0, self.worldW-1, square):
+                for y in range(0, self.worldH-1, square):
+                    #print 'Ranges: ', x, y, square+x, square+y    
+                    # find random location
+                    sources = []
+                    for sx in range(x, x+square):
+                        for sy in range(y, y+square):
+                            if self.isOutOfBounds([sx, sy]):
+                                continue
+                            if self.heightmap[sx, sy] < BIOME_ELEVATION_HILLS or \
+                                self.heightmap[sx, sy] > BIOME_ELEVATION_MOUNTAIN_LOW:
+                                continue
+                            sources.append([sx, sy])
+                    #print len(sources), sources
+                    if sources:
+                        #print "Possible sources: ", len(sources)
+                        source = sources[random.randint(0, len(sources))]
+                        #print "River source: ", source
+                        riverSourceList.append(source)
+                pbar.update(x+y)
+            pbar.finish()
+            
+        else:
+            # Version 2, with rainfall
+            #  Using the wind and rainfall data, create river 'seeds' by 
+            #    flowing rainfall along paths until a 'flow' threshold is reached
+            #    and we have a beginning of a river... trickle->stream->river->sea
+            
+            # step one: water flow per cell based on rainfall 
+            waterFlow = self.rainmap
+            for cell in self.heightmap:
+                print cell
+                
+            exit()
+            pass                
+            
         return riverSourceList
 
     def inCircle(self, radius, center_x, center_y, x, y):
