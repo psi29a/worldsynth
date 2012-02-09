@@ -13,8 +13,8 @@ from library.riversAndLakes import *
 from library.biomes import *
 
 class mapGen():
-    """Our game object! This is a fairly simple object that handles the
-    initialization of pygame and sets up our game to run."""
+    """This is a fairly simple object that handles the initialization of pygame 
+    and sets up our game to run."""
 
     def __init__(self, size=512, debug=False):
         """Called when the the Game object is initialized. Initializes
@@ -171,8 +171,8 @@ class mapGen():
         if self.debug:
             print "Going on full autopilot..."
             self.createHeightmap()
-            #self.createTemperature()
-            #self.createWindAndRain()
+            self.createTemperature()
+            self.createWindAndRain()
             self.createRiversAndLakes()
             #self.createDrainage()
             #self.createBiomes()
@@ -426,7 +426,7 @@ class mapGen():
         self.showMap('biomemap')
 
     def createRiversAndLakes(self):
-        riversObject = Rivers(self.elevation, None)
+        riversObject = Rivers(self.elevation, self.rainfall)
         riversObject.run()
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
