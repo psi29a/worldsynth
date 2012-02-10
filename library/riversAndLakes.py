@@ -17,14 +17,21 @@ class Rivers():
         self.worldH = len(self.heightmap[0])
         self.riverMap = zeros((self.worldW, self.worldH))
         self.lakeMap = zeros((self.worldW, self.worldH))
-        self.waterPath = zeros((self.worldW, self.worldH), dtype=int)        
+        self.waterPath = zeros((self.worldW, self.worldH), dtype=int)
+        self.waterFlow = self.rainmap       
         self.lakeList = []
 
     def run(self):
-        self.waterPath = self.findWaterPath()
+        # step one: water flow per cell based on rainfall 
+        self.findWaterFlow()
         
+        # step two: find river sources (seeds)
         riverSources = self.riverSources()
 
+# temp
+        #return
+
+        # step three: for each source, find a path to sea
         for source in riverSources:
             x,y = source
             #self.riverMap[x,y] = 0.1
@@ -44,33 +51,31 @@ class Rivers():
             #self.riverMap[x, y] = 0.1
             #break
 
+        # step four: rivers with no paths to sea form lakes
         for lake in self.lakeList:
             print "Found a lake here: ", lake
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
-
         return
 
-    def findWaterPath(self):
-        '''Find the flow direction for each cell that is above the waterline'''
+    def findWaterFlow(self):
+        '''Find the flow direction for each cell in heightmap'''
         # iterate through each cell
         for x in range(0, self.worldW-1):
             for y in range(0, self.worldH-1):
                 # search around cell for a direction
                 path = self.findQuickPath([x,y])
                 if path:
-                    tx,ty = path
+                    tx,ty = path             
+                    if self.heightmap[tx,ty] < WGEN_SEA_LEVEL:
+                        continue # to not bother with cells below sealevel
                     flowDir = [tx-x,ty-y]
                     key = 0
-                    for dir in DIR_GRID:
+                    for dir in DIR_NEIGHBORS_CENTER:
                         if dir == flowDir:
                             self.waterPath[x,y] = key
                         key += 1
-                else:
-                    self.waterPath[0,0] = 0
-                print DIR_GRID[self.waterPath[x,y]]
-        exit('hah')
-                    
-        
+
+                #print DIR_ALL_CENTER[self.waterPath[x,y]]
 
     def riverSources(self):
         '''Find places on map where sources of river can be found'''
@@ -112,13 +117,47 @@ class Rivers():
             #    flowing rainfall along paths until a 'flow' threshold is reached
             #    and we have a beginning of a river... trickle->stream->river->sea
             
-            # step one: water flow per cell based on rainfall 
-            waterFlow = self.rainmap
-            for cell in self.heightmap:
-                print cell
-                
-            exit()
-            pass                
+            # step one: Using flow direction, follow the path for each cell
+            #    adding the previous cell's flow to the current cell's flow.
+            # step two: We loop through the water flow map looking for cells 
+            #    above the water flow threshold. These are our river sources and
+            #    we mark them as rivers. While looking, the cells with no
+            #    out-going flow, above water flow threshold and are still 
+            #    above sea level are marked as 'sources'.
+                        
+            for x in range(0, self.worldW-1):
+                for y in range(0, self.worldH-1):
+                    if self.waterPath[x,y] == 1:
+                        continue # ignore cells without flow direction
+                    
+                    cx,cy = x,y # begin with starting location
+                    neighbourSeedFound = False
+                    while not neighbourSeedFound: # follow flow path to where it may lead
+                        
+                        # have we found a seed?
+                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS and \
+                            self.heightmap[cx, cy] <= BIOME_ELEVATION_MOUNTAIN_LOW and \
+                            self.waterFlow[cx,cy] >= 30.0:
+                        
+                            for tx,ty in DIR_ALL: # do we have any seed neighbors?
+                                if self.riverMap[cx+tx,cy+ty] > 0.0:
+                                    neighbourSeedFound = True  
+                            if neighbourSeedFound:
+                                break # we do not want seeds for neighbors
+                            
+                            riverSourceList.append([cx, cy]) # river seed
+                            self.riverMap[cx,cy] = self.waterFlow[cx,cy] #temp: mark it on map to see 'seed'
+                            break
+                            
+                        # no path means dead end...
+                        if self.waterPath[cx,cy] == 0.0:
+                            break # break out of loop
+                        
+                        # follow path, add water flow from previous cell                            
+                        dx,dy = DIR_NEIGHBORS_CENTER[self.waterPath[cx,cy]]
+                        nx,ny = cx+dx,cy+dy # calculate next cell
+                        self.waterFlow[nx,ny] += self.waterFlow[cx,cy]
+                        cx,cy = nx,ny # set current cell to next cell
             
         return riverSourceList
 
@@ -224,7 +263,7 @@ class Rivers():
         lowestElevation = self.heightmap[x, y]
         #lowestDirection = [0, 0]
 
-        for dx,dy in DIR_ALL:
+        for dx,dy in DIR_NEIGHBORS:
             tempDir = [x+dx, y+dy]
             tx, ty = tempDir
 
