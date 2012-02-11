@@ -135,18 +135,19 @@ class Rivers():
                     while not neighbourSeedFound: # follow flow path to where it may lead
                         
                         # have we found a seed?
-                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS and \
+                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS_LOW and \
                             self.heightmap[cx, cy] <= BIOME_ELEVATION_MOUNTAIN_LOW and \
                             self.waterFlow[cx,cy] >= 30.0:
                         
                             for tx,ty in DIR_ALL: # do we have any seed neighbors?
-                                if self.riverMap[cx+tx,cy+ty] > 0.0:
-                                    neighbourSeedFound = True  
+                                for seed in riverSourceList:
+                                    if seed == [cx+tx,cy+ty]:
+                                        neighbourSeedFound = True  
                             if neighbourSeedFound:
                                 break # we do not want seeds for neighbors
                             
                             riverSourceList.append([cx, cy]) # river seed
-                            self.riverMap[cx,cy] = self.waterFlow[cx,cy] #temp: mark it on map to see 'seed'
+                            #self.riverMap[cx,cy] = self.waterFlow[cx,cy] #temp: mark it on map to see 'seed'
                             break
                             
                         # no path means dead end...
@@ -180,7 +181,12 @@ class Rivers():
             # found another river?
             if self.riverMap[x, y] > 0.0:
                 #print "A river found another river."
-                break #TODO:  make remaining river stronge
+                break #TODO:  make remaining river stronger
+            
+            # is there a river nearby
+            for tx,ty in DIR_NEIGHBORS: # do we have any river neighbors?
+                if self.riverMap[x+tx,y+ty] > 0.0:
+                    break # TODO: same as above TODO         
 
             # found a sea?
             if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
