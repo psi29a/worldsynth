@@ -135,14 +135,16 @@ class Rivers():
                     while not neighbourSeedFound: # follow flow path to where it may lead
                         
                         # have we found a seed?
-                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS_LOW and \
+                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS and \
                             self.heightmap[cx, cy] <= BIOME_ELEVATION_MOUNTAIN_LOW and \
                             self.waterFlow[cx,cy] >= 30.0:
                         
-                            for tx,ty in DIR_ALL: # do we have any seed neighbors?
-                                for seed in riverSourceList:
-                                    if seed == [cx+tx,cy+ty]:
-                                        neighbourSeedFound = True  
+                        
+                            # try not to create seeds around other seeds
+                            for seed in riverSourceList:
+                                sx,sy = seed
+                                if self.inCircle(5,cx,cy,sx,sy):
+                                    neighbourSeedFound = True  
                             if neighbourSeedFound:
                                 break # we do not want seeds for neighbors
                             
