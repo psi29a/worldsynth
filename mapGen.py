@@ -174,8 +174,8 @@ class mapGen():
             self.createTemperature()
             self.createWindAndRain()
             self.createRiversAndLakes()
-            #self.createDrainage()
-            #self.createBiomes()
+            self.createDrainage()
+            self.createBiomes()
 
         print 'Starting Event Loop'
         running = True
