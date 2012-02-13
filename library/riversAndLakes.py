@@ -109,8 +109,6 @@ class Rivers():
                         #print "River source: ", source
                         riverSourceList.append(source)
                 pbar.update(x+y)
-            pbar.finish()
-            
         else:
             # Version 2, with rainfall
             #  Using the wind and rainfall data, create river 'seeds' by 
@@ -161,7 +159,8 @@ class Rivers():
                         nx,ny = cx+dx,cy+dy # calculate next cell
                         self.waterFlow[nx,ny] += self.waterFlow[cx,cy]
                         cx,cy = nx,ny # set current cell to next cell
-            
+                pbar.update(x+y)
+        pbar.finish()            
         return riverSourceList
 
     def inCircle(self, radius, center_x, center_y, x, y):
@@ -175,6 +174,12 @@ class Rivers():
         #currentElevation = self.heightmap[x, y]
         path = [source]
         direction = []
+
+        # first check that our source is not next to a river
+        x,y = currentLocation
+        for tx,ty in DIR_NEIGHBORS: # do we have any river neighbors?
+            if self.riverMap[x+tx,y+ty] > 0.0:
+                return [] # return empty set, ignore the source        
 
         # start the flow
         while True:
