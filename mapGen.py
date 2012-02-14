@@ -4,43 +4,46 @@ import random, sys, os, getopt
 import pygame.display
 from numpy import *
 from pygame.locals import *
-from library.popup_menu import PopupMenu
+from library.gui import gui
 from library.midpointDisplacement import *
 from library.diamondSquare import *
 from library.temperature import *
 from library.windAndRain import *
 from library.riversAndLakes import *
 from library.biomes import *
+from library.render import render
 
 class mapGen():
-    """This is a fairly simple object that handles the initialization of pygame 
-    and sets up our game to run."""
+    '''More than just a map generator but a world generator complete with
+    oceans, rivers, forests and more.'''
 
     def __init__(self, size=512, debug=False):
-        """Called when the the Game object is initialized. Initializes
-        pygame and sets up our pygame window and other pygame tools
-        that we will need for more complicated tutorials."""
+        self.debug = debug
         pygame.init()
-        pygame.display.set_icon(pygame.image.load("data/images/icon.png"))
+        pygame.display.set_icon(pygame.image.load("data"+os.sep+"images"+os.sep+"icon.png"))
 
         # create our window
         self.height = size
         self.width = size
         self.window = pygame.display.set_mode((self.width, self.height))
 
-        # do some defines
-        self.debug = debug
+        # setup our working directories
+        self.homeDir = os.environ['HOME']+os.sep+'.mapGen'
+        if not os.path.exists(self.homeDir):
+            os.makedirs(self.homeDir)
 
         # world data
-        self.elevation = None
-        self.wind = None
-        self.rainfall = None
-        self.temperature = None
-        self.rivers = None
-        self.lakes = None
-        self.contiguous = None
-        self.biome = None
-        self.biomeColour = None
+        self.elevation = zeros((self.width, self.height))
+        self.wind = zeros((self.width, self.height))
+        self.rainfall = zeros((self.width, self.height))
+        self.temperature = zeros((self.width, self.height))
+        self.rivers = zeros((self.width, self.height))
+        self.lakes = zeros((self.width, self.height))
+        self.drainage = zeros((self.width, self.height))
+        self.biome = zeros((self.width, self.height))
+        self.biomeColour = zeros((self.width, self.height))
+        
+        self.world = {}    
 
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -64,104 +67,13 @@ class mapGen():
         textpos.centerx = self.background.get_rect().centerx
         self.background.blit(text, textpos)
 
+        # initialize gui
+        self.gui = gui()
+
         # update the display so the background is on there
         self.window.blit(self.background, (0,0))
         pygame.display.update()
 
-        # create menues
-        self.actionMenu = (
-            'Action Menu',
-            (
-                'Actions',
-                'Heightmap',
-                'Temperature',
-                'WindAndRain',
-                'Drainage',
-                'Rivers',
-                'Biomes',
-            ),
-            (
-                'Size',
-                'Tiny',
-                'Small',
-                'Medium',
-                'Large',
-            ),
-            'Save',
-            'Reset',
-            'Quit',
-        )
-        self.viewMenu = (
-            'View Menu',
-            'Height Map',
-            'Sea Level',
-            'Elevation',
-            'Heat Map',
-            'Raw Heat Map',
-            'Wind Map',
-            'Rain Map',
-            'Wind and Rain Map',
-            'Drainage Map',
-            'River Map',
-            'Biome Map'
-        )
-
-
-    def handleMenu(self,e):
-        print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
-        if e.name == 'Action Menu':
-            if e.text == 'Quit':
-                quit()
-            elif e.text == 'Reset':
-                self.__init__()
-
-        elif e.name == 'Actions...':
-            if e.text == 'Heightmap':
-                self.createHeightmap()
-            elif e.text == 'Temperature':
-                self.createTemperature()
-            elif e.text == 'WindAndRain':
-                self.createWindAndRain()
-            elif e.text == 'Drainage':
-                self.createDrainage()
-            elif e.text == 'Rivers':
-                self.createRiversAndLakes()
-            elif e.text == 'Biomes':
-                self.createBiomes()
-
-        elif e.name == 'Size...':
-            if e.text == 'Tiny':
-                self.__init__(size=128)
-            if e.text == 'Small':
-                self.__init__(size=256)
-            elif e.text == 'Medium':
-                self.__init__(size=512)
-            elif e.text == 'Large':
-                self.__init__(size=1024)
-
-        elif e.name == 'View Menu':
-            if e.text == 'Height Map':
-                self.showMap('heightmap')
-            elif e.text == 'Sea Level':
-                self.showMap('sealevel')
-            elif e.text == 'Elevation':
-                self.showMap('elevation')
-            elif e.text == 'Heat Map':
-                self.showMap('heatmap')
-            elif e.text == 'Raw Heat Map':
-                self.showMap('rawheatmap')
-            elif e.text == 'Wind Map':
-                self.showMap('windmap')
-            elif e.text == 'Rain Map':
-                self.showMap('rainmap')
-            elif e.text == 'Wind and Rain Map':
-                self.showMap('windandrainmap')
-            elif e.text == 'Drainage Map':
-                self.showMap('drainagemap')
-            elif e.text == 'River Map':
-                self.showMap('rivermap')
-            elif e.text == 'Biome Map':
-                self.showMap('biomemap')
 
     def run(self):
         """Runs the game. Contains the game loop that computes and renders
@@ -192,7 +104,8 @@ class mapGen():
             # update the title bar with our frames per second
             pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
 
-            # blit the dirty areas of the screen
+            # blit to screen our background
+            self.window.blit(self.background, (0,0))         
             pygame.display.update()
             #pygame.display.flip()
 
@@ -217,134 +130,46 @@ class mapGen():
             elif event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     print 'Show action menu: '
-                    PopupMenu(self.actionMenu)
+                    self.gui.menu('actionMenu')
                 elif event.button == 3:
                     print 'Show view menu: '
-                    PopupMenu(self.viewMenu)
+                    self.gui.menu('viewMenu')
 
             elif event.type == USEREVENT:
                 if event.code == 'MENU':
-                    self.handleMenu(event)
-
-        self.window.blit(self.background, (0,0)) # blit to screen our background
-        pygame.display.update() # update our screen after event
-
+                    callback = self.gui.handleMenu(event)
+                    
+                    # we did something...
+                    if callback:
+                        exec(callback)                        
         return True
 
 
-    def showMap(self,mapType):
-        background = []
-
-        if mapType == "heightmap":
-            for x in self.elevation:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-                    background.append(int(hexified,0))
-
-        elif mapType == "sealevel":
-            for x in self.elevation:
-                for y in x:
-                    colour = int(y*255)
-                    if y <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 255*y)
-                    else:
-                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-                    background.append(int(hexified,0))
-
-        elif mapType == "elevation":
-            for x in self.elevation:
-                for y in x:
-                    if y <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 128)
-                    elif y < BIOME_ELEVATION_HILLS: # grasslands
-                        hexified = "0x%02x%02x%02x" % (128, 255, 0)
-                    elif y < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
-                        hexified = "0x%02x%02x%02x" % (90, 128, 90)
-                    else:
-                        hexified = "0x%02x%02x%02x" % (255, 255, 255)
-
-                    background.append(int(hexified,0))
-
-        elif mapType == "heatmap":
-            for x in self.temperature:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (255*y,128*y,255*(1-y))
-                    background.append(int(hexified,0))
-
-        elif mapType == "rawheatmap":
-            for x in self.temperature:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
-                    background.append(int(hexified,0))
-
-        elif mapType == 'windmap':
-            for x in self.wind:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (0,255*y,0)
-                    background.append(int(hexified,0))
-
-        elif mapType == 'rainmap':
-            for x in self.rainfall:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (100*y,100*y,255*y)
-                    background.append(int(hexified,0))
-
-        elif mapType == 'windandrainmap':
-            for x in range(0,self.width):
-                for y in range(0,self.height):
-                    wind = int(255*min(self.wind[x,y],1.0))
-                    rain = int(255*min(self.rainfall[x,y],1.0))
-                    hexified = "0x%02x%02x%02x" % (0,wind,rain)
-                    background.append(int(hexified,0))
-
-        elif mapType == 'drainagemap':
-            for x in self.drainage:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
-                    background.append(int(hexified,0))
-
-        elif mapType == 'rivermap':
-            for x in range(0,self.width):
-                for y in range(0,self.height):
-                    colour = int(self.elevation[x,y]*255)
-
-                    if self.elevation[x,y] <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
-                    else:
-                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-
-                    if self.rivers[x,y] > 0:
-                        hexified = COLOR_COBALT
-
-                    if self.lakes[x,y] > 0:
-                        hexified = COLOR_AZURE
-
-                    if isinstance(hexified,int):
-                        background.append(hexified)
-                    else:
-                        background.append(int(hexified,0))
-
-        elif mapType == 'biomemap':
-            for x in range(0,self.width):
-                for y in range(0,self.height):
-                    hexified = self.biomeColour[x,y]
-                    background.append(hexified)
-
-        else: # something bad happened...
-            print "did not get a map type, check your bindings programmer man!"
-            print len(background),background
-            background = zeros((self.width,self.height),dtype="int32")
+    def showMap(self,mapType):     
+        renderer = render(self.world)
+        background = renderer.convert(mapType)
 
         #print len(background),len(self.elevation)
+        #print background
 
         background = array(background,dtype="int32").reshape(self.width,self.height)
         pygame.surfarray.blit_array(self.background, background)
         pygame.display.update()
         #print len(background),background
-        del background
+
+    def updateWorld(self):
+        # update and package up our world data
+        self.world = { 
+          'elevation': self.elevation, 
+          'wind': self.wind, 
+          'rainfall': self.rainfall, 
+          'temperature': self.temperature,
+          'rivers': self.rivers,
+          'lakes': self.lakes,
+          'drainage': self.drainage,
+          'biome': self.biome,
+          'biomeColour': self.biomeColour,
+          }           
 
     def createHeightmap(self):
         mda = MDA(self.width, self.height, roughness=15)
@@ -352,7 +177,7 @@ class mapGen():
         while not found: # loop until we have something workable
             mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL-0.1)
             self.elevation = mda.heightmap
-            self.showMap('heightmap')
+            #self.showMap('heightmap')
             if self.landMassPercent() < 0.15:
                 print "Rejecting map: to little landmass"
             elif self.landMassPercent() > 0.85:
@@ -368,10 +193,8 @@ class mapGen():
             else:
                 print "Success! We have found an usable map."
                 found = True
-            pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
-            self.window.blit(self.background, (0,0))
-            pygame.display.update()
         del mda
+        self.updateWorld()
         self.showMap('heightmap')
 
     def createTemperature(self):
@@ -382,6 +205,7 @@ class mapGen():
         tempObject.run()
         self.temperature = tempObject.temperature
         del tempObject
+        self.updateWorld()
         self.showMap('rawheatmap')
 
     def createWindAndRain(self):
@@ -396,6 +220,7 @@ class mapGen():
         self.wind = warObject.windMap
         self.rainfall = warObject.rainMap
         del warObject
+        self.updateWorld()
         self.showMap('windandrainmap')
 
     def createDrainage(self):
@@ -403,26 +228,16 @@ class mapGen():
         drainObject.run()
         self.drainage = drainObject.heightmap
         del drainObject
+        self.updateWorld()
         self.showMap('drainagemap')
 
     def createBiomes(self):
-        if self.elevation == None:
-            print "Error: No heightmap!"
-            return
-        if self.temperature == None:
-            print "Error: No temperature map!"
-            return
-        if self.drainage == None:
-            print "Error: No drainage map!"
-            return
-        if self.rainfall == None:
-            print "Error: No rainfall map!"
-            return
         biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
         biomeObject.run()
         self.biome = biomeObject.biome
         self.biomeColour = biomeObject.biomeColourCode
         del biomeObject
+        self.updateWorld()
         self.showMap('biomemap')
 
     def createRiversAndLakes(self):
@@ -431,6 +246,7 @@ class mapGen():
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         del riversObject
+        self.updateWorld()
         self.showMap('rivermap')
 
     def landMassPercent(self):
