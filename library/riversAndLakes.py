@@ -12,14 +12,16 @@ class Rivers():
 
     def __init__(self, heightmap, rainmap=None):
         self.heightmap = heightmap
-        self.rainmap = rainmap
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.riverMap = zeros((self.worldW, self.worldH))
         self.lakeMap = zeros((self.worldW, self.worldH))
-        self.waterPath = zeros((self.worldW, self.worldH), dtype=int)
-        self.waterFlow = self.rainmap       
+        self.waterPath = zeros((self.worldW, self.worldH), dtype=int)    
         self.lakeList = []
+        self.waterFlow = None
+        if rainmap is not None:
+            self.waterFlow = rainmap.copy()
+            
 
     def run(self):
         # step one: water flow per cell based on rainfall 
@@ -28,21 +30,22 @@ class Rivers():
         # step two: find river sources (seeds)
         riverSources = self.riverSources()
 
-# temp
-        #return
-
+        widgets = ['Generating rivers: ', Percentage(), ' ', ETA()]
+        pbar = ProgressBar(widgets=widgets, maxval=len(riverSources))
+        counter = 0
+        
         # step three: for each source, find a path to sea
         for source in riverSources:
             x,y = source
             #self.riverMap[x,y] = 0.1
             #continue
 
-            print "Finding path for river: ", source
+            #print "Finding path for river: ", source
             river = self.riverFlow(source)
             #print 'River path:', river
 
             if river:
-                print "Simulating erosion..."
+                #print "Simulating erosion..."
                 self.riverErosion(river)
 
             for wx,wy in river:
@@ -50,6 +53,10 @@ class Rivers():
 
             #self.riverMap[x, y] = 0.1
             #break
+
+            pbar.update(counter)
+            counter += 1
+        pbar.finish()           
 
         # step four: rivers with no paths to sea form lakes
         for lake in self.lakeList:
@@ -79,12 +86,10 @@ class Rivers():
 
     def riverSources(self):
         '''Find places on map where sources of river can be found'''
-        widgets = ['Finding river sources: ', Percentage(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=self.worldH*self.worldH)
 
         riverSourceList = []
         
-        if self.rainmap == None:
+        if self.waterFlow is None:
             # Version 1, is good 'enough' but we can do better.          
             square = 32
             #square = int(math.log(self.worldH, 2)**2)
@@ -108,7 +113,6 @@ class Rivers():
                         source = sources[random.randint(0, len(sources))]
                         #print "River source: ", source
                         riverSourceList.append(source)
-                pbar.update(x+y)
         else:
             # Version 2, with rainfall
             #  Using the wind and rainfall data, create river 'seeds' by 
@@ -122,7 +126,6 @@ class Rivers():
             #    we mark them as rivers. While looking, the cells with no
             #    out-going flow, above water flow threshold and are still 
             #    above sea level are marked as 'sources'.
-                        
             for x in range(0, self.worldW-1):
                 for y in range(0, self.worldH-1):
                     if self.waterPath[x,y] == 1:
@@ -158,9 +161,7 @@ class Rivers():
                         dx,dy = DIR_NEIGHBORS_CENTER[self.waterPath[cx,cy]]
                         nx,ny = cx+dx,cy+dy # calculate next cell
                         self.waterFlow[nx,ny] += self.waterFlow[cx,cy]
-                        cx,cy = nx,ny # set current cell to next cell
-                pbar.update(x+y)
-        pbar.finish()            
+                        cx,cy = nx,ny # set current cell to next cell 
         return riverSourceList
 
     def inCircle(self, radius, center_x, center_y, x, y):
