@@ -59,7 +59,8 @@ class gui():
                 return 'self.__init__()'
 
         elif e.name == 'Save...':
-            pass
+            if e.text == 'Export':
+                return 'self.exportWorld()'
         
         elif e.name == 'Load...':
             pass

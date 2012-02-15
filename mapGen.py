@@ -146,8 +146,9 @@ class mapGen():
 
 
     def showMap(self,mapType):     
-        renderer = render(self.world)
-        background = renderer.convert(mapType)
+        #renderer = render(self.world)
+        #background = renderer.convert(mapType)
+        background = render(self.world).convert(mapType)
 
         #print len(background),len(self.elevation)
         #print background
@@ -170,6 +171,15 @@ class mapGen():
           'biome': self.biome,
           'biomeColour': self.biomeColour,
           }           
+
+    def exportWorld(self):
+        '''Dump all data to disk.'''
+        import tables
+        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData")
+        root = h5file.root
+        h5file.createArray(root,"elevation",self.elevation)
+        h5file.createArray(root,"temperature",self.elevation)
+        h5file.close
 
     def createHeightmap(self):
         mda = MDA(self.width, self.height, roughness=15)
