@@ -1,4 +1,5 @@
 from constants import *
+from numpy import *
 
 class render():
     '''Transform the numpy data into a renderable form suitable for screen and
@@ -114,8 +115,8 @@ class render():
                     background.append(hexified)
 
         else: # something bad happened...
-            print "did not get a map type, check your bindings programmer man!"
-            print len(background),background
+            print "did not get a valid map type, check your bindings programmer man!"
+            print len(background),background, mapType
             background = zeros((self.width,self.height),dtype="int32")
             
         return background

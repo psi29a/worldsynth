@@ -63,7 +63,8 @@ class gui():
                 return 'self.exportWorld()'
         
         elif e.name == 'Load...':
-            pass
+            if e.text == 'Import':
+                return 'self.importWorld()'            
 
         elif e.name == 'Actions...':
             if e.text == 'Heightmap':

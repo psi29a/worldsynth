@@ -42,8 +42,7 @@ class mapGen():
         self.drainage = zeros((self.width, self.height))
         self.biome = zeros((self.width, self.height))
         self.biomeColour = zeros((self.width, self.height))
-        
-        self.world = {}    
+        self.updateWorld()    
 
         # clock for ticking
         self.clock = pygame.time.Clock()
@@ -172,14 +171,24 @@ class mapGen():
           'biomeColour': self.biomeColour,
           }           
 
+    def importWorld(self):
+        import tables
+        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='r')
+        for k in self.world:
+            exec('self.'+k+' = h5file.getNode("/",k)')
+        h5file.close()
+        self.updateWorld()
+        self.showMap('biomemap')
+            
     def exportWorld(self):
         '''Dump all data to disk.'''
         import tables
-        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData")
+        filter = tables.Filters(complevel=9, complib='bzip2', fletcher32=True)
+        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData", filters=filter)
         root = h5file.root
-        h5file.createArray(root,"elevation",self.elevation)
-        h5file.createArray(root,"temperature",self.elevation)
-        h5file.close
+        for k in self.world:
+            exec('h5file.createArray(root,k,self.world["'+k+'"])')
+        h5file.close()
 
     def createHeightmap(self):
         mda = MDA(self.width, self.height, roughness=15)
