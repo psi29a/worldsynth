@@ -18,9 +18,9 @@ class Rivers():
         self.lakeMap = zeros((self.worldW, self.worldH))
         self.waterPath = zeros((self.worldW, self.worldH), dtype=int)    
         self.lakeList = []
-        self.waterFlow = None
-        if rainmap is not None:
-            self.waterFlow = rainmap.copy()
+        self.rainmap = rainmap
+        self.waterFlow = zeros((self.worldW, self.worldH))
+
             
 
     def run(self):
@@ -128,23 +128,24 @@ class Rivers():
             #    above sea level are marked as 'sources'.
             for x in range(0, self.worldW-1):
                 for y in range(0, self.worldH-1):
-                    if self.waterPath[x,y] == 1:
-                        continue # ignore cells without flow direction
+                    rainFall = self.rainmap[x,y]
+                    self.waterFlow[x,y] = rainFall
                     
+                    if self.waterPath[x,y] == 0:
+                        continue # ignore cells without flow direction
                     cx,cy = x,y # begin with starting location
                     neighbourSeedFound = False
                     while not neighbourSeedFound: # follow flow path to where it may lead
                         
                         # have we found a seed?
-                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS and \
+                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS_LOW and \
                             self.heightmap[cx, cy] <= BIOME_ELEVATION_MOUNTAIN_LOW and \
-                            self.waterFlow[cx,cy] >= 30.0:
-                        
+                            self.waterFlow[cx,cy] >= 10.0:
                         
                             # try not to create seeds around other seeds
                             for seed in riverSourceList:
                                 sx,sy = seed
-                                if self.inCircle(5,cx,cy,sx,sy):
+                                if self.inCircle(9,cx,cy,sx,sy):
                                     neighbourSeedFound = True  
                             if neighbourSeedFound:
                                 break # we do not want seeds for neighbors
@@ -154,13 +155,13 @@ class Rivers():
                             break
                             
                         # no path means dead end...
-                        if self.waterPath[cx,cy] == 0.0:
+                        if self.waterPath[cx,cy] == 0:
                             break # break out of loop
                         
                         # follow path, add water flow from previous cell                            
                         dx,dy = DIR_NEIGHBORS_CENTER[self.waterPath[cx,cy]]
                         nx,ny = cx+dx,cy+dy # calculate next cell
-                        self.waterFlow[nx,ny] += self.waterFlow[cx,cy]
+                        self.waterFlow[nx,ny] += rainFall
                         cx,cy = nx,ny # set current cell to next cell 
         return riverSourceList
 
