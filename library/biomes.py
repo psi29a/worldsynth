@@ -64,12 +64,13 @@ class Biomes():
                 elif self.heightmap[x, y] < 0.95:                                                               # Mountain (High): e366-399, rany, dany
                     self.biome[x, y] = BIOME_TYPE_MOUNTAIN_HIGH
                     self.biomeColourCode[x, y] = COLOR_SILVER
-                elif self.heightmap[x, y] == 1.00:                                                              # Mountain (Peak): e400, rany, dany
-                    self.biome[x, y] = BIOME_TYPE_PEAK
+                elif self.heightmap[x, y] <= 1.00:                                                              # Mountain (Peak): e400, rany, dany
+                    self.biome[x, y] = BIOME_TYPE_MOUNTAIN_PEAK
                     self.biomeColourCode[x, y] = COLOR_CREAM
                 else:
                     self.biome[x, y] = BIOME_TYPE_UNDEFINED
                     self.biomeColourCode[x, y] = COLOR_RED
+                    print 'does not fit: ', self.heightmap[x,y]
 
 
 if __name__ == '__main__':

@@ -175,7 +175,7 @@ class mapGen():
         import tables
         h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='r')
         for k in self.world:
-            exec('self.'+k+' = h5file.getNode("/",k)')
+            exec('self.'+k+' = h5file.getNode("/",k).read()') # read object out of pytables
         h5file.close()
         self.updateWorld()
         self.showMap('biomemap')
@@ -183,7 +183,7 @@ class mapGen():
     def exportWorld(self):
         '''Dump all data to disk.'''
         import tables
-        filter = tables.Filters(complevel=9, complib='bzip2', fletcher32=True)
+        filter = tables.Filters(complevel=9, complib='zlib', fletcher32=True)
         h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData", filters=filter)
         root = h5file.root
         for k in self.world:
