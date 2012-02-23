@@ -18,6 +18,7 @@ class Rivers():
         self.lakeMap = zeros((self.worldW, self.worldH))
         self.waterPath = zeros((self.worldW, self.worldH), dtype=int)    
         self.lakeList = []
+        self.riverList = []        
         self.rainmap = rainmap
         self.waterFlow = zeros((self.worldW, self.worldH))
 
@@ -45,9 +46,10 @@ class Rivers():
             #print 'River path:', river
 
             if river:
+                self.riverList.append(river)                
+                self.cleanUpFlow(river)
                 #print "Simulating erosion..."
                 self.riverErosion(river)
-
             for wx,wy in river:
                 self.riverMap[wx, wy] = 0.1
 
@@ -173,7 +175,6 @@ class Rivers():
         '''simulate fluid dynamics by using starting point and flowing to the
         lowest available point'''
         currentLocation = source
-        #currentElevation = self.heightmap[x, y]
         path = [source]
         direction = []
 
@@ -188,14 +189,28 @@ class Rivers():
             x, y = currentLocation
 
             # found another river?
-            if self.riverMap[x, y] > 0.0:
+            #if self.riverMap[x, y] > 0.0:
                 #print "A river found another river."
-                break #TODO:  make remaining river stronger
+            #    break #TODO:  make remaining river stronger
             
-            # is there a river nearby
-            for tx,ty in DIR_NEIGHBORS: # do we have any river neighbors?
-                if self.riverMap[x+tx,y+ty] > 0.0:
-                    break # TODO: same as above TODO         
+            # is there a river nearby, flow into it
+#            for tx,ty in DIR_NEIGHBORS: # do we have any river neighbors?
+#                nx,ny = x+tx,y+ty
+#                if self.riverMap[nx,ny] > 0.0 and [nx,ny] not in path:
+#                    print "  A river found another river at:", x,y," -> ",nx,ny," Thus, using that river's path."
+#                    for riverPath in self.riverList:
+#                        found = False
+#                        if [nx,ny] in riverPath:
+#                           for rPath in riverPath:
+#                               rx,ry = rPath
+#                               if [nx,ny] == rPath:
+#                                   found = True
+#                                   path.append([rx,ry])
+#                               elif found == True:
+#                                   path.append([rx,ry])
+#                        elif found:
+#                            break          
+#                    break 
 
             # found a sea?
             if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
@@ -210,7 +225,6 @@ class Rivers():
                 qx, qy = quickSection
                 direction = [x-qx, y-qy]
                 currentLocation = quickSection
-                #currentElevation = self.heightmap[x, y]
 
             else:
                 #print "  A river became stuck...", currentLocation, direction
@@ -222,7 +236,6 @@ class Rivers():
                         #print '      Lower path found: ', lowerPath
                         path += lowerPath
                         currentLocation = lowerPath[-1]
-                        #currentElevation = self.heightmap[x, y]
                     else:
                         #print '      No path to lower elevation found.'
                         break
@@ -233,36 +246,76 @@ class Rivers():
 
         return path
 
+    def cleanUpFlow(self, river):
+        '''Validate that for each point in river is equal to or lower than the
+        last'''
+        celevation = 1.0
+        for r in river:
+            rx, ry = r
+            relevation = self.heightmap[rx,ry]            
+            if relevation <= celevation:
+                celevation = relevation
+            elif relevation > celevation:
+                #print 'river cleanup: ', relevation, celevation
+                self.heightmap[rx,ry] = celevation
+        return river
+
+
     def riverErosion(self, river):
         '''Simulate erosion in heightmap based on river path.
             * current location must be equal to or less than previous location
             * riverbed is carved out by % of volume/flow
             * sides of river are also eroded to slope into riverbed.
             '''
-
-        # clean up river route
-        celevation = 1.0
-        for r in river:
-            rx, ry = r
-            relevation = self.heightmap[rx,ry]
-            if relevation < celevation:
-                celevation = relevation
-            elif relevation > celevation:
-                #print 'river cleanup: ', relevation, celevation
-                self.heightmap[rx,ry] = celevation
-
+        
         # erosion of riverbed
         maxElevation = 1.0
         for r in river:
             rx, ry = r
             if self.heightmap[rx, ry] < maxElevation:
                 maxElevation = self.heightmap[rx, ry]
-            minElevation = maxElevation-(maxElevation*0.02)
+            minElevation = maxElevation-(maxElevation*0.01)
             if minElevation < WGEN_SEA_LEVEL:
                 minElevation = WGEN_SEA_LEVEL
             maxElevation = random.uniform(minElevation,maxElevation)
             self.heightmap[rx,ry] = maxElevation
+            
+        # erosion around river, create river valley
+        for r in river:
+            rx, ry = r
+            radius = 2
+            for x in range(rx-radius,rx+radius):
+                for y in range(ry-radius,ry+radius):
+                    curve = 1.0
+                    
+                    # ignore center
+                    if [x,y] == [0,0]:
+                        continue 
 
+                    # ignore river itself
+                    if [x,y] in river:
+                        continue
+
+                    # ignore areas lower than river itself
+                    if self.heightmap[x,y] <= self.heightmap[rx,ry]:
+                        continue
+                    
+                    # ignore things outside a circle
+                    if not self.inCircle(radius, rx, ry, x, y):
+                        continue
+
+                    adx = math.fabs(rx-x)
+                    ady = math.fabs(ry-y)
+                    
+                    if adx == 1 or ady == 1:
+                        curve = 0.4
+                    elif adx == 2 or ady == 2:
+                        curve = 0.2
+                    else:
+                        curve = 0.1
+                    
+                    diff = self.heightmap[x,y] - self.heightmap[rx,ry]
+                    self.heightmap[x,y] = self.heightmap[x,y] - (diff * curve)
         return
 
 

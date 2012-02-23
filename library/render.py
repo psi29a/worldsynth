@@ -96,12 +96,11 @@ class render():
                         hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
                     else:
                         hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-
-                    if self.rivers[x,y] > 0:
-                        hexified = COLOR_COBALT
-
-                    if self.lakes[x,y] > 0:
-                        hexified = COLOR_AZURE
+                        if self.rivers[x,y] > 0.0:
+                            hexified = COLOR_COBALT
+    
+                        if self.lakes[x,y] > 0.0:
+                            hexified = COLOR_AZURE
 
                     if isinstance(hexified,int):
                         background.append(hexified)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import random, sys, os, getopt
+import random, sys, os, getopt, tables
 import pygame.display
 from numpy import *
 from pygame.locals import *
@@ -17,7 +17,7 @@ class mapGen():
     '''More than just a map generator but a world generator complete with
     oceans, rivers, forests and more.'''
 
-    def __init__(self, size=512, debug=False):
+    def __init__(self, size=512, debug=False, load=False):
         self.debug = debug
         pygame.init()
         pygame.display.set_icon(pygame.image.load("data"+os.sep+"images"+os.sep+"icon.png"))
@@ -69,6 +69,10 @@ class mapGen():
         # initialize gui
         self.gui = gui()
 
+        # load export if told to
+        if load:
+            self.importWorld()
+
         # update the display so the background is on there
         self.window.blit(self.background, (0,0))
         pygame.display.update()
@@ -81,12 +85,12 @@ class mapGen():
         # check for debugging
         if self.debug:
             print "Going on full autopilot..."
-            self.createHeightmap()
-            self.createTemperature()
-            self.createWindAndRain()
+            #self.createHeightmap()
+            #self.createTemperature()
+            #self.createWindAndRain()
             self.createRiversAndLakes()
-            self.createDrainage()
-            self.createBiomes()
+            #self.createDrainage()
+            #self.createBiomes()
 
         print 'Starting Event Loop'
         running = True
@@ -172,7 +176,6 @@ class mapGen():
           }           
 
     def importWorld(self):
-        import tables
         h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='r')
         for k in self.world:
             exec('self.'+k+' = h5file.getNode("/",k).read()') # read object out of pytables
@@ -182,7 +185,6 @@ class mapGen():
             
     def exportWorld(self):
         '''Dump all data to disk.'''
-        import tables
         filter = tables.Filters(complevel=9, complib='zlib', fletcher32=True)
         h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData", filters=filter)
         root = h5file.root
@@ -343,10 +345,11 @@ class TextSprite(pygame.sprite.Sprite):
 # runs the program
 if __name__ == '__main__':
     debug = False
+    load = False
     size = 512
     # parse our options and arguments
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds:")
+        opts, args = getopt.getopt(sys.argv[1:], "hdls:")
     except getopt.GetoptError:
         #usage()
         print "Unable to parse arguments"
@@ -357,10 +360,14 @@ if __name__ == '__main__':
             print "Debugging turned on."
         elif opt in ("-s"):
             size = int(arg)
+            print "Size of map:",size
+        elif opt in ("-l"):
+            load = True
+            print "Loading last export."
         elif opt in ("-h", "--help"):
             #usage()
             print "No help for you..."
             sys.exit()
 
-    world = mapGen(size=size,debug=debug)
+    world = mapGen(size=size,debug=debug,load=load)
     world.run()
