@@ -31,7 +31,7 @@ class Biomes():
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.10 and self.drainmap[x, y] < 0.50:    # Desert (Rock): e100-299, r0-9, d33-49
                     self.biome[x, y] = BIOME_TYPE_DESERT_ROCK
                     self.biomeColourCode[x, y] = COLOR_DARK_CHESTNUT
-                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.10 and self.drainmap[x, y] < 1.00:    # Desert (Badlands): e100-299, r0-9, d50-100
+                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.10 and self.drainmap[x, y] <= 1.00:    # Desert (Badlands): e100-299, r0-9, d50-100
                     self.biome[x, y] = BIOME_TYPE_DESERT_BADLANDS
                     self.biomeColourCode[x, y] = COLOR_OLIVE
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.20 and self.drainmap[x, y] < 0.50:    # Grassland: e100-299, r10-19, d0-50
@@ -46,13 +46,13 @@ class Biomes():
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.66 and self.drainmap[x, y] < 0.50:    # Shrubland: e100-299, r33-65, d33-49
                     self.biome[x, y] = BIOME_TYPE_SHRUBLAND
                     self.biomeColourCode[x, y] = COLOR_TAUPE_PALE
-                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.66 and self.drainmap[x, y] < 1.00:    # Hills: e100-299, r10-65, d50-100
+                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.66 and self.drainmap[x, y] <= 1.00:    # Hills: e100-299, r10-65, d50-100
                     self.biome[x, y] = BIOME_TYPE_HILLS
                     self.biomeColourCode[x, y] = COLOR_EMERALD
-                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 1.00 and self.drainmap[x, y] < 0.33:    # Swamp: e100-299, r66-100, d0-32
+                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] <= 1.00 and self.drainmap[x, y] < 0.33:    # Swamp: e100-299, r66-100, d0-32
                     self.biome[x, y] = BIOME_TYPE_SWAMP
                     self.biomeColourCode[x, y] = COLOR_AMETHYST
-                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 1.00 and self.drainmap[x, y] < 1.00:    # Forest: e100-299, r66-100, d33-100
+                elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] <= 1.00 and self.drainmap[x, y] <= 1.00:    # Forest: e100-299, r66-100, d33-100
                     self.biome[x, y] = BIOME_TYPE_FOREST
                     self.biomeColourCode[x, y] = COLOR_DARK_GREEN
                 elif self.heightmap[x, y] < 0.84:                                                               # Mountain (Low): e300-332, rany, dany
