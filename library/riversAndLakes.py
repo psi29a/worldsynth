@@ -9,7 +9,9 @@ from aStar import *
 
 
 class Rivers():
-
+    '''Generates fresh water sources, rivers and lakes either randomly or with 
+    a rainmap.'''
+    
     def __init__(self, heightmap, rainmap=None):
         self.heightmap = heightmap
         self.worldW = len(self.heightmap)
@@ -34,36 +36,36 @@ class Rivers():
         widgets = ['Generating rivers: ', Percentage(), ' ', ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=len(riverSources))
         counter = 0
-        
         # step three: for each source, find a path to sea
         for source in riverSources:
-            x,y = source
-            #self.riverMap[x,y] = 0.1
-            #continue
-
-            #print "Finding path for river: ", source
             river = self.riverFlow(source)
-            #print 'River path:', river
-
             if river:
                 self.riverList.append(river)                
                 self.cleanUpFlow(river)
-                #print "Simulating erosion..."
-                self.riverErosion(river)
-            for wx,wy in river:
-                self.riverMap[wx, wy] = 0.1
-
-            #self.riverMap[x, y] = 0.1
-            #break
-
             pbar.update(counter)
             counter += 1
         pbar.finish()           
 
-        # step four: rivers with no paths to sea form lakes
+        # step four: simulate erosion and updating river map
+        widgets = ['Simulating erosion: ', Percentage(), ' ', ETA()]
+        pbar = ProgressBar(widgets=widgets, maxval=len(self.riverList))
+        counter = 0
+        for river in self.riverList:
+            self.riverErosion(river)
+            self.riverMapUpdate(river)
+            pbar.update(counter)
+            counter += 1
+        pbar.finish()  
+
+        # step five: rivers with no paths to sea form lakes
+        widgets = ['Generating lakes: ', Percentage(), ' ', ETA()]
+        pbar = ProgressBar(widgets=widgets, maxval=len(self.lakeList)) 
+        counter = 0       
         for lake in self.lakeList:
-            print "Found a lake here: ", lake
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
+            pbar.update(counter)
+            counter += 1
+        pbar.finish()              
         return
 
     def findWaterFlow(self):
@@ -88,9 +90,7 @@ class Rivers():
 
     def riverSources(self):
         '''Find places on map where sources of river can be found'''
-
         riverSourceList = []
-        
         if self.waterFlow is None:
             # Version 1, is good 'enough' but we can do better.          
             square = 32
@@ -188,29 +188,20 @@ class Rivers():
         while True:
             x, y = currentLocation
 
-            # found another river?
-            #if self.riverMap[x, y] > 0.0:
-                #print "A river found another river."
-            #    break #TODO:  make remaining river stronger
-            
-            # is there a river nearby, flow into it
-#            for tx,ty in DIR_NEIGHBORS: # do we have any river neighbors?
-#                nx,ny = x+tx,y+ty
-#                if self.riverMap[nx,ny] > 0.0 and [nx,ny] not in path:
-#                    print "  A river found another river at:", x,y," -> ",nx,ny," Thus, using that river's path."
-#                    for riverPath in self.riverList:
-#                        found = False
-#                        if [nx,ny] in riverPath:
-#                           for rPath in riverPath:
-#                               rx,ry = rPath
-#                               if [nx,ny] == rPath:
-#                                   found = True
-#                                   path.append([rx,ry])
-#                               elif found == True:
-#                                   path.append([rx,ry])
-#                        elif found:
-#                            break          
-#                    break 
+            for dx,dy in DIR_NEIGHBORS: # is there a river nearby, flow into it
+                nx,ny = x+dx,y+dy
+                for river in self.riverList:
+                    if [nx,ny] in river:
+                #if self.riverMap[nx,ny] > 0.0 and [nx,ny] not in path: # is there water and not in current path
+                        print "Found another river at:", x,y," -> ",nx,ny," Thus, using that river's path."
+                        merge = False
+                        for rx,ry in river:
+                            if [nx,ny] == [rx,ry]:
+                                merge = True
+                                path.append([rx,ry])
+                            elif merge == True:
+                                path.append([rx,ry])
+                        return path # skip the rest, return path
 
             # found a sea?
             if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
@@ -279,6 +270,8 @@ class Rivers():
                 minElevation = WGEN_SEA_LEVEL
             maxElevation = random.uniform(minElevation,maxElevation)
             self.heightmap[rx,ry] = maxElevation
+        
+        return
             
         # erosion around river, create river valley
         for r in river:
@@ -317,6 +310,16 @@ class Rivers():
                     diff = self.heightmap[x,y] - self.heightmap[rx,ry]
                     self.heightmap[x,y] = self.heightmap[x,y] - (diff * curve)
         return
+
+    def riverMapUpdate(self, river):
+        '''Update the rivermap with the rainfall that is to become the waterflow'''
+        isSeed = True
+        for x,y in river:
+            if isSeed:
+                self.riverMap[x, y] = self.waterFlow[x, y]
+            else:
+                self.riverMap[x, y] = self.rainmap[x, y] + self.riverMap[px, py]
+            px,py = x,y
 
 
     def findQuickPath(self, river):
