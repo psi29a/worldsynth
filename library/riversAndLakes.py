@@ -63,7 +63,7 @@ class Rivers():
         pbar = ProgressBar(widgets=widgets, maxval=len(self.lakeList)) 
         counter = 0       
         for lake in self.lakeList:
-            print "Found lake at:",lake
+            #print "Found lake at:",lake
             lx,ly = lake
             self.lakeMap[lx,ly] = 0.1 #TODO: make this based on rainfall/flow
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
@@ -208,7 +208,6 @@ class Rivers():
 
             # found a sea?
             if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
-                #print "A river made it out sea."
                 break
 
             # find our immediate lowest elevation and flow there
@@ -221,20 +220,15 @@ class Rivers():
                 currentLocation = quickSection
 
             else:
-                #print "  A river became stuck...", currentLocation, direction
                 lowerElevation = self.findLowerElevation(currentLocation)
                 if lowerElevation:
-                    #print '    Found a lower elevation here: ', lowerElevation
                     lowerPath = self.findPath(currentLocation, lowerElevation)
                     if lowerPath:
-                        #print '      Lower path found: ', lowerPath
                         path += lowerPath
                         currentLocation = lowerPath[-1]
                     else:
-                        #print '      No path to lower elevation found.'
                         break
                 else:
-                    #print '    This river flows into a lake!'
                     self.lakeList.append(currentLocation)
                     break
 
@@ -250,7 +244,6 @@ class Rivers():
             if relevation <= celevation:
                 celevation = relevation
             elif relevation > celevation:
-                #print 'river cleanup: ', relevation, celevation
                 self.heightmap[rx,ry] = celevation
         return river
 
@@ -273,8 +266,6 @@ class Rivers():
                 minElevation = WGEN_SEA_LEVEL
             maxElevation = random.uniform(minElevation,maxElevation)
             self.heightmap[rx,ry] = maxElevation
-        
-        return
             
         # erosion around river, create river valley
         for r in river:
@@ -283,35 +274,27 @@ class Rivers():
             for x in range(rx-radius,rx+radius):
                 for y in range(ry-radius,ry+radius):
                     curve = 1.0
-                    
-                    # ignore center
-                    if [x,y] == [0,0]:
+                    if [x,y] == [0,0]: # ignore center
                         continue 
-
-                    # ignore river itself
-                    if [x,y] in river:
+                    if [x,y] in river: # ignore river itself
+                        continue
+                    if self.heightmap[x,y] <= self.heightmap[rx,ry]: # ignore areas lower than river itself
+                        continue
+                    if not self.inCircle(radius, rx, ry, x, y): # ignore things outside a circle
                         continue
 
-                    # ignore areas lower than river itself
-                    if self.heightmap[x,y] <= self.heightmap[rx,ry]:
-                        continue
-                    
-                    # ignore things outside a circle
-                    if not self.inCircle(radius, rx, ry, x, y):
-                        continue
-
-                    adx = math.fabs(rx-x)
-                    ady = math.fabs(ry-y)
-                    
+                    adx,ady = math.fabs(rx-x), math.fabs(ry-y)
                     if adx == 1 or ady == 1:
-                        curve = 0.4
-                    elif adx == 2 or ady == 2:
                         curve = 0.2
-                    else:
-                        curve = 0.1
+                    elif adx == 2 or ady == 2:
+                        curve = 0.05
                     
-                    diff = self.heightmap[x,y] - self.heightmap[rx,ry]
-                    self.heightmap[x,y] = self.heightmap[x,y] - (diff * curve)
+                    diff = self.heightmap[rx,ry] - self.heightmap[x,y]
+                    newElevation = self.heightmap[x,y] + (diff * curve)
+                    if newElevation <= self.heightmap[rx,ry]:
+                        print 'newElevation is <= than river, fix me...'
+                        newElevation = self.heightmap[x,y]
+                    self.heightmap[x,y] = newElevation
         return
 
     def riverMapUpdate(self, river):
