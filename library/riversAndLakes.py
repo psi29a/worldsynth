@@ -24,8 +24,6 @@ class Rivers():
         self.rainmap = rainmap
         self.waterFlow = zeros((self.worldW, self.worldH))
 
-            
-
     def run(self):
         # step one: water flow per cell based on rainfall 
         self.findWaterFlow()
@@ -33,15 +31,18 @@ class Rivers():
         # step two: find river sources (seeds)
         riverSources = self.riverSources()
 
+        # step three: for each source, find a path to sea
         widgets = ['Generating rivers: ', Percentage(), ' ', ETA()]
         pbar = ProgressBar(widgets=widgets, maxval=len(riverSources))
         counter = 0
-        # step three: for each source, find a path to sea
         for source in riverSources:
             river = self.riverFlow(source)
-            if river:
+            if len(river) > 0:
                 self.riverList.append(river)                
                 self.cleanUpFlow(river)
+                rx,ry = river[-1] # find last cell in river                
+                if (self.heightmap[rx,ry] > WGEN_SEA_LEVEL):
+                    self.lakeList.append(river[-1])
             pbar.update(counter)
             counter += 1
         pbar.finish()           
@@ -62,6 +63,9 @@ class Rivers():
         pbar = ProgressBar(widgets=widgets, maxval=len(self.lakeList)) 
         counter = 0       
         for lake in self.lakeList:
+            print "Found lake at:",lake
+            lx,ly = lake
+            self.lakeMap[lx,ly] = 0.1 #TODO: make this based on rainfall/flow
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
             pbar.update(counter)
             counter += 1
@@ -192,8 +196,7 @@ class Rivers():
                 nx,ny = x+dx,y+dy
                 for river in self.riverList:
                     if [nx,ny] in river:
-                #if self.riverMap[nx,ny] > 0.0 and [nx,ny] not in path: # is there water and not in current path
-                        print "Found another river at:", x,y," -> ",nx,ny," Thus, using that river's path."
+                        #print "Found another river at:", x,y," -> ",nx,ny," Thus, using that river's path."
                         merge = False
                         for rx,ry in river:
                             if [nx,ny] == [rx,ry]:
