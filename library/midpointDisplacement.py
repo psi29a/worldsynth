@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # Requirements:
 #  - pyPNG @ http://pypng.googlecode.com
-
 import math, random, sys
 from numpy import *
 from progressbar import ProgressBar, Percentage, ETA

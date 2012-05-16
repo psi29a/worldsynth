@@ -42,7 +42,7 @@ class Rivers():
                 self.cleanUpFlow(river)
                 rx,ry = river[-1] # find last cell in river                
                 if (self.heightmap[rx,ry] > WGEN_SEA_LEVEL):
-                    self.lakeList.append(river[-1])
+                    self.lakeList.append(river[-1]) # river flowed into a lake
             pbar.update(counter)
             counter += 1
         pbar.finish()           
