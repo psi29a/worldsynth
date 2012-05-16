@@ -1,9 +1,10 @@
 from constants import *
 from numpy import *
+from PySide import QtGui
+from PySide.QtGui import QImage
 
 class render():
-    '''Transform the numpy data into a renderable form suitable for screen and
-    exporting.'''
+    '''Transform the numpy data into a renderable image suitable for screen'''
     
     def __init__(self, world):
         self.world = world
@@ -12,46 +13,46 @@ class render():
             
         self.width = len(self.elevation)
         self.height = self.width
+        self.image = QImage(self.width, self.height, QImage.Format_RGB32)
        
     def convert(self, mapType):
         
         background = []
         if mapType == "heightmap":
-            for x in self.elevation:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-                    background.append(int(hexified,0))
+            heightmap = self.elevation*255 # convert to greyscale
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = heightmap[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(gValue,gValue,gValue).rgb())            
 
         elif mapType == "sealevel":
-            for x in self.elevation:
-                for y in x:
-                    colour = int(y*255)
-                    if y <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 255*y)
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    elevation = self.elevation[x,y]
+                    gValue = elevation*255
+                    if elevation <= WGEN_SEA_LEVEL: # sealevel
+                        self.image.setPixel(x,y,QtGui.QColor(0,0,gValue).rgb())
                     else:
-                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
-                    background.append(int(hexified,0))
+                        self.image.setPixel(x,y,QtGui.QColor(gValue,gValue,gValue).rgb())
 
         elif mapType == "elevation":
-            for x in self.elevation:
-                for y in x:
-                    if y <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 128)
-                    elif y < BIOME_ELEVATION_HILLS: # grasslands
-                        hexified = "0x%02x%02x%02x" % (128, 255, 0)
-                    elif y < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
-                        hexified = "0x%02x%02x%02x" % (90, 128, 90)
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    elevation = self.elevation[x,y]
+                    if elevation <= WGEN_SEA_LEVEL: # sealevel
+                        self.image.setPixel(x,y,QtGui.QColor(0, 0, 128).rgb())
+                    elif elevation < BIOME_ELEVATION_HILLS: # grasslands
+                        self.image.setPixel(x,y,QtGui.QColor(128, 255, 0).rgb())
+                    elif elevation < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
+                        self.image.setPixel(x,y,QtGui.QColor(90, 128, 90).rgb())
                     else:
-                        hexified = "0x%02x%02x%02x" % (255, 255, 255)
-
-                    background.append(int(hexified,0))
+                        self.image.setPixel(x,y,QtGui.QColor(255, 255, 255).rgb())
 
         elif mapType == "heatmap":
-            for x in self.temperature:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (255*y,128*y,255*(1-y))
-                    background.append(int(hexified,0))
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = self.temperature[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(gValue*255,gValue*128,(1-gValue)*255).rgb())   
 
         elif mapType == "rawheatmap":
             for x in self.temperature:
@@ -118,4 +119,4 @@ class render():
             print len(background),background, mapType
             background = zeros((self.width,self.height),dtype="int32")
             
-        return background
+        return self.image
