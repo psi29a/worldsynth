@@ -3,6 +3,7 @@
 #  - pyPNG @ http://pypng.googlecode.com
 import math, random, sys
 from numpy import *
+from library.constants import *
 from progressbar import ProgressBar, Percentage, ETA
 
 class MDA():
@@ -78,6 +79,39 @@ class MDA():
                 self.heightmap[x][y + 1] = c
             if (width == 2 and height == 2):
                 self.heightmap[x + 1][y + 1] = c
+
+    def landMassPercent(self):
+        return self.heightmap.sum() / (self.width * self.height)
+
+    def averageElevation(self):
+        return average(self.heightmap)
+
+    def hasNoMountains(self):
+        if self.heightmap.max() > BIOME_ELEVATION_MOUNTAIN:
+            return False
+        return True
+
+    def landTouchesEastWest(self):
+        for x in range(0,1):
+            for y in range(0,self.height):
+                if self.heightmap[x,y] > WGEN_SEA_LEVEL or \
+                    self.heightmap[self.width-1-x,y] > WGEN_SEA_LEVEL:
+                    return True
+        return False
+
+    def landTouchesMapEdge(self):
+        result = False
+        for x in range(4,self.width-4):
+            if self.heightmap[x,4] > WGEN_SEA_LEVEL or self.heightmap[x,self.height-4] > WGEN_SEA_LEVEL:
+                result = True
+                break
+
+        for y in range(4,self.height-4):
+            if self.heightmap[4,y] > WGEN_SEA_LEVEL or self.heightmap[self.width-4,y] > WGEN_SEA_LEVEL:
+                result = True
+                break
+
+        return result
 
 # runs the program
 if __name__ == '__main__':
