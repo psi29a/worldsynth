@@ -92,12 +92,44 @@ class MapGen(QtGui.QMainWindow):
         viewSeaLevelAction.triggered.connect(self.viewSeaLevel) 
         viewElevationAction = QtGui.QAction('Elevation', self)
         viewElevationAction.setStatusTip('Display elevation.')
-        viewElevationAction.triggered.connect(self.viewElevation)         
+        viewElevationAction.triggered.connect(self.viewElevation)
+        viewRawHeatMapAction = QtGui.QAction('Raw Heat Map', self)
+        viewRawHeatMapAction.setStatusTip('Display raw temperature.')
+        viewRawHeatMapAction.triggered.connect(self.viewRawHeatMap) 
+        viewHeatMapAction = QtGui.QAction('Heat Map', self)
+        viewHeatMapAction.setStatusTip('Display temperature.')
+        viewHeatMapAction.triggered.connect(self.viewHeatMap) 
+        viewWeatherAction = QtGui.QAction('Weather (Rain and Wind)', self)
+        viewWeatherAction.setStatusTip('Display weather conditions.')
+        viewWeatherAction.triggered.connect(self.viewWeatherMap)
+        viewWindMapAction = QtGui.QAction('Wind Map', self)
+        viewWindMapAction.setStatusTip('Display wind map.')
+        viewWindMapAction.triggered.connect(self.viewWindMap)
+        viewPrecipitationAction = QtGui.QAction('Precipitation', self)
+        viewPrecipitationAction.setStatusTip('Display precipitation.')
+        viewPrecipitationAction.triggered.connect(self.viewPrecipitation)
+        viewDrainageAction = QtGui.QAction('Drainage', self)
+        viewDrainageAction.setStatusTip('Display drainage map.')
+        viewDrainageAction.triggered.connect(self.viewDrainageMap)                
+        viewRiverMapAction = QtGui.QAction('River Map', self)
+        viewRiverMapAction.setStatusTip('Display river map.')
+        viewRiverMapAction.triggered.connect(self.viewRiverMap)
+        viewBiomeMapAction = QtGui.QAction('Biome Map', self)
+        viewBiomeMapAction.setStatusTip('Display biome map.')
+        viewBiomeMapAction.triggered.connect(self.viewBiomeMap) 
 
         viewMenu = menubar.addMenu('&View')
         viewMenu.addAction(viewHeightMapAction)
         viewMenu.addAction(viewElevationAction)        
         viewMenu.addAction(viewSeaLevelAction)
+        viewMenu.addAction(viewRawHeatMapAction)
+        viewMenu.addAction(viewHeatMapAction)        
+        viewMenu.addAction(viewWeatherAction)
+        viewMenu.addAction(viewWindMapAction)
+        viewMenu.addAction(viewPrecipitationAction)
+        viewMenu.addAction(viewDrainageAction)
+        viewMenu.addAction(viewRiverMapAction)
+        viewMenu.addAction(viewBiomeMapAction)
 
         helpAboutAction = QtGui.QAction('About', self)
         helpAboutAction.setStatusTip('About the Map Generator')
@@ -171,6 +203,38 @@ class MapGen(QtGui.QMainWindow):
     def viewHeatMap(self):
         self.updateWorld()
         self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('heatmap')))        
+
+    def viewRawHeatMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('rawheatmap'))) 
+    
+    def viewWeatherMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('windandrainmap'))) 
+    
+    def viewWindMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('windmap'))) 
+    
+    def viewPrecipitation(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('rainmap'))) 
+    
+    def viewDrainageMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('drainagemap'))) 
+    
+    def viewRiverMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('rivermap'))) 
+    
+    def viewBiomeMap(self):
+        self.updateWorld()
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('biomemap'))) 
+        
+        
+
+
 
     def updateWorld(self):
         # update and package up our world data

@@ -14,6 +14,12 @@ class render():
         self.width = len(self.elevation)
         self.height = self.width
         self.image = QImage(self.width, self.height, QImage.Format_RGB32)
+
+    def hex2rgb(self, hex):
+        r = ( hexcolor >> 16 ) & 0xFF;
+        g = ( hexcolor >> 8 ) & 0xFF;
+        b = hexcolor & 0xFF;
+        return [r,g,b]
        
     def convert(self, mapType):
         
@@ -55,58 +61,51 @@ class render():
                     self.image.setPixel(x,y,QtGui.QColor(gValue*255,gValue*128,(1-gValue)*255).rgb())   
 
         elif mapType == "rawheatmap":
-            for x in self.temperature:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
-                    background.append(int(hexified,0))
+            temperature = self.temperature*255 # convert to greyscale
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = temperature[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(gValue,gValue,gValue).rgb())  
 
         elif mapType == 'windmap':
-            for x in self.wind:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (0,255*y,0)
-                    background.append(int(hexified,0))
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = self.wind[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(0,gValue*255,0).rgb())
 
         elif mapType == 'rainmap':
-            for x in self.rainfall:
-                for y in x:
-                    hexified = "0x%02x%02x%02x" % (100*y,100*y,255*y)
-                    background.append(int(hexified,0))
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = self.rainfall[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(gValue*100,gValue*100,gValue*255).rgb())
 
         elif mapType == 'windandrainmap':
-            for x in range(0,self.width):
-                for y in range(0,self.height):
-                    wind = int(255*min(self.wind[x,y],1.0))
-                    rain = int(255*min(self.rainfall[x,y],1.0))
-                    hexified = "0x%02x%02x%02x" % (0,wind,rain)
-                    background.append(int(hexified,0))
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    rain = int(255*min(self.wind[x,y],1.0))
+                    wind = int(255*min(self.rainfall[x,y],1.0))
+                    self.image.setPixel(x,y,QtGui.QColor(0,wind,rain).rgb())
 
         elif mapType == 'drainagemap':
-            for x in self.drainage:
-                for y in x:
-                    colour = int(y*255)
-                    hexified = "0x%02x%02x%02x" % (colour,colour,colour)
-                    background.append(int(hexified,0))
+            drainage = self.drainage*255 # convert to greyscale
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = drainage[x,y]
+                    self.image.setPixel(x,y,QtGui.QColor(gValue,gValue,gValue).rgb())              
 
         elif mapType == 'rivermap':
-            for x in range(0,self.width):
-                for y in range(0,self.height):
-                    colour = int(self.elevation[x,y]*255)
-
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    gValue = self.elevation[x,y]*255
                     if self.elevation[x,y] <= WGEN_SEA_LEVEL: # sealevel
-                        hexified = "0x%02x%02x%02x" % (0, 0, 255*self.elevation[x,y])
+                        self.image.setPixel(x,y,QtGui.QColor(0,0,gValue).rgb())
                     else:
-                        hexified = "0x%02x%02x%02x" % (colour, colour, colour)
+                        rgb = QtGui.QColor(gValue,gValue,gValue).rgb()
                         if self.rivers[x,y] > 0.0:
-                            hexified = COLOR_COBALT
-    
+                            rgb = COLOR_COBALT
                         if self.lakes[x,y] > 0.0:
-                            hexified = COLOR_AZURE
-
-                    if isinstance(hexified,int):
-                        background.append(hexified)
-                    else:
-                        background.append(int(hexified,0))
+                            rgb = COLOR_AZURE
+                        self.image.setPixel(x,y,rgb)
 
         elif mapType == 'biomemap':
             for x in range(0,self.width):
