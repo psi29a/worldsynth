@@ -20,6 +20,11 @@ class render():
         g = ( hexcolor >> 8 ) & 0xFF;
         b = hexcolor & 0xFF;
         return [r,g,b]
+    
+    def rgb2hex(self, rgb):
+        assert(len(rgb) == 3)
+        return '#%02x%02x%02x' % rgb
+        
        
     def convert(self, mapType):
         

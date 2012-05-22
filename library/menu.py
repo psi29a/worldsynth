@@ -1,0 +1,80 @@
+from PySide import QtGui
+
+class Menu():
+    '''Abstracted menu system for worldgenerator'''
+    
+    def __init__(self, mapGen, menuBar):
+        ''' initialization of menu through mapGen object '''
+        
+        # File actions
+        fileExitAction = QtGui.QAction('Exit', mapGen)
+        fileExitAction.setShortcut('Ctrl+Q')
+        fileExitAction.setStatusTip('Exit application')
+        fileExitAction.triggered.connect(mapGen.close)
+        fileMenu = menuBar.addMenu('&File')
+        fileMenu.addAction(fileExitAction)
+        
+        # Generate actions
+        genHeightMapAction = QtGui.QAction('Heightmap', mapGen)
+        genHeightMapAction.setStatusTip('Generate a heightmap and display it.')
+        genHeightMapAction.triggered.connect(mapGen.genHeightMap)        
+        genHeatMapAction = QtGui.QAction('Heatmap', mapGen)
+        genHeatMapAction.setStatusTip('Generate a heatmap and display it.')
+        genHeatMapAction.triggered.connect(mapGen.genHeatMap)         
+        generateMenu = menuBar.addMenu('&Generate')
+        generateMenu.addAction(genHeightMapAction)
+        generateMenu.addAction(genHeatMapAction)
+
+        # View actions
+        viewHeightMapAction = QtGui.QAction('Raw Heightmap', mapGen)
+        viewHeightMapAction.setStatusTip('Display raw heightmap.')
+        viewHeightMapAction.triggered.connect(mapGen.viewHeightMap)   
+        viewSeaLevelAction = QtGui.QAction('Sea Level', mapGen)
+        viewSeaLevelAction.setStatusTip('Display sea level view.')
+        viewSeaLevelAction.triggered.connect(mapGen.viewSeaLevel) 
+        viewElevationAction = QtGui.QAction('Elevation', mapGen)
+        viewElevationAction.setStatusTip('Display elevation.')
+        viewElevationAction.triggered.connect(mapGen.viewElevation)
+        viewRawHeatMapAction = QtGui.QAction('Raw Heat Map', mapGen)
+        viewRawHeatMapAction.setStatusTip('Display raw temperature.')
+        viewRawHeatMapAction.triggered.connect(mapGen.viewRawHeatMap) 
+        viewHeatMapAction = QtGui.QAction('Heat Map', mapGen)
+        viewHeatMapAction.setStatusTip('Display temperature.')
+        viewHeatMapAction.triggered.connect(mapGen.viewHeatMap) 
+        viewWeatherAction = QtGui.QAction('Weather (Rain and Wind)', mapGen)
+        viewWeatherAction.setStatusTip('Display weather conditions.')
+        viewWeatherAction.triggered.connect(mapGen.viewWeatherMap)
+        viewWindMapAction = QtGui.QAction('Wind Map', mapGen)
+        viewWindMapAction.setStatusTip('Display wind map.')
+        viewWindMapAction.triggered.connect(mapGen.viewWindMap)
+        viewPrecipitationAction = QtGui.QAction('Precipitation', mapGen)
+        viewPrecipitationAction.setStatusTip('Display precipitation.')
+        viewPrecipitationAction.triggered.connect(mapGen.viewPrecipitation)
+        viewDrainageAction = QtGui.QAction('Drainage', mapGen)
+        viewDrainageAction.setStatusTip('Display drainage map.')
+        viewDrainageAction.triggered.connect(mapGen.viewDrainageMap)                
+        viewRiverMapAction = QtGui.QAction('River Map', mapGen)
+        viewRiverMapAction.setStatusTip('Display river map.')
+        viewRiverMapAction.triggered.connect(mapGen.viewRiverMap)
+        viewBiomeMapAction = QtGui.QAction('Biome Map', mapGen)
+        viewBiomeMapAction.setStatusTip('Display biome map.')
+        viewBiomeMapAction.triggered.connect(mapGen.viewBiomeMap) 
+        viewMenu = menuBar.addMenu('&View')
+        viewMenu.addAction(viewHeightMapAction)
+        viewMenu.addAction(viewElevationAction)        
+        viewMenu.addAction(viewSeaLevelAction)
+        viewMenu.addAction(viewRawHeatMapAction)
+        viewMenu.addAction(viewHeatMapAction)        
+        viewMenu.addAction(viewWeatherAction)
+        viewMenu.addAction(viewWindMapAction)
+        viewMenu.addAction(viewPrecipitationAction)
+        viewMenu.addAction(viewDrainageAction)
+        viewMenu.addAction(viewRiverMapAction)
+        viewMenu.addAction(viewBiomeMapAction)
+
+        # Help actions
+        helpAboutAction = QtGui.QAction('About', mapGen)
+        helpAboutAction.setStatusTip('About the Map Generator')
+        helpAboutAction.triggered.connect(mapGen.aboutApp)
+        helpMenu = menuBar.addMenu('&Help')
+        helpMenu.addAction(helpAboutAction)
