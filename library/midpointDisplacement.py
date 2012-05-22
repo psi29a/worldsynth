@@ -1,10 +1,8 @@
 #!/usr/bin/python
-# Requirements:
-#  - pyPNG @ http://pypng.googlecode.com
 import math, random, sys
 from numpy import *
+from PySide import QtGui
 from library.constants import *
-from progressbar import ProgressBar, Percentage, ETA
 
 class MDA():
     def __init__(self, width, height,roughness=8):
@@ -14,10 +12,14 @@ class MDA():
         self.roughness = roughness
         self.heightmap = zeros((self.width,self.height))
 
-    def run(self, globe=False, seaLevel=0.25):
-        widgets = ['Generating heightmap: ', Percentage(), ' ', ETA() ]
-        self.pbar = ProgressBar(widgets=widgets, maxval=self.width*self.height)
+    def run(self, globe=False, seaLevel=0.25, sb=None):
         self.heightmap = zeros((self.width,self.height))
+        self.sb = sb
+        if self.sb != None:
+            self.progressValue = 0
+            self.progress = QtGui.QProgressBar() 
+            self.progress.setRange(0,self.width*self.height)
+            self.sb.addPermanentWidget(self.progress)
 
         if globe: # try to create world that wraps around on a globe/sphere
             c1 = random.uniform(0.00, seaLevel)     # top
@@ -30,8 +32,10 @@ class MDA():
             c2 = random.random()    # right
             c4 = random.random()    # left
         self.divideRect(0, 0, self.width, self.height, c1, c2, c3, c4)
-        self.pbar.finish()
-        del self.pbar
+        
+        if self.sb != None:
+            self.sb.removeWidget(self.progress)
+            del self.progress 
 
     def normalize(self, point): # +/- infinity are reset to 1 and 1 values
         if point < 0.0:
@@ -45,7 +49,6 @@ class MDA():
         return (random.random() - 0.5) * maxd
 
     def divideRect(self, x, y, width, height, c1, c2, c3, c4):
-        self.pbar.update(x+y)
         new_width = math.floor(width / 2)
         new_height = math.floor(height / 2)
 
@@ -53,7 +56,7 @@ class MDA():
             # average of all the points and normalize in case of "out of bounds" during displacement
             mid = self.normalize(self.normalize(((c1 + c2 + c3 + c4) / 4) + self.displace(new_width + new_height)))
 
-            # midpoint of the edges is the average of its two endpoints
+            # midpoint of the edges is the average of its two end points
             edge1 = self.normalize((c1 + c2) / 2)
             edge2 = self.normalize((c2 + c3) / 2)
             edge3 = self.normalize((c3 + c4) / 2)
@@ -79,6 +82,10 @@ class MDA():
                 self.heightmap[x][y + 1] = c
             if (width == 2 and height == 2):
                 self.heightmap[x + 1][y + 1] = c
+                
+        if self.sb != None:
+            self.progress.setValue(self.progressValue)
+            self.progressValue += 1
 
     def landMassPercent(self):
         return self.heightmap.sum() / (self.width * self.height)
