@@ -62,6 +62,7 @@ WGEN_RAIN_FALLOFF = 0.2 # Default 0.2 - less for less rain, more for more rain
 WGEN_WIND_GRAVITY = 0.975
 TEMPERATURE_BAND_RESOLUTION = 2 # 1 is perfect, higher = rougher
 
+
 #Colour contant
 # http://df.magmawiki.com/index.php/Colour (as reference)
 COLOR_BLACK = 0x000000
