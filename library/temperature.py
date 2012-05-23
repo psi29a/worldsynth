@@ -6,25 +6,26 @@ from PySide import QtGui
 from constants import *
 
 class Temperature():
-    def __init__(self, heightmap=zeros(1), hemisphere=2):
+    def __init__( self, heightmap = zeros( 1 ), hemisphere = 2, resolution = TEMPERATURE_BAND_RESOLUTION ):
         self.heightmap = heightmap
         self.hemisphere = hemisphere
-        self.worldW = len(self.heightmap)
-        self.worldH = len(self.heightmap[0])
-        self.temperature = zeros((self.worldW,self.worldH))
+        self.resolution = resolution
+        self.worldW = len( self.heightmap )
+        self.worldH = len( self.heightmap[0] )
+        self.temperature = zeros( ( self.worldW, self.worldH ) )
 
-    def run(self, sb=None):
+    def run( self, sb = None ):
         # setup or local variables
         if sb != None:
             progressValue = 0
-            progress = QtGui.QProgressBar() 
-            progress.setRange(0,self.worldH)
-            sb.addPermanentWidget(progress)
-                    
-        for i in xrange(0, self.worldH, TEMPERATURE_BAND_RESOLUTION):
+            progress = QtGui.QProgressBar()
+            progress.setRange( 0, self.worldH / self.resolution )
+            sb.addPermanentWidget( progress )
+
+        for i in xrange( 0, self.worldH, self.resolution ):
             if sb != None:
-                progress.setValue(progressValue)
-                progressValue += 1            
+                progress.setValue( progressValue )
+                progressValue += 1
 
             # Generate band
             bandy = i
@@ -32,61 +33,61 @@ class Temperature():
 
             if self.hemisphere == WGEN_HEMISPHERE_NORTH:
                     # 0, 0.5, 1
-                    bandtemp = float(i)/self.worldH
+                    bandtemp = float( i ) / self.worldH
             elif self.hemisphere == WGEN_HEMISPHERE_EQUATOR:
                     # 0, 1, 0
-                    if i < (self.worldH/2):
-                        bandtemp = float(i)/self.worldH
+                    if i < ( self.worldH / 2 ):
+                        bandtemp = float( i ) / self.worldH
                     else:
-                        bandtemp = 1.0 - float(i)/self.worldH
+                        bandtemp = 1.0 - float( i ) / self.worldH
                     bandtemp *= 2.0
             elif self.hemisphere == WGEN_HEMISPHERE_SOUTH:
                     # 1, 0.5, 0
-                    bandtemp = 1.0 - float(i)/self.worldH
+                    bandtemp = 1.0 - float( i ) / self.worldH
             else:
                 print "Whoops: no hemisphere chosen."
                 exit()
 
             #print bandtemp,i,self.worldH
-            bandtemp = max(bandtemp, 0.075)
+            bandtemp = max( bandtemp, 0.075 )
 
             # Initialise at bandy and randomise direction
             direction = 1.0
             diradj = 1
-            dirsin = random.randint(1,8)            
-            band = zeros(self.worldW)
-            for x in xrange(self.worldW):
+            dirsin = random.randint( 1, 8 )
+            band = zeros( self.worldW )
+            for x in xrange( self.worldW ):
                 band[x] = bandy
                 band[x] += direction
-                direction = direction + random.uniform(0.0, math.sin(dirsin*x)*diradj)
+                direction = direction + random.uniform( 0.0, math.sin( dirsin * x ) * diradj )
                 if direction > bandrange:
                     diradj = -1
-                    dirsin = random.randint(1,8)
+                    dirsin = random.randint( 1, 8 )
                 if direction < -bandrange:
                     diradj = 1
-                    dirsin = random.randint(1,8)
+                    dirsin = random.randint( 1, 8 )
 
 
             # create temperature map
-            for x in xrange(self.worldW):
-                bandx = int(band[x])
-                for y in xrange(self.worldH):
+            for x in xrange( self.worldW ):
+                bandx = int( band[x] )
+                for y in xrange( self.worldH ):
                     if y > bandx:
-                        if self.heightmap[x,y] < WGEN_SEA_LEVEL: # typical temp at sea level
+                        if self.heightmap[x, y] < WGEN_SEA_LEVEL: # typical temp at sea level
                                 temperature = bandtemp * 0.7
                         else: # typical temp at elevation
-                                temperature = bandtemp * (1.0 - (self.heightmap[x,y]-WGEN_SEA_LEVEL))
-                        self.temperature[x,y] = temperature
-                        
+                                temperature = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
+                        self.temperature[x, y] = temperature
+
             #break # for profiling 
         if sb != None:
-            sb.removeWidget(progress)
-            del progress 
+            sb.removeWidget( progress )
+            del progress
 
 if __name__ == '__main__':
-    heightmap = zeros((512,512))
-    tempObject = Temperature(heightmap)
+    heightmap = zeros( ( 512, 512 ) )
+    tempObject = Temperature( heightmap )
     #tempObject.run()
     import cProfile
-    cProfile.run('tempObject.run()')
+    cProfile.run( 'tempObject.run()' )
     #print tempObject.temperature
