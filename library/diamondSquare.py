@@ -7,22 +7,22 @@
 
 import math, random, sys
 from numpy import *
-from progressbar import ProgressBar, Percentage, ETA
 
-class DS():
-    def __init__( self, depth=9, roughness=0.5, scale=1.0):
+class DSA():
+    #def __init__( self, depth=9, roughness=0.5, scale=1.0):
+    def __init__(self, width, height, roughness=0.5, scale=1.0):
         # initialise arguments to constructor
-        self.depth = int(depth)
+        #self.depth = int(depth)
+        self.width = width
+        self.height = height
+        self.depth = int(math.log(width,2))        
         self.roughness = float(roughness)
-        self.scale=float(scale)
+        self.scale = float(scale)
         self.size = (1 << self.depth)+1         # grid size, 2^depth+1
         self.heightmap = zeros((self.size,self.size))
-        widgets = ['Generating heightmap: ', Percentage(), ' ', ETA() ]
-        self.pbar = ProgressBar(widgets=widgets, maxval=self.size*self.size)
-
 
     # Itterative terrain deformer using classic diamond-square algorithm.
-    def run(self):
+    def run(self, globe, sealevel):
         # Seeds an initial random altitude for the four corners of the dataset.
         self.heightmap[0,0]                     = self.scale*(random.random()-self.roughness)
         self.heightmap[0,self.size-1]           = self.scale*(random.random()-self.roughness)
@@ -53,7 +53,6 @@ class DS():
               x = x + s
           rough = rough * self.roughness #0.5
           r = r >> 1
-          self.pbar.update(i)
 
         # compress the range while maintaining ratio
         newMin = 0.0; newMax = 1.0;
@@ -68,10 +67,9 @@ class DS():
             for y in range(0,self.size):
                 self.heightmap[x,y] = (((self.heightmap[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin
 
-        # trip up heightmap to be power of 2
+        # trim up heightmap to be power of 2
         self.heightmap = delete(self.heightmap,1,0)
         self.heightmap = delete(self.heightmap,1,1)
-        self.pbar.finish()
 
     def diamond( self, c, x, y, step ):
         if step > 1:
@@ -103,24 +101,6 @@ class DS():
         h = avg/num + self.scale * c * (random.random()-self.roughness)
         self.heightmap[x+half][y+half] = h
 
-#            if self.landMassPercent() < 0.15 or self.landMassPercent() > 0.85 or self.averageElevation() < 0.2 or self.averageElevation() > 0.8:
-#                print "Rejecting map: retrying..."
-#                self.heightmap = zeros((self.width,self.height))
-#            else:
-#                print "We have a winner!"
-#                break
-
-
-    def landMassPercent(self):
-        return self.heightmap.sum() / (self.width * self.height)
-
-    def averageElevation(self):
-        return average(self.heightmap)
-
 # runs the program
 if __name__ == '__main__':
-    print "Setting things up..."
-    mda = DS()
-    print "Thinking..."
-    mda.run()
     print "done!"

@@ -2,7 +2,6 @@
 import math, random, sys
 from numpy import *
 from PySide import QtGui
-from constants import *
 
 class MDA():
     def __init__( self, width, height, roughness = 8 ):
@@ -10,16 +9,10 @@ class MDA():
         self.width = width
         self.height = height
         self.roughness = roughness
-        self.heightmap = zeros( ( self.width, self.height ) )
+        self.heightmap = None
 
-    def run( self, globe = False, seaLevel = 0.25, sb = None ):
-        self.heightmap = zeros( ( self.width, self.height ) )
-        self.sb = sb
-        if self.sb != None:
-            self.progressValue = 0
-            self.progress = QtGui.QProgressBar()
-            self.progress.setRange( 0, self.width * self.height )
-            self.sb.addPermanentWidget( self.progress )
+    def run( self, globe = False, seaLevel = 0.25 ):
+        self.heightmap = zeros( ( self.width, self.height ) ) # reset on run
 
         if globe: # try to create world that wraps around on a globe/sphere
             c1 = random.uniform( 0.00, seaLevel )     # top
@@ -32,10 +25,6 @@ class MDA():
             c2 = random.random()    # right
             c4 = random.random()    # left
         self.divideRect( 0, 0, self.width, self.height, c1, c2, c3, c4 )
-
-        if self.sb != None:
-            self.sb.removeWidget( self.progress )
-            del self.progress
 
     def normalize( self, point ): # +/- infinity are reset to 1 and 1 values
         if point < 0.0:
@@ -79,43 +68,6 @@ class MDA():
                 self.heightmap[x][y + 1] = c
             if ( width == 2 and height == 2 ):
                 self.heightmap[x + 1][y + 1] = c
-
-        if self.sb != None:
-            self.progress.setValue( self.progressValue )
-            self.progressValue += 1
-
-    def landMassPercent( self ):
-        return self.heightmap.sum() / ( self.width * self.height )
-
-    def averageElevation( self ):
-        return average( self.heightmap )
-
-    def hasNoMountains( self ):
-        if self.heightmap.max() > BIOME_ELEVATION_MOUNTAIN:
-            return False
-        return True
-
-    def landTouchesEastWest( self ):
-        for x in range( 0, 1 ):
-            for y in range( 0, self.height ):
-                if self.heightmap[x, y] > WGEN_SEA_LEVEL or \
-                    self.heightmap[self.width - 1 - x, y] > WGEN_SEA_LEVEL:
-                    return True
-        return False
-
-    def landTouchesMapEdge( self ):
-        result = False
-        for x in range( 4, self.width - 4 ):
-            if self.heightmap[x, 4] > WGEN_SEA_LEVEL or self.heightmap[x, self.height - 4] > WGEN_SEA_LEVEL:
-                result = True
-                break
-
-        for y in range( 4, self.height - 4 ):
-            if self.heightmap[4, y] > WGEN_SEA_LEVEL or self.heightmap[self.width - 4, y] > WGEN_SEA_LEVEL:
-                result = True
-                break
-
-        return result
 
 # runs the program
 if __name__ == '__main__':
