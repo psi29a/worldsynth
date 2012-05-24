@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-
 from numpy import *
 from constants import *
-
 
 class Biomes():
 

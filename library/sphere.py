@@ -5,16 +5,18 @@ import pygame.display, pygame.image
 import random
 import sys
 from math import ceil
+from numpy import *
 
-class Planet():
-    def __init__(self,mapSize = 512):
+class Sphere():
+    def __init__(self, width, height):
             self.percentWater = .70
-            self.mapSize = mapSize #width (same as height) in pixels
+            self.mapSize = width #width (same as height) in pixels
             self.maxSize = 2.40 # 1 to 5 How big should the slices be cut, smaller slices create more islands
             self.shape = 1.40 # 1 has round continents .5 is twice as tall as it is wide, 2.0 is twice as wide as tall
             self.driftRate = .70 # As the world ages how much slower does it drift. 1 creates a more textured world but takes longer
             self.roughness = 1 #High numbers make a world faster, with more "ridges", but also makes things less "smooth"
             self.filename = 'heightmap.bmp'
+            self.heightmap = zeros((self.mapSize,self.mapSize))
 
             self.randType = random.uniform #change to alter variability
             self.xrand = lambda ms = self.mapSize*3: int(self.randType(0, ms))
@@ -92,7 +94,8 @@ class Planet():
         picture = imageToPygame(picture)
         return picture
 
-    def generatePlanet(self, sphere, displayInterval = 50):
+    def run(self, globe, seaLevel, displayInterval = 50):
+        sphere = self.createSphere()
         extrema = self.highestPointOnSphere(sphere)
         i = 0
         picture = self.sphereToPicture(sphere)
@@ -112,7 +115,13 @@ class Planet():
             #    if event.type == pygame.QUIT:    
             #        return image
             extrema = self.highestPointOnSphere(sphere)
-        return sphere
+        
+        self.heightmap = array(sphere.getdata(),float)#.reshape(sphere.size[1],sphere.size[0],3)
+        self.heightmap = self.heightmap.reshape(512,512) / 100
+        print self.heightmap
+        #return sphere
+        
+        
         
 if __name__ == '__main__':
     sphere = Planet()

@@ -19,7 +19,7 @@ from PySide import QtGui, QtCore
 from library.constants import *
 from library.menu import *
 from library.render import render
-from library.midpointDisplacement import *
+from library.heightmap import *
 from library.temperature import *
 from library.weather import *
 from library.rivers import *
@@ -81,26 +81,27 @@ class MapGen( QtGui.QMainWindow ):
     def genHeightMap( self ):
         '''Generate our heightmap'''
         self.sb.showMessage( 'Generating heightmap...' )
-        mda = MDA( self.width, self.height, roughness = 15 )
+        heightObject = HeightMap( self.width, self.height, roughness = 15 )
         found = False
         while not found: # loop until we have something workable
-            mda.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1 )
-            if mda.landMassPercent() < 0.15:
+            heightObject.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1, method = HM_SPH )
+            break
+            if heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage( 'Too little land mass' )
-            elif mda.landMassPercent() > 0.85:
+            elif heightObject.landMassPercent() > 0.85:
                 self.statusBar().showMessage( 'Too much land mass' )
-            elif mda.averageElevation() < 0.2:
+            elif heightObject.averageElevation() < 0.2:
                 self.statusBar().showMessage( 'Average elevation is too low' )
-            elif mda.averageElevation() > 0.8:
+            elif heightObject.averageElevation() > 0.8:
                 self.statusBar().showMessage( 'Average elevation is too high' )
-            elif mda.hasNoMountains():
+            elif heightObject.hasNoMountains():
                 self.statusBar().showMessage( 'Not enough mountains' )
-            elif mda.landTouchesEastWest():
+            elif heightObject.landTouchesEastWest():
                 self.statusBar().showMessage( 'Cannot wrap around a sphere.' )
             else:
                 found = True
-        self.elevation = mda.heightmap
-        del mda
+        self.elevation = heightObject.heightmap
+        del heightObject
         self.viewHeightMap()
         self.statusBar().showMessage( 'Successfully generated a heightmap!' )
 
@@ -221,7 +222,7 @@ class MapGen( QtGui.QMainWindow ):
             self.statusBar().showMessage( 'Error: No weather!' )
             return                       
         riversObject = Rivers(self.elevation, self.rainfall)
-        riversObject.run()
+        riversObject.run( self.sb )
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         del riversObject

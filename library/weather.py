@@ -25,10 +25,16 @@ class Weather():
         rainFall = 1.0
         worldW = len( self.heightmap )
         worldH = len( self.heightmap[0] )
+        r = math.sqrt( worldW * worldW + worldH * worldH )
+        if sb != None:
+            progressValue = 0
+            progress = QtGui.QProgressBar()
+            progress.setRange( 0, int( r ) )
+            sb.addPermanentWidget( progress )
+            progress.setValue( 0 )             
         self.windMap = zeros( ( worldW, worldH ) )
         self.rainMap = zeros( ( worldW, worldH ) )
         worldWindDir = random.randint( 0, 360 )
-        r = math.sqrt( worldW * worldW + worldH * worldH )
         theta1 = worldWindDir * WIND_PARITY + WIND_OFFSET
         theta2 = 180 - 90 - ( worldWindDir * WIND_PARITY + WIND_OFFSET )
         sinT1 = math.sin( theta1 )
@@ -37,11 +43,6 @@ class Weather():
         rainAmount = ( ( rainFall * mapsqrt ) / WGEN_WIND_RESOLUTION ) * WGEN_RAIN_FALLOFF
         rainMap = zeros( ( worldW, worldH ) )
         rainMap.fill( rainAmount )        
-        if sb != None:
-            progressValue = 0
-            progress = QtGui.QProgressBar()
-            progress.setRange( 0, int( r ) )
-            sb.addPermanentWidget( progress )
 
         # cast wind and rain
         for d in range( int( r ), -1, -WGEN_WIND_RESOLUTION ):

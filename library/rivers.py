@@ -3,7 +3,7 @@
 import math, random, sys
 from time import time
 from numpy import *
-from progressbar import ProgressBar, Percentage, ETA
+from PySide import QtGui
 from constants import *
 from aStar import *
 
@@ -24,17 +24,27 @@ class Rivers():
         self.rainmap = rainmap
         self.waterFlow = zeros((self.worldW, self.worldH))
 
-    def run(self):
+    def run(self, sb):               
+        if sb != None:
+            progressValue = 0
+            progress = QtGui.QProgressBar()
+            progress.setRange( 0, 5 )
+            sb.addPermanentWidget( progress )
+            progress.setValue( 0 )
+                    
         # step one: water flow per cell based on rainfall 
         self.findWaterFlow()
+        if sb != None:
+            progress.setValue( progressValue )
+            progressValue += 1    
         
         # step two: find river sources (seeds)
         riverSources = self.riverSources()
+        if sb != None:
+            progress.setValue( progressValue )
+            progressValue += 1        
 
         # step three: for each source, find a path to sea
-        widgets = ['Generating rivers: ', Percentage(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=len(riverSources))
-        counter = 0
         for source in riverSources:
             river = self.riverFlow(source)
             if len(river) > 0:
@@ -42,34 +52,30 @@ class Rivers():
                 self.cleanUpFlow(river)
                 rx,ry = river[-1] # find last cell in river                
                 if (self.heightmap[rx,ry] > WGEN_SEA_LEVEL):
-                    self.lakeList.append(river[-1]) # river flowed into a lake
-            pbar.update(counter)
-            counter += 1
-        pbar.finish()           
+                    self.lakeList.append(river[-1]) # river flowed into a lake         
+        if sb != None:
+            progress.setValue( progressValue )
+            progressValue += 1
 
         # step four: simulate erosion and updating river map
-        widgets = ['Simulating erosion: ', Percentage(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=len(self.riverList))
-        counter = 0
         for river in self.riverList:
             self.riverErosion(river)
             self.riverMapUpdate(river)
-            pbar.update(counter)
-            counter += 1
-        pbar.finish()  
+        if sb != None:
+            progress.setValue( progressValue )
+            progressValue += 1    
 
-        # step five: rivers with no paths to sea form lakes
-        widgets = ['Generating lakes: ', Percentage(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=len(self.lakeList)) 
-        counter = 0       
+        # step five: rivers with no paths to sea form lakes    
         for lake in self.lakeList:
             #print "Found lake at:",lake
             lx,ly = lake
             self.lakeMap[lx,ly] = 0.1 #TODO: make this based on rainfall/flow
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
-            pbar.update(counter)
-            counter += 1
-        pbar.finish()              
+        if sb != None:
+            progress.setValue( progressValue )
+            progressValue += 1
+            sb.removeWidget( progress )
+            del progress              
         return
 
     def findWaterFlow(self):

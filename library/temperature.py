@@ -21,6 +21,7 @@ class Temperature():
             progress = QtGui.QProgressBar()
             progress.setRange( 0, self.worldH / self.resolution )
             sb.addPermanentWidget( progress )
+            progress.setValue( 0 )
 
         for i in xrange( 0, self.worldH, self.resolution ):
             if sb != None:
