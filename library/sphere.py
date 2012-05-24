@@ -116,6 +116,7 @@ class Sphere():
             #        return image
             extrema = self.highestPointOnSphere(sphere)
         
+        sphere = self.normalize(sphere)
         self.heightmap = array(sphere.getdata(),float)#.reshape(sphere.size[1],sphere.size[0],3)
         self.heightmap = self.heightmap.reshape(512,512) / 100
         print self.heightmap
