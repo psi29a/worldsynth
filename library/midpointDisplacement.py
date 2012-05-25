@@ -79,10 +79,7 @@ if __name__ == '__main__':
     height = int( sys.argv[2] )
     roughness = int( sys.argv[3] )
 
-    print "Setting things up..."
     mda = MDA( width, height, roughness )
     print "Thinking..."
     import cProfile
     cProfile.run( 'mda.run()' )
-    #mda.run()
-    print "done!"

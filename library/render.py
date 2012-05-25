@@ -25,7 +25,6 @@ class render():
         assert( len( rgb ) == 3 )
         return '#%02x%02x%02x' % rgb
 
-
     def convert( self, mapType ):
 
         background = []

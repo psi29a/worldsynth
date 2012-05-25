@@ -79,6 +79,7 @@ class Temperature():
                         else: # typical temp at elevation
                                 temperature = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
                         self.temperature[x, y] = temperature
+                    #pass
 
             #break # for profiling 
         if sb != None:
@@ -86,7 +87,7 @@ class Temperature():
             del progress
 
 if __name__ == '__main__':
-    heightmap = zeros( ( 512, 512 ) )
+    heightmap = zeros( ( 256, 256 ) )
     tempObject = Temperature( heightmap )
     #tempObject.run()
     import cProfile
