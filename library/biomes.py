@@ -18,8 +18,8 @@ class Biomes():
         steps = 0
 
         # calculate biome -- from scale of 0-400 ((oldValue-0) * (100-0)) / (400-0) + 0
-        for x in range(0, self.worldW):
-            for y in range(0, self.worldH):
+        for x in xrange(self.worldW):
+            for y in xrange(self.worldH):
                 if self.heightmap[x, y] <= WGEN_SEA_LEVEL:    # Water: e0-99, rany, dany # 0.25 converted
                     self.biome[x, y] = BIOME_TYPE_WATER
                     self.biomeColourCode[x, y] = COLOR_BLUE

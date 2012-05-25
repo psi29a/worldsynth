@@ -45,14 +45,14 @@ class Weather():
         rainMap.fill( rainAmount )        
 
         # cast wind and rain
-        for d in range( int( r ), -1, -WGEN_WIND_RESOLUTION ):
+        for d in xrange( int( r ), -1, -WGEN_WIND_RESOLUTION ):
             windx = d * sinT1
             windy = d * sinT2
 
-            for x in range( 0, worldW ):
-                for y in range( 0, worldH ):
-                    if ( int( windx + x ) > -1 ) and ( int( windy + y ) > -1 ):
-                        if ( int( windx + x ) < ( worldW ) ) and ( int( windy + y ) < ( worldH ) ):
+            for x in xrange( worldW ):
+                if int( windx + x ) > -1  and int( windx + x ) < worldW:
+                    for y in xrange( worldH ):
+                        if int( windy + y ) > -1 and int( windy + y ) < worldH:
 
                             # set our wind
                             windz = self.heightmap[int( windx + x ), int( windy + y )]

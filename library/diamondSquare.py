@@ -22,7 +22,7 @@ class DSA():
         self.heightmap = zeros((self.size,self.size))
 
     # Itterative terrain deformer using classic diamond-square algorithm.
-    def run(self, globe, sealevel):
+    def run(self, globe = True, sealevel = 0.25):
         # Seeds an initial random altitude for the four corners of the dataset.
         self.heightmap[0,0]                     = self.scale*(random.random()-self.roughness)
         self.heightmap[0,self.size-1]           = self.scale*(random.random()-self.roughness)
@@ -103,4 +103,6 @@ class DSA():
 
 # runs the program
 if __name__ == '__main__':
-    print "done!"
+    dsa = DSA(512,512)
+    import cProfile
+    cProfile.run( 'dsa.run()' )
