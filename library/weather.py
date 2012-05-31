@@ -25,11 +25,11 @@ class Weather():
         rainFall = 1.0
         worldW = len( self.heightmap )
         worldH = len( self.heightmap[0] )
-        r = math.sqrt( worldW * worldW + worldH * worldH )
+        r = int( math.sqrt( worldW * worldW + worldH * worldH ) )
         if sb != None:
             progressValue = 0
             progress = QtGui.QProgressBar()
-            progress.setRange( 0, int( r ) )
+            progress.setRange( 0, r )
             sb.addPermanentWidget( progress )
             progress.setValue( 0 )             
         self.windMap = zeros( ( worldW, worldH ) )
@@ -45,35 +45,68 @@ class Weather():
         rainMap.fill( rainAmount )        
 
         # cast wind and rain
-        for d in xrange( int( r ), -1, -WGEN_WIND_RESOLUTION ):
-            windx = d * sinT1
-            windy = d * sinT2
+        for d in xrange( r , -1, -WGEN_WIND_RESOLUTION ):
+            windx = int( d * sinT1 )
+            windy = int( d * sinT2 )
 
-            for x in xrange( worldW ):
-                if int( windx + x ) > -1  and int( windx + x ) < worldW:
-                    for y in xrange( worldH ):
-                        if int( windy + y ) > -1 and int( windy + y ) < worldH:
+            # continue if above are bigger than our map size
+            if math.fabs(windx) > worldW or math.fabs(windy) > worldH:
+                continue
 
-                            # set our wind
-                            windz = self.heightmap[int( windx + x ), int( windy + y )]
-                            self.windMap[x, y] = max( self.windMap[x, y] * WGEN_WIND_GRAVITY, windz )
+            # calculate our range to save cpu cycles
+            if windx < 0:
+                xBegin = int(math.fabs(windx))
+            else:
+                xBegin = 0
+                
+            if windy < 0:
+                yBegin = int(math.fabs(windy))
+            else:
+                yBegin = 0
+            
+            xEnd = worldW - windx
+            if xEnd > worldW:
+                xEnd = worldW
 
-                            # calculate how much rain is remaining
-                            rainRemaining = rainMap[x, y] / rainAmount * ( 1.0 - ( self.temperature[x, y] / 2.0 ) )
+            yEnd = worldH - windy
+            if yEnd > worldH:
+                yEnd = worldH
+            
+            #print windx, xBegin, xEnd#windy, yBegin
+            print windy, yBegin, yEnd
+            
+            
+            for x in xrange( xBegin, xEnd ):
+                windxX = windx + x
+                for y in xrange( yBegin, worldH ):
+                    windyY = windy + y
+                    if windyY > -1 and windyY < worldH:
+                        
+                        # set our wind
+                        windz = self.heightmap[windxX , windyY ]
+                        self.windMap[x, y] = max( self.windMap[x, y] * WGEN_WIND_GRAVITY, windz )
 
-                            # calculate our rainfall
-                            rlost = ( self.windMap[x, y] ) * rainRemaining
-                            if rlost < 0:
-                                rlost = 0
-                            rainMap[x, y] = rainMap[x, y] - rlost
-                            if rainMap[x, y] <= 0:
-                                rainMap[x, y] = 0
+                        # calculate how much rain is remaining
+                        rainRemaining = rainMap[x, y] / rainAmount * ( 1.0 - ( self.temperature[x, y] / 2.0 ) )
 
-                            self.rainMap[int( windx + x ), int( windy + y )] = rlost
+                        # calculate our rainfall
+                        rlost = self.windMap[x, y] * rainRemaining
+                        if rlost < 0:
+                            rlost = 0
+                        self.rainMap[windxX , windyY ] = rlost
+                        
+                        # calculate rain loss due raining
+                        rainMap[x, y] -= rlost
+                        if rainMap[x, y] < 0:
+                            rainMap[x, y] = 0
+                        #print 'good', y, windy, windyY
+                    else:
+                        print 'crap', y, windy, windyY
+            break
 
             if sb != None:
                 progress.setValue( progressValue )
-                progressValue += 1
+                progressValue += WGEN_WIND_RESOLUTION
         if sb != None:
             sb.removeWidget( progress )
             del progress
