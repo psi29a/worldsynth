@@ -72,14 +72,11 @@ class Temperature():
             # create temperature map
             for x in xrange( self.worldW ):
                 bandx = int( band[x] )
-                for y in xrange( self.worldH ):
-                    if y > bandx:
-                        if self.heightmap[x, y] < WGEN_SEA_LEVEL: # typical temp at sea level
-                                temperature = bandtemp * 0.7
-                        else: # typical temp at elevation
-                                temperature = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
-                        self.temperature[x, y] = temperature
-                    #pass
+                for y in xrange(bandx+1, self.worldH ):
+                    if self.heightmap[x, y] <= WGEN_SEA_LEVEL: # typical temp at sea level
+                            self.temperature[x, y] = bandtemp * 0.7
+                    else: # typical temp at elevation
+                            self.temperature[x, y] = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
 
             #break # for profiling 
         if sb != None:
