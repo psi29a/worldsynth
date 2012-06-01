@@ -20,7 +20,7 @@ class Weather():
         self.heightmap = heightmap
         self.temperature = temperature
 
-    def run( self, sb = None):
+    def run( self, sb = None ):
         # setup or local variables
         rainFall = 1.0
         worldW = len( self.heightmap )
@@ -31,7 +31,7 @@ class Weather():
             progress = QtGui.QProgressBar()
             progress.setRange( 0, r )
             sb.addPermanentWidget( progress )
-            progress.setValue( 0 )             
+            progress.setValue( 0 )
         self.windMap = zeros( ( worldW, worldH ) )
         self.rainMap = zeros( ( worldW, worldH ) )
         worldWindDir = random.randint( 0, 360 )
@@ -42,28 +42,28 @@ class Weather():
         mapsqrt = math.sqrt( worldW * worldW + worldH * worldH )
         rainAmount = ( ( rainFall * mapsqrt ) / WGEN_WIND_RESOLUTION ) * WGEN_RAIN_FALLOFF
         rainMap = zeros( ( worldW, worldH ) )
-        rainMap.fill( rainAmount )        
+        rainMap.fill( rainAmount )
 
         # cast wind and rain
         for d in xrange( r , -1, -WGEN_WIND_RESOLUTION ):
             windx = int( d * sinT1 )
             windy = int( d * sinT2 )
 
-            # continue if above are bigger than our map size
-            if math.fabs(windx) > worldW or math.fabs(windy) > worldH:
-                continue
+            # continue (next d) if above are bigger than our map size
+            if math.fabs( windx ) > worldW or math.fabs( windy ) > worldH:
+                continue # do no more processing, go to next value
 
             # calculate our range to save cpu cycles
             if windx < 0:
-                xBegin = int(math.fabs(windx))
+                xBegin = int( math.fabs( windx ) )
             else:
                 xBegin = 0
-                
+
             if windy < 0:
-                yBegin = int(math.fabs(windy))
+                yBegin = int( math.fabs( windy ) )
             else:
                 yBegin = 0
-            
+
             xEnd = worldW - windx
             if xEnd > worldW:
                 xEnd = worldW
@@ -71,38 +71,34 @@ class Weather():
             yEnd = worldH - windy
             if yEnd > worldH:
                 yEnd = worldH
-            
+
             #print windx, xBegin, xEnd#windy, yBegin
-            print windy, yBegin, yEnd
-            
-            
+            #print windy, yBegin, yEnd
+
             for x in xrange( xBegin, xEnd ):
                 windxX = windx + x
-                for y in xrange( yBegin, worldH ):
+
+                for y in xrange( yBegin, yEnd ):
                     windyY = windy + y
-                    if windyY > -1 and windyY < worldH:
-                        
-                        # set our wind
-                        windz = self.heightmap[windxX , windyY ]
-                        self.windMap[x, y] = max( self.windMap[x, y] * WGEN_WIND_GRAVITY, windz )
 
-                        # calculate how much rain is remaining
-                        rainRemaining = rainMap[x, y] / rainAmount * ( 1.0 - ( self.temperature[x, y] / 2.0 ) )
+                    # set our wind
+                    windz = self.heightmap[windxX , windyY ]
+                    self.windMap[x, y] = max( self.windMap[x, y] * WGEN_WIND_GRAVITY, windz )
 
-                        # calculate our rainfall
-                        rlost = self.windMap[x, y] * rainRemaining
-                        if rlost < 0:
-                            rlost = 0
-                        self.rainMap[windxX , windyY ] = rlost
-                        
-                        # calculate rain loss due raining
-                        rainMap[x, y] -= rlost
-                        if rainMap[x, y] < 0:
-                            rainMap[x, y] = 0
-                        #print 'good', y, windy, windyY
-                    else:
-                        print 'crap', y, windy, windyY
-            break
+                    # calculate how much rain is remaining
+                    rainRemaining = rainMap[x, y] / rainAmount * ( 1.0 - ( self.temperature[x, y] / 2.0 ) )
+
+                    # calculate our rainfall
+                    rlost = self.windMap[x, y] * rainRemaining
+                    if rlost < 0:
+                        rlost = 0
+                    self.rainMap[windxX , windyY ] = rlost
+
+                    # calculate rain loss due raining
+                    rainMap[x, y] -= rlost
+                    if rainMap[x, y] < 0:
+                        rainMap[x, y] = 0
+            #break
 
             if sb != None:
                 progress.setValue( progressValue )
@@ -113,8 +109,8 @@ class Weather():
 
 if __name__ == '__main__':
     heightMap = zeros( ( 128, 128 ) )
-    tempMap = zeros( ( 128, 128 ) )    
+    tempMap = zeros( ( 128, 128 ) )
     warObject = Weather( heightMap, tempMap )
     import cProfile
-    cProfile.run( 'warObject.run()' )    
+    cProfile.run( 'warObject.run()' )
     #warObject.run()
