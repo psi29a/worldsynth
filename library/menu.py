@@ -3,8 +3,9 @@ from PySide import QtGui
 class Menu():
     '''Abstracted menu system for worldgenerator'''
 
-    def __init__( self, mapGen, menuBar ):
+    def __init__( self, mapGen ):
         ''' initialization of menu through mapGen object '''
+        menuBar = mapGen.menuBar
 
         # File actions
         fileExitAction = QtGui.QAction( 'Exit', mapGen )

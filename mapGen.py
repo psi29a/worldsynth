@@ -51,6 +51,10 @@ class MapGen( QtGui.QMainWindow ):
         self.biomeColour = zeros( ( self.width, self.height ) )
         self.updateWorld()
 
+        # set our state
+        #self.settings = QSettings("Mindwerks", "mapGen")
+        self.state = None
+
         # display the GUI!
         self.initUI()
 
@@ -66,17 +70,26 @@ class MapGen( QtGui.QMainWindow ):
 
     def initUI( self ):
         '''Initialize the GUI for usage'''
-        self.setGeometry( 300, 300, self.width, self.height + 32 )
+        self.setMinimumSize( self.width, self.height )
         self.setWindowTitle( 'Map Generator' )
         self.sb = self.statusBar()
 
-        mapGenGui = Menu( self, self.menuBar() )
+        self.menuBar = self.menuBar()
+        mapGenGui = Menu( self )
 
         self.mainImage = QtGui.QLabel( self )
+        self.mainImage.setGeometry( 0, 0 , self.width, self.height )
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
         self.setCentralWidget( self.mainImage )
 
         self.show()
 
+        self.size = QtCore.QSize( self.geometry().width(), self.geometry().height() )
+        self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
+
+    def mouseReleaseEvent( self, e ):
+        x, y = e.pos().toTuple()
+        self.statusBar().showMessage( 'click! : ' + str( x ) + ',' + str( y - 26 ) )
 
     def genHeightMap( self ):
         '''Generate our heightmap'''
@@ -104,6 +117,7 @@ class MapGen( QtGui.QMainWindow ):
         del heightObject
         self.viewHeightMap()
         self.statusBar().showMessage( 'Successfully generated a heightmap!' )
+        self.resize( self.size )
 
     def viewHeightMap( self ):
         self.updateWorld()
@@ -133,6 +147,7 @@ class MapGen( QtGui.QMainWindow ):
         del tempObject
         self.viewHeatMap()
         self.statusBar().showMessage( 'Successfully generated a heatmap!' )
+        self.resize( self.size )
 
     def viewHeatMap( self ):
         self.updateWorld()
@@ -157,7 +172,8 @@ class MapGen( QtGui.QMainWindow ):
         self.rainfall = weatherObject.rainMap
         del weatherObject
         self.viewWeatherMap()
-        self.statusBar().showMessage( 'Successfully generated weather!' )        
+        self.statusBar().showMessage( 'Successfully generated weather!' )
+        self.resize( self.size )
 
     def viewWeatherMap( self ):
         self.updateWorld()
@@ -171,21 +187,22 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rainmap' ) ) )
 
-    def genDrainageMap(self):
+    def genDrainageMap( self ):
         '''Generate a fractal drainage map'''
-        self.sb.showMessage( 'Generating drainage...' )        
-        drainObject = MDA(self.width, self.height, 10)
+        self.sb.showMessage( 'Generating drainage...' )
+        drainObject = MDA( self.width, self.height, 10 )
         drainObject.run()
         self.drainage = drainObject.heightmap
         del drainObject
         self.viewDrainageMap()
         self.statusBar().showMessage( 'Successfully generated drainage!' )
+        self.resize( self.size )
 
     def viewDrainageMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'drainagemap' ) ) )
 
-    def genBiomeMap(self):
+    def genBiomeMap( self ):
         '''Generate a biome map'''
         self.sb.showMessage( 'Generating biomes...' )
         if self.elevation.sum() == 0:
@@ -193,26 +210,27 @@ class MapGen( QtGui.QMainWindow ):
             return
         if self.temperature.sum() == 0:
             self.statusBar().showMessage( 'Error: No heatmap!' )
-            return        
+            return
         if self.drainage.sum() == 0:
             self.statusBar().showMessage( 'Error: No drainage!' )
             return
         if self.wind.sum() == 0 or self.rainfall.sum() == 0:
             self.statusBar().showMessage( 'Error: No weather!' )
-            return        
-        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
+            return
+        biomeObject = Biomes( self.elevation, self.rainfall, self.drainage, self.temperature )
         biomeObject.run()
         self.biome = biomeObject.biome
         self.biomeColour = biomeObject.biomeColourCode
         del biomeObject
         self.viewBiomeMap()
-        self.statusBar().showMessage( 'Successfully generated biomes!' )    
+        self.statusBar().showMessage( 'Successfully generated biomes!' )
+        self.resize( self.size )
 
     def viewBiomeMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'biomemap' ) ) )
 
-    def genRiverMap(self):
+    def genRiverMap( self ):
         '''Generate a river map'''
         self.sb.showMessage( 'Generating rivers and lakes...' )
         if self.elevation.sum() == 0:
@@ -220,14 +238,15 @@ class MapGen( QtGui.QMainWindow ):
             return
         if self.wind.sum() == 0 or self.rainfall.sum() == 0:
             self.statusBar().showMessage( 'Error: No weather!' )
-            return                       
-        riversObject = Rivers(self.elevation, self.rainfall)
+            return
+        riversObject = Rivers( self.elevation, self.rainfall )
         riversObject.run( self.sb )
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         del riversObject
         self.viewRiverMap()
-        self.statusBar().showMessage( 'Successfully generated rivers and lakes!' )  
+        self.statusBar().showMessage( 'Successfully generated rivers and lakes!' )
+        self.resize( self.size )
 
     def viewRiverMap( self ):
         self.updateWorld()
