@@ -53,7 +53,7 @@ class MapGen( QtGui.QMainWindow ):
 
         # set our state
         #self.settings = QSettings("Mindwerks", "mapGen")
-        self.state = None
+        self.viewState = VIEWER_HEIGHTMAP
 
         # display the GUI!
         self.initUI()
@@ -87,9 +87,32 @@ class MapGen( QtGui.QMainWindow ):
         self.size = QtCore.QSize( self.geometry().width(), self.geometry().height() )
         self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
 
-    def mouseReleaseEvent( self, e ):
+    def mouseMoveEvent( self, e ):
         x, y = e.pos().toTuple()
-        self.statusBar().showMessage( 'click! : ' + str( x ) + ',' + str( y - 26 ) )
+        y -= 25 # offset from menu
+        
+        if x < 0 or y < 0 or x > self.width-1 or y > self.height-1:
+            return # do not bother going out of range of size
+        
+        sX, sY = str(x).zfill(4),str(y).zfill(4) # string formatting
+        
+        message = ''
+        if self.viewState == VIEWER_HEIGHTMAP:
+            message = 'Elevation is: ' + "{:4.2f}".format(self.elevation[x,y])
+        elif self.viewState == VIEWER_HEATMAP:
+            message = 'Temperature is: ' + "{:4.2f}".format(self.temperature[x,y])
+        elif self.viewState == VIEWER_RAINFALL:
+            message = 'Precipitation is: ' + "{:4.2f}".format(self.rainfall[x,y])
+        elif self.viewState == VIEWER_WIND:
+            message = 'Wind strength is: ' + "{:4.2f}".format(self.wind[x,y])
+        elif self.viewState == VIEWER_DRAINAGE:
+            message = 'Drainage is: ' + "{:4.2f}".format(self.drainage[x,y])
+        elif self.viewState == VIEWER_RIVERS:
+            message = 'River flow is: ' + "{:4.2f}".format(self.rivers[x,y])                
+        elif self.viewState == VIEWER_BIOMES:
+            message = 'Biome type is: ' + Biomes().biomeType(self.biome[x,y])     
+                
+        self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
 
     def genHeightMap( self ):
         '''Generate our heightmap'''
@@ -122,16 +145,19 @@ class MapGen( QtGui.QMainWindow ):
     def viewHeightMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage( 'Viewing raw heatmap.' )
 
     def viewElevation( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'elevation' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage( 'Viewing elevation.' )
 
     def viewSeaLevel( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'sealevel' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage( 'Viewing sealevel.' )
 
     def genHeatMap( self ):
@@ -152,10 +178,14 @@ class MapGen( QtGui.QMainWindow ):
     def viewHeatMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heatmap' ) ) )
+        self.viewState = VIEWER_HEATMAP
+        self.statusBar().showMessage( 'Viewing heatmap.' )        
 
     def viewRawHeatMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rawheatmap' ) ) )
+        self.viewState = VIEWER_HEATMAP
+        self.statusBar().showMessage( 'Viewing raw heatmap.' )          
 
     def genWeatherMap( self ):
         '''Generate a weather based on heightmap and heatmap'''
@@ -178,14 +208,20 @@ class MapGen( QtGui.QMainWindow ):
     def viewWeatherMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windandrainmap' ) ) )
+        self.viewState = VIEWER_RAINFALL
+        self.statusBar().showMessage( 'Viewing weathermap.' )        
 
     def viewWindMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windmap' ) ) )
+        self.viewState = VIEWER_WIND
+        self.statusBar().showMessage( 'Viewing windmap.' )          
 
     def viewPrecipitation( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rainmap' ) ) )
+        self.viewState = VIEWER_RAINFALL
+        self.statusBar().showMessage( 'Viewing rainmap.' )          
 
     def genDrainageMap( self ):
         '''Generate a fractal drainage map'''
@@ -201,6 +237,8 @@ class MapGen( QtGui.QMainWindow ):
     def viewDrainageMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'drainagemap' ) ) )
+        self.viewState = VIEWER_DRAINAGE
+        self.statusBar().showMessage( 'Viewing drainmap.' )         
 
     def genBiomeMap( self ):
         '''Generate a biome map'''
@@ -229,6 +267,8 @@ class MapGen( QtGui.QMainWindow ):
     def viewBiomeMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'biomemap' ) ) )
+        self.viewState = VIEWER_BIOMES
+        self.statusBar().showMessage( 'Viewing biomes.' )           
 
     def genRiverMap( self ):
         '''Generate a river map'''
@@ -251,6 +291,8 @@ class MapGen( QtGui.QMainWindow ):
     def viewRiverMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rivermap' ) ) )
+        self.viewState = VIEWER_RIVERS
+        self.statusBar().showMessage( 'Viewing rivers and lakes.' )          
 
     def updateWorld( self ):
         # update and package up our world data
