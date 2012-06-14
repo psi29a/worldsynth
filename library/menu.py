@@ -11,8 +11,15 @@ class Menu():
         fileExitAction = QtGui.QAction( 'Exit', mapGen )
         fileExitAction.setShortcut( 'Ctrl+Q' )
         fileExitAction.setStatusTip( 'Exit application' )
-        fileExitAction.triggered.connect( mapGen.close )
+        fileImportAction = QtGui.QAction( 'Import', mapGen )
+        fileImportAction.setStatusTip( 'Import world' )        
+        fileImportAction.triggered.connect( mapGen.importWorld )
+        fileExportAction = QtGui.QAction( 'Export', mapGen )
+        fileExportAction.setStatusTip( 'Export world' )        
+        fileImportAction.triggered.connect( mapGen.exportWorld )        
         fileMenu = menuBar.addMenu( '&File' )
+        fileMenu.addAction( fileImportAction )        
+        fileMenu.addAction( fileExportAction )        
         fileMenu.addAction( fileExitAction )
 
         # Generate actions
