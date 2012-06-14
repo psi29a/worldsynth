@@ -1,17 +1,23 @@
 #!/usr/bin/env python
+import sys
 from numpy import *
 from constants import *
 
 class Biomes():
 
-    def __init__(self, heightmap, rainmap, drainmap, temperature):
-        self.heightmap = heightmap
-        self.rainmap = rainmap
-        self.drainmap = drainmap
-        self.worldW = len(self.heightmap)
-        self.worldH = len(self.heightmap[0])
-        self.biome = zeros((self.worldW, self.worldH))
-        self.biomeColourCode = zeros((self.worldW, self.worldH))
+    def __init__(self, *args, **kwargs):
+        if len(args) == 0:
+            pass
+        elif len(args) == 4:
+            self.heightmap = args[0]
+            self.rainmap = args[1]
+            self.drainmap = args[2]
+            self.worldW = len(self.heightmap)
+            self.worldH = len(self.heightmap[0])
+            self.biome = zeros((self.worldW, self.worldH))
+            self.biomeColourCode = zeros((self.worldW, self.worldH))
+        else:
+            sys.exit('0 or 4 arguments only')
 
     def run(self):
         # setup or local variables
@@ -36,7 +42,7 @@ class Biomes():
                     self.biome[x, y] = BIOME_TYPE_GRASSLAND
                     self.biomeColourCode[x, y] = COLOR_GREEN
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.33 and self.drainmap[x, y] < 0.50:    # Savanna: e100-299, r20-32, d0-50
-                    self.biome[x, y] = BIOME_TYPE_SAVANNAH
+                    self.biome[x, y] = BIOME_TYPE_SAVANNA
                     self.biomeColourCode[x, y] = COLOR_GREEN_YELLOW
                 elif self.heightmap[x, y] < 0.75 and self.rainmap[x, y] < 0.66 and self.drainmap[x, y] < 0.33:    # Marsh: e100-299, r33-65, d0-32
                     self.biome[x, y] = BIOME_TYPE_MARSH
@@ -70,6 +76,40 @@ class Biomes():
                     self.biomeColourCode[x, y] = COLOR_RED
                     print 'does not fit: ', self.heightmap[x,y]
 
+                    
+    def biomeType(self, biome):
+        result = "Undefined"
+        if biome == BIOME_TYPE_WATER: 
+            result = "Water"
+        elif biome == BIOME_TYPE_GRASSLAND: 
+            result = "Grassland"
+        elif biome == BIOME_TYPE_DESERT_SAND: 
+            result = "Sandy Desert"
+        elif biome == BIOME_TYPE_DESERT_ROCK: 
+            result = "Rocky Desert"
+        elif biome == BIOME_TYPE_MOUNTAIN_LOW: 
+            result = "Low Mountains"
+        elif biome == BIOME_TYPE_MOUNTAIN_HIGH: 
+            result = "High Mountains"
+        elif biome == BIOME_TYPE_SAVANNA: 
+            result = "Savanna"
+        elif biome == BIOME_TYPE_MARSH: 
+            result = "Marsh"
+        elif biome == BIOME_TYPE_SHRUBLAND: 
+            result = "Shrubland"
+        elif biome == BIOME_TYPE_HILLS: 
+            result = "Hills"
+        elif biome == BIOME_TYPE_SWAMP: 
+            result = "Swamps"
+        elif biome == BIOME_TYPE_DESERT_BADLANDS: 
+            result = "Badlands"
+        elif biome == BIOME_TYPE_MOUNTAIN: 
+            result = "Mountains"                    
+        elif biome == BIOME_TYPE_MOUNTAIN_PEAK: 
+            result = "Mountain Peak"            
+        return result
+
 
 if __name__ == '__main__':
-    print "hello!"
+    biomes = Biomes()
+    print biomes
