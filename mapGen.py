@@ -313,9 +313,9 @@ class MapGen( QtGui.QMainWindow ):
         for k in self.world:
             exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
         h5file.close()
-        self.updateWorld()
-        self.showMap( 'biomemap' )
-
+        self.statusBar().showMessage( 'Imported world.' )  
+        self.viewBiomeMap()
+              
     def exportWorld( self ):
         '''Dump all data to disk.'''
         filter = tables.Filters( complevel = 9, complib = 'zlib', fletcher32 = True )
