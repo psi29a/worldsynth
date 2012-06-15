@@ -313,16 +313,25 @@ class MapGen( QtGui.QMainWindow ):
         for k in self.world:
             exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
         h5file.close()
+        self.updateWorld()
         self.statusBar().showMessage( 'Imported world.' )  
         self.viewBiomeMap()
               
     def exportWorld( self ):
         '''Dump all data to disk.'''
+        self.updateWorld()
+        file = self.homeDir + os.sep + 'worldData.h5'
+        if tables.isHDF5(file) < 0 :
+             self.statusBar().showMessage( 'worldData.h5 file does not exist' )
+             return
+        elif tables.isHDF5(file) == 0 :
+             self.statusBar().showMessage( 'worldData.h5 file is not valid' )
+             return
+         
         filter = tables.Filters( complevel = 9, complib = 'zlib', fletcher32 = True )
-        h5file = tables.openFile( self.homeDir + os.sep + 'worldData.h5', mode = 'w', title = "worldData", filters = filter )
-        root = h5file.root
+        h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
         for k in self.world:
-            exec( 'h5file.createArray(root,k,self.world["' + k + '"])' )
+            exec( 'h5file.createArray(h5file.root,k,self.world["' + k + '"])' )
         h5file.close()
 
     def aboutApp( self ):
