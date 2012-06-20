@@ -89,7 +89,9 @@ class MapGen( QtGui.QMainWindow ):
 
     def mouseMoveEvent( self, e ):
         x, y = e.pos().toTuple()
-        y -= 25 # offset from menu
+        
+        if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
+            y -= 25 # offset from menu
         
         if x < 0 or y < 0 or x > self.width-1 or y > self.height-1:
             return # do not bother going out of range of size
@@ -309,7 +311,14 @@ class MapGen( QtGui.QMainWindow ):
           }
 
     def importWorld( self ):
-        h5file = tables.openFile( self.homeDir + os.sep + 'worldData.h5', mode = 'r' )
+        file = self.homeDir + os.sep + 'worldData.h5'
+        if tables.isHDF5(file) < 0 :
+             self.statusBar().showMessage( 'worldData.h5 file does not exist' )
+             return
+        elif tables.isHDF5(file) == 0 :
+             self.statusBar().showMessage( 'worldData.h5 file is not valid' )
+             return        
+        h5file = tables.openFile( file, mode = 'r' )
         for k in self.world:
             exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
         h5file.close()
@@ -321,13 +330,6 @@ class MapGen( QtGui.QMainWindow ):
         '''Dump all data to disk.'''
         self.updateWorld()
         file = self.homeDir + os.sep + 'worldData.h5'
-        if tables.isHDF5(file) < 0 :
-             self.statusBar().showMessage( 'worldData.h5 file does not exist' )
-             return
-        elif tables.isHDF5(file) == 0 :
-             self.statusBar().showMessage( 'worldData.h5 file is not valid' )
-             return
-         
         filter = tables.Filters( complevel = 9, complib = 'zlib', fletcher32 = True )
         h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
         for k in self.world:
