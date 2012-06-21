@@ -89,31 +89,31 @@ class MapGen( QtGui.QMainWindow ):
 
     def mouseMoveEvent( self, e ):
         x, y = e.pos().toTuple()
-        
+
         if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
             y -= 25 # offset from menu
-        
-        if x < 0 or y < 0 or x > self.width-1 or y > self.height-1:
+
+        if x < 0 or y < 0 or x > self.width - 1 or y > self.height - 1:
             return # do not bother going out of range of size
-        
-        sX, sY = str(x).zfill(4),str(y).zfill(4) # string formatting
-        
+
+        sX, sY = str( x ).zfill( 4 ), str( y ).zfill( 4 ) # string formatting
+
         message = ''
         if self.viewState == VIEWER_HEIGHTMAP:
-            message = 'Elevation is: ' + "{:4.2f}".format(self.elevation[x,y])
+            message = 'Elevation is: ' + "{:4.2f}".format( self.elevation[x, y] )
         elif self.viewState == VIEWER_HEATMAP:
-            message = 'Temperature is: ' + "{:4.2f}".format(self.temperature[x,y])
+            message = 'Temperature is: ' + "{:4.2f}".format( self.temperature[x, y] )
         elif self.viewState == VIEWER_RAINFALL:
-            message = 'Precipitation is: ' + "{:4.2f}".format(self.rainfall[x,y])
+            message = 'Precipitation is: ' + "{:4.2f}".format( self.rainfall[x, y] )
         elif self.viewState == VIEWER_WIND:
-            message = 'Wind strength is: ' + "{:4.2f}".format(self.wind[x,y])
+            message = 'Wind strength is: ' + "{:4.2f}".format( self.wind[x, y] )
         elif self.viewState == VIEWER_DRAINAGE:
-            message = 'Drainage is: ' + "{:4.2f}".format(self.drainage[x,y])
+            message = 'Drainage is: ' + "{:4.2f}".format( self.drainage[x, y] )
         elif self.viewState == VIEWER_RIVERS:
-            message = 'River flow is: ' + "{:4.2f}".format(self.rivers[x,y])                
+            message = 'River flow is: ' + "{:4.2f}".format( self.rivers[x, y] )
         elif self.viewState == VIEWER_BIOMES:
-            message = 'Biome type is: ' + Biomes().biomeType(self.biome[x,y])     
-                
+            message = 'Biome type is: ' + Biomes().biomeType( self.biome[x, y] )
+
         self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
 
     def genHeightMap( self ):
@@ -181,13 +181,13 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heatmap' ) ) )
         self.viewState = VIEWER_HEATMAP
-        self.statusBar().showMessage( 'Viewing heatmap.' )        
+        self.statusBar().showMessage( 'Viewing heatmap.' )
 
     def viewRawHeatMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rawheatmap' ) ) )
         self.viewState = VIEWER_HEATMAP
-        self.statusBar().showMessage( 'Viewing raw heatmap.' )          
+        self.statusBar().showMessage( 'Viewing raw heatmap.' )
 
     def genWeatherMap( self ):
         '''Generate a weather based on heightmap and heatmap'''
@@ -211,19 +211,19 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windandrainmap' ) ) )
         self.viewState = VIEWER_RAINFALL
-        self.statusBar().showMessage( 'Viewing weathermap.' )        
+        self.statusBar().showMessage( 'Viewing weathermap.' )
 
     def viewWindMap( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windmap' ) ) )
         self.viewState = VIEWER_WIND
-        self.statusBar().showMessage( 'Viewing windmap.' )          
+        self.statusBar().showMessage( 'Viewing windmap.' )
 
     def viewPrecipitation( self ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rainmap' ) ) )
         self.viewState = VIEWER_RAINFALL
-        self.statusBar().showMessage( 'Viewing rainmap.' )          
+        self.statusBar().showMessage( 'Viewing rainmap.' )
 
     def genDrainageMap( self ):
         '''Generate a fractal drainage map'''
@@ -240,7 +240,7 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'drainagemap' ) ) )
         self.viewState = VIEWER_DRAINAGE
-        self.statusBar().showMessage( 'Viewing drainmap.' )         
+        self.statusBar().showMessage( 'Viewing drainmap.' )
 
     def genBiomeMap( self ):
         '''Generate a biome map'''
@@ -270,7 +270,7 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'biomemap' ) ) )
         self.viewState = VIEWER_BIOMES
-        self.statusBar().showMessage( 'Viewing biomes.' )           
+        self.statusBar().showMessage( 'Viewing biomes.' )
 
     def genRiverMap( self ):
         '''Generate a river map'''
@@ -294,7 +294,7 @@ class MapGen( QtGui.QMainWindow ):
         self.updateWorld()
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rivermap' ) ) )
         self.viewState = VIEWER_RIVERS
-        self.statusBar().showMessage( 'Viewing rivers and lakes.' )          
+        self.statusBar().showMessage( 'Viewing rivers and lakes.' )
 
     def updateWorld( self ):
         # update and package up our world data
@@ -312,29 +312,34 @@ class MapGen( QtGui.QMainWindow ):
 
     def importWorld( self ):
         file = self.homeDir + os.sep + 'worldData.h5'
-        if tables.isHDF5(file) < 0 :
+        if tables.isHDF5File( file ) < 0 :
              self.statusBar().showMessage( 'worldData.h5 file does not exist' )
              return
-        elif tables.isHDF5(file) == 0 :
+        elif tables.isHDF5File( file ) == 0 :
              self.statusBar().showMessage( 'worldData.h5 file is not valid' )
-             return        
+             return
         h5file = tables.openFile( file, mode = 'r' )
         for k in self.world:
             exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
         h5file.close()
+        del h5file,file
         self.updateWorld()
-        self.statusBar().showMessage( 'Imported world.' )  
+        self.statusBar().showMessage( 'Imported world.' )
         self.viewBiomeMap()
-              
+
     def exportWorld( self ):
         '''Dump all data to disk.'''
         self.updateWorld()
         file = self.homeDir + os.sep + 'worldData.h5'
-        filter = tables.Filters( complevel = 9, complib = 'zlib', fletcher32 = True )
+        filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
         h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
         for k in self.world:
-            exec( 'h5file.createArray(h5file.root,k,self.world["' + k + '"])' )
+            atom = tables.Atom.from_dtype(self.world[k].dtype)
+            shape = self.world[k].shape
+            cArray = h5file.createCArray( h5file.root, k, atom, shape )
+            cArray[:] = self.world[k]
         h5file.close()
+        del h5file,filter,file
 
     def aboutApp( self ):
         '''All about the application'''

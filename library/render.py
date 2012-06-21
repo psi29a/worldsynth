@@ -9,7 +9,7 @@ class render():
     def __init__( self, world ):
         self.world = world
         for k in self.world:
-            exec( 'self.' + k + ' = self.world["' + k + '"]' )
+            exec( 'self.' + k + ' = self.world[k]' )
 
         self.width = len( self.elevation )
         self.height = self.width
