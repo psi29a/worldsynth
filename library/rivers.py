@@ -102,7 +102,7 @@ class Rivers():
         '''Find places on map where sources of river can be found'''
         riverSourceList = []
         if self.waterFlow is None:
-            # Version 1, is good 'enough' but we can do better.          
+            # Version 1, is 'good enough' but we can do better.          
             square = 32
             #square = int(math.log(self.worldH, 2)**2)
             # iterate through map and mark river sources

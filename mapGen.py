@@ -122,7 +122,7 @@ class MapGen( QtGui.QMainWindow ):
         heightObject = HeightMap( self.width, self.height, roughness = 15 )
         found = False
         while not found: # loop until we have something workable
-            heightObject.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1, method = HM_SPH )
+            heightObject.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1, method = HM_MDA )
             break
             if heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage( 'Too little land mass' )
