@@ -1,373 +1,356 @@
 #!/usr/bin/env python
+"""
+Map Generator 
 
+This program is a world generator using various simulations based
+on real world phenomenon. The output data should be reusable by other
+applications. 
+
+author:  Bret Curtis
+website: http://www.mindwerks.net 
+license: LGPL
+"""
+#system libraries
 import random, sys, os, getopt, tables
-import pygame.display
 from numpy import *
-from pygame.locals import *
-from library.gui import gui
-from library.midpointDisplacement import *
-from library.diamondSquare import *
-from library.temperature import *
-from library.windAndRain import *
-from library.riversAndLakes import *
-from library.biomes import *
+from PySide import QtGui, QtCore
+
+# mapGen libraries
+from library.constants import *
+from library.menu import *
 from library.render import render
+from library.heightmap import *
+from library.temperature import *
+from library.weather import *
+from library.rivers import *
+from library.biomes import *
 
-class mapGen():
-    '''More than just a map generator but a world generator complete with
-    oceans, rivers, forests and more.'''
+class MapGen( QtGui.QMainWindow ):
 
-    def __init__(self, size=512, debug=False, load=False):
-        self.debug = debug
-        pygame.init()
-        pygame.display.set_icon(pygame.image.load("data"+os.sep+"images"+os.sep+"icon.png"))
+    def __init__( self, size = 512, debug = False, load = False ):
+        '''Attempt to allocate the necessary resources'''
+        super( MapGen, self ).__init__()
 
-        # create our window
-        self.height = size
-        self.width = size
-        self.window = pygame.display.set_mode((self.width, self.height))
+        # application variables
+        self.height = self.width = size
 
         # setup our working directories
-        self.homeDir = os.environ['HOME']+os.sep+'.mapGen'
-        if not os.path.exists(self.homeDir):
-            os.makedirs(self.homeDir)
+        self.homeDir = os.environ['HOME'] + os.sep + '.mapGen'
+        if not os.path.exists( self.homeDir ):
+            os.makedirs( self.homeDir )
 
         # world data
-        self.elevation = zeros((self.width, self.height))
-        self.wind = zeros((self.width, self.height))
-        self.rainfall = zeros((self.width, self.height))
-        self.temperature = zeros((self.width, self.height))
-        self.rivers = zeros((self.width, self.height))
-        self.lakes = zeros((self.width, self.height))
-        self.drainage = zeros((self.width, self.height))
-        self.biome = zeros((self.width, self.height))
-        self.biomeColour = zeros((self.width, self.height))
-        self.updateWorld()    
+        self.elevation = zeros( ( self.width, self.height ) )
+        self.wind = zeros( ( self.width, self.height ) )
+        self.rainfall = zeros( ( self.width, self.height ) )
+        self.temperature = zeros( ( self.width, self.height ) )
+        self.rivers = zeros( ( self.width, self.height ) )
+        self.lakes = zeros( ( self.width, self.height ) )
+        self.drainage = zeros( ( self.width, self.height ) )
+        self.biome = zeros( ( self.width, self.height ) )
+        self.biomeColour = zeros( ( self.width, self.height ) )
+        self.updateWorld()
 
-        # clock for ticking
-        self.clock = pygame.time.Clock()
+        # set our state
+        #self.settings = QSettings("Mindwerks", "mapGen")
+        self.viewState = VIEWER_HEIGHTMAP
 
-        # set the window title
-        pygame.display.set_caption("World Generator - Setup")
+        # display the GUI!
+        self.initUI()
 
-        # tell pygame to only pay attention to certain events
-        # we want to know if the user hits the X on the window, and we
-        # want keys so we can close the window with the esc key
-        pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP, MOUSEBUTTONDOWN])
-
-        # make background and blit the background onto the window
-        self.background = pygame.Surface(self.window.get_size(), depth=32)
-        self.background.fill((0, 0, 0))
-
-        # Show are initial text
-        font = pygame.font.Font(None, 36)
-        text = font.render("Click for menu.", 1, (255, 255, 255))
-        textpos = text.get_rect()
-        textpos.centerx = self.background.get_rect().centerx
-        self.background.blit(text, textpos)
-
-        # initialize gui
-        self.gui = gui()
-
-        # load export if told to
-        if load:
-            self.importWorld()
-
-        # update the display so the background is on there
-        self.window.blit(self.background, (0,0))
-        pygame.display.update()
-
-
-    def run(self):
-        """Runs the game. Contains the game loop that computes and renders
-        each frame."""
-
-        # check for debugging
-        if self.debug:
+        # Our debug / autopilot / crash dummy
+        if debug:
             print "Going on full autopilot..."
-            #self.createHeightmap()
+            self.createHeightmap()
             #self.createTemperature()
             #self.createWindAndRain()
-            self.createRiversAndLakes()
+            #self.createRiversAndLakes()
             #self.createDrainage()
-            #self.createBiomes()
+            #self.createBiomes()        
 
-        print 'Starting Event Loop'
-        running = True
-        # run until something tells us to stop
-        while running:
+    def initUI( self ):
+        '''Initialize the GUI for usage'''
+        self.setMinimumSize( self.width, self.height )
+        self.setWindowTitle( 'Map Generator' )
+        self.sb = self.statusBar()
 
-            # tick pygame clock
-            # you can limit the fps by passing the desired frames per seccond to tick()
-            self.clock.tick(60)
+        self.menuBar = self.menuBar()
+        mapGenGui = Menu( self )
 
-            # handle pygame events -- if user closes game, stop running
-            running = self.handleEvents()
+        self.mainImage = QtGui.QLabel( self )
+        self.mainImage.setGeometry( 0, 0 , self.width, self.height )
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
+        self.setCentralWidget( self.mainImage )
 
-            # update the title bar with our frames per second
-            pygame.display.set_caption('World Generator - %d fps' % self.clock.get_fps())
+        self.show()
 
-            # blit to screen our background
-            self.window.blit(self.background, (0,0))         
-            pygame.display.update()
-            #pygame.display.flip()
+        self.size = QtCore.QSize( self.geometry().width(), self.geometry().height() )
+        self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
 
-        print 'Closing '
+    def mouseMoveEvent( self, e ):
+        x, y = e.pos().toTuple()
 
+        if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
+            y -= 25 # offset from menu
 
-    def handleEvents(self):
-        """Poll for PyGame events and behave accordingly. Return false to stop
-        the event loop and end the game."""
+        if x < 0 or y < 0 or x > self.width - 1 or y > self.height - 1:
+            return # do not bother going out of range of size
 
-        # poll for pygame events
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                return False
+        sX, sY = str( x ).zfill( 4 ), str( y ).zfill( 4 ) # string formatting
 
-            # handle user input
-            elif event.type == KEYDOWN:
-                # if the user presses escape, quit the event loop.
-                if event.key == K_ESCAPE:
-                    return False
+        message = ''
+        if self.viewState == VIEWER_HEIGHTMAP:
+            message = 'Elevation is: ' + "{:4.2f}".format( self.elevation[x, y] )
+        elif self.viewState == VIEWER_HEATMAP:
+            message = 'Temperature is: ' + "{:4.2f}".format( self.temperature[x, y] )
+        elif self.viewState == VIEWER_RAINFALL:
+            message = 'Precipitation is: ' + "{:4.2f}".format( self.rainfall[x, y] )
+        elif self.viewState == VIEWER_WIND:
+            message = 'Wind strength is: ' + "{:4.2f}".format( self.wind[x, y] )
+        elif self.viewState == VIEWER_DRAINAGE:
+            message = 'Drainage is: ' + "{:4.2f}".format( self.drainage[x, y] )
+        elif self.viewState == VIEWER_RIVERS:
+            message = 'River flow is: ' + "{:4.2f}".format( self.rivers[x, y] )
+        elif self.viewState == VIEWER_BIOMES:
+            message = 'Biome type is: ' + Biomes().biomeType( self.biome[x, y] )
 
-            elif event.type == MOUSEBUTTONUP:
-                if event.button == 1:
-                    print 'Show action menu: '
-                    self.gui.menu('actionMenu')
-                elif event.button == 3:
-                    print 'Show view menu: '
-                    self.gui.menu('viewMenu')
+        self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
 
-            elif event.type == USEREVENT:
-                if event.code == 'MENU':
-                    callback = self.gui.handleMenu(event)
-                    
-                    # we did something...
-                    if callback:
-                        exec(callback)                        
-        return True
+    def genHeightMap( self ):
+        '''Generate our heightmap'''
+        self.sb.showMessage( 'Generating heightmap...' )
+        heightObject = HeightMap( self.width, self.height, roughness = 15 )
+        found = False
+        while not found: # loop until we have something workable
+            heightObject.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1, method = HM_MDA )
+            break
+            if heightObject.landMassPercent() < 0.15:
+                self.statusBar().showMessage( 'Too little land mass' )
+            elif heightObject.landMassPercent() > 0.85:
+                self.statusBar().showMessage( 'Too much land mass' )
+            elif heightObject.averageElevation() < 0.2:
+                self.statusBar().showMessage( 'Average elevation is too low' )
+            elif heightObject.averageElevation() > 0.8:
+                self.statusBar().showMessage( 'Average elevation is too high' )
+            elif heightObject.hasNoMountains():
+                self.statusBar().showMessage( 'Not enough mountains' )
+            elif heightObject.landTouchesEastWest():
+                self.statusBar().showMessage( 'Cannot wrap around a sphere.' )
+            else:
+                found = True
+        self.elevation = heightObject.heightmap
+        del heightObject
+        self.viewHeightMap()
+        self.statusBar().showMessage( 'Successfully generated a heightmap!' )
+        self.resize( self.size )
 
+    def viewHeightMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
+        self.statusBar().showMessage( 'Viewing raw heatmap.' )
 
-    def showMap(self,mapType):     
-        #renderer = render(self.world)
-        #background = renderer.convert(mapType)
-        background = render(self.world).convert(mapType)
+    def viewElevation( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'elevation' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
+        self.statusBar().showMessage( 'Viewing elevation.' )
 
-        #print len(background),len(self.elevation)
-        #print background
+    def viewSeaLevel( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'sealevel' ) ) )
+        self.viewState = VIEWER_HEIGHTMAP
+        self.statusBar().showMessage( 'Viewing sealevel.' )
 
-        background = array(background,dtype="int32").reshape(self.width,self.height)
-        pygame.surfarray.blit_array(self.background, background)
-        pygame.display.update()
-        #print len(background),background
+    def genHeatMap( self ):
+        '''Generate a heatmap based on heightmap'''
+        self.statusBar().showMessage( 'Generating heatmap...' )
+        if self.elevation.sum() == 0:
+            self.statusBar().showMessage( 'Error: You have not yet generated a heightmap.' )
+            return
+        hemisphere = random.randint( 1, 3 )
+        tempObject = Temperature( self.elevation, hemisphere )
+        tempObject.run( sb = self.sb )
+        self.temperature = tempObject.temperature
+        del tempObject
+        self.viewHeatMap()
+        self.statusBar().showMessage( 'Successfully generated a heatmap!' )
+        self.resize( self.size )
 
-    def updateWorld(self):
+    def viewHeatMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heatmap' ) ) )
+        self.viewState = VIEWER_HEATMAP
+        self.statusBar().showMessage( 'Viewing heatmap.' )
+
+    def viewRawHeatMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rawheatmap' ) ) )
+        self.viewState = VIEWER_HEATMAP
+        self.statusBar().showMessage( 'Viewing raw heatmap.' )
+
+    def genWeatherMap( self ):
+        '''Generate a weather based on heightmap and heatmap'''
+        self.sb.showMessage( 'Generating weather...' )
+        if self.elevation.sum() == 0:
+            self.statusBar().showMessage( 'Error: No heightmap!' )
+            return
+        if self.temperature.sum() == 0:
+            self.statusBar().showMessage( 'Error: No heatmap!' )
+            return
+        weatherObject = Weather( self.elevation, self.temperature )
+        weatherObject.run( self.sb )
+        self.wind = weatherObject.windMap
+        self.rainfall = weatherObject.rainMap
+        del weatherObject
+        self.viewWeatherMap()
+        self.statusBar().showMessage( 'Successfully generated weather!' )
+        self.resize( self.size )
+
+    def viewWeatherMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windandrainmap' ) ) )
+        self.viewState = VIEWER_RAINFALL
+        self.statusBar().showMessage( 'Viewing weathermap.' )
+
+    def viewWindMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'windmap' ) ) )
+        self.viewState = VIEWER_WIND
+        self.statusBar().showMessage( 'Viewing windmap.' )
+
+    def viewPrecipitation( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rainmap' ) ) )
+        self.viewState = VIEWER_RAINFALL
+        self.statusBar().showMessage( 'Viewing rainmap.' )
+
+    def genDrainageMap( self ):
+        '''Generate a fractal drainage map'''
+        self.sb.showMessage( 'Generating drainage...' )
+        drainObject = MDA( self.width, self.height, 10 )
+        drainObject.run()
+        self.drainage = drainObject.heightmap
+        del drainObject
+        self.viewDrainageMap()
+        self.statusBar().showMessage( 'Successfully generated drainage!' )
+        self.resize( self.size )
+
+    def viewDrainageMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'drainagemap' ) ) )
+        self.viewState = VIEWER_DRAINAGE
+        self.statusBar().showMessage( 'Viewing drainmap.' )
+
+    def genBiomeMap( self ):
+        '''Generate a biome map'''
+        self.sb.showMessage( 'Generating biomes...' )
+        if self.elevation.sum() == 0:
+            self.statusBar().showMessage( 'Error: No heightmap!' )
+            return
+        if self.temperature.sum() == 0:
+            self.statusBar().showMessage( 'Error: No heatmap!' )
+            return
+        if self.drainage.sum() == 0:
+            self.statusBar().showMessage( 'Error: No drainage!' )
+            return
+        if self.wind.sum() == 0 or self.rainfall.sum() == 0:
+            self.statusBar().showMessage( 'Error: No weather!' )
+            return
+        biomeObject = Biomes( self.elevation, self.rainfall, self.drainage, self.temperature )
+        biomeObject.run()
+        self.biome = biomeObject.biome
+        self.biomeColour = biomeObject.biomeColourCode
+        del biomeObject
+        self.viewBiomeMap()
+        self.statusBar().showMessage( 'Successfully generated biomes!' )
+        self.resize( self.size )
+
+    def viewBiomeMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'biomemap' ) ) )
+        self.viewState = VIEWER_BIOMES
+        self.statusBar().showMessage( 'Viewing biomes.' )
+
+    def genRiverMap( self ):
+        '''Generate a river map'''
+        self.sb.showMessage( 'Generating rivers and lakes...' )
+        if self.elevation.sum() == 0:
+            self.statusBar().showMessage( 'Error: No heightmap!' )
+            return
+        if self.wind.sum() == 0 or self.rainfall.sum() == 0:
+            self.statusBar().showMessage( 'Error: No weather!' )
+            return
+        riversObject = Rivers( self.elevation, self.rainfall )
+        riversObject.run( self.sb )
+        self.rivers = riversObject.riverMap
+        self.lakes = riversObject.lakeMap
+        del riversObject
+        self.viewRiverMap()
+        self.statusBar().showMessage( 'Successfully generated rivers and lakes!' )
+        self.resize( self.size )
+
+    def viewRiverMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'rivermap' ) ) )
+        self.viewState = VIEWER_RIVERS
+        self.statusBar().showMessage( 'Viewing rivers and lakes.' )
+
+    def updateWorld( self ):
         # update and package up our world data
-        self.world = { 
-          'elevation': self.elevation, 
-          'wind': self.wind, 
-          'rainfall': self.rainfall, 
+        self.world = {
+          'elevation': self.elevation,
+          'wind': self.wind,
+          'rainfall': self.rainfall,
           'temperature': self.temperature,
           'rivers': self.rivers,
           'lakes': self.lakes,
           'drainage': self.drainage,
           'biome': self.biome,
           'biomeColour': self.biomeColour,
-          }           
+          }
 
-    def importWorld(self):
-        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='r')
+    def importWorld( self ):
+        file = self.homeDir + os.sep + 'worldData.h5'
+        if tables.isHDF5File( file ) < 0 :
+             self.statusBar().showMessage( 'worldData.h5 file does not exist' )
+             return
+        elif tables.isHDF5File( file ) == 0 :
+             self.statusBar().showMessage( 'worldData.h5 file is not valid' )
+             return
+        h5file = tables.openFile( file, mode = 'r' )
         for k in self.world:
-            exec('self.'+k+' = h5file.getNode("/",k).read()') # read object out of pytables
+            exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
         h5file.close()
+        del h5file,file
         self.updateWorld()
-        self.showMap('biomemap')
-            
-    def exportWorld(self):
+        self.statusBar().showMessage( 'Imported world.' )
+        self.viewBiomeMap()
+
+    def exportWorld( self ):
         '''Dump all data to disk.'''
-        filter = tables.Filters(complevel=9, complib='zlib', fletcher32=True)
-        h5file = tables.openFile(self.homeDir+os.sep+'worldData.h5', mode='w', title="worldData", filters=filter)
-        root = h5file.root
+        self.updateWorld()
+        file = self.homeDir + os.sep + 'worldData.h5'
+        filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
+        h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
         for k in self.world:
-            exec('h5file.createArray(root,k,self.world["'+k+'"])')
+            atom = tables.Atom.from_dtype(self.world[k].dtype)
+            shape = self.world[k].shape
+            cArray = h5file.createCArray( h5file.root, k, atom, shape )
+            cArray[:] = self.world[k]
         h5file.close()
+        del h5file,filter,file
 
-    def createHeightmap(self):
-        mda = MDA(self.width, self.height, roughness=15)
-        found = False
-        while not found: # loop until we have something workable
-            mda.run(globe=True,seaLevel=WGEN_SEA_LEVEL-0.1)
-            self.elevation = mda.heightmap
-            #self.showMap('heightmap')
-            if self.landMassPercent() < 0.15:
-                print "Rejecting map: to little landmass"
-            elif self.landMassPercent() > 0.85:
-                print "Rejecting map: to much landmass"
-            elif self.averageElevation() < 0.2:
-                print "Rejecting map: average elevation is too low"
-            elif self.averageElevation() > 0.8:
-                print "Rejecting map: average elevation is too high"
-            elif self.hasNoMountains():
-                print "Rejecting map: not enough mountains"
-            elif self.landTouchesEastWest():
-                print "Rejecting map: cannot wrap around a sphere."
-            else:
-                print "Success! We have found an usable map."
-                found = True
-        del mda
-        self.updateWorld()
-        self.showMap('heightmap')
+    def aboutApp( self ):
+        '''All about the application'''
+        pass
 
-    def createTemperature(self):
-        if self.elevation == None:
-            print "Error: You have not yet generated a heightmap."
-            return
-        tempObject = Temperature(self.elevation,2)
-        tempObject.run()
-        self.temperature = tempObject.temperature
-        del tempObject
-        self.updateWorld()
-        self.showMap('rawheatmap')
+def main():
+    app = QtGui.QApplication( sys.argv )
+    ex = MapGen()
+    sys.exit( app.exec_() )
 
-    def createWindAndRain(self):
-        if self.elevation == None:
-            print "Error: No heightmap!"
-            return
-        if self.temperature == None:
-            print "Error: No temperature map!"
-            return
-        warObject = WindAndRain(self.elevation, self.temperature)
-        warObject.run()
-        self.wind = warObject.windMap
-        self.rainfall = warObject.rainMap
-        del warObject
-        self.updateWorld()
-        self.showMap('windandrainmap')
-
-    def createDrainage(self):
-        drainObject = MDA(self.width, self.height, 10)
-        drainObject.run()
-        self.drainage = drainObject.heightmap
-        del drainObject
-        self.updateWorld()
-        self.showMap('drainagemap')
-
-    def createBiomes(self):
-        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
-        biomeObject.run()
-        self.biome = biomeObject.biome
-        self.biomeColour = biomeObject.biomeColourCode
-        del biomeObject
-        self.updateWorld()
-        self.showMap('biomemap')
-
-    def createRiversAndLakes(self):
-        riversObject = Rivers(self.elevation, self.rainfall)
-        riversObject.run()
-        self.rivers = riversObject.riverMap
-        self.lakes = riversObject.lakeMap
-        del riversObject
-        self.updateWorld()
-        self.showMap('rivermap')
-
-    def landMassPercent(self):
-        return self.elevation.sum() / (self.width * self.height)
-
-    def averageElevation(self):
-        return average(self.elevation)
-
-    def hasNoMountains(self):
-        if self.elevation.max() > BIOME_ELEVATION_MOUNTAIN:
-            return False
-        return True
-
-    def landTouchesEastWest(self):
-        for x in range(0,1):
-            for y in range(0,self.height):
-                if self.elevation[x,y] > WGEN_SEA_LEVEL or \
-                    self.elevation[self.width-1-x,y] > WGEN_SEA_LEVEL:
-                    return True
-
-        return False
-
-    def landTouchesMapEdge(self):
-        result = False
-
-        for x in range(4,self.width-4):
-            if self.elevation[x,4] > WGEN_SEA_LEVEL or self.elevation[x,self.height-4] > WGEN_SEA_LEVEL:
-                result = True
-                break
-
-        for y in range(4,self.height-4):
-            if self.elevation[4,y] > WGEN_SEA_LEVEL or self.elevation[self.width-4,y] > WGEN_SEA_LEVEL:
-                result = True
-                break
-
-        return result
-
-class Button(pygame.sprite.Sprite):
-    """An extremely simple button sprite."""
-    def __init__(self, xy, text):
-        pygame.sprite.Sprite.__init__(self)
-        self.xy = xy
-        self.font = pygame.font.Font(None, 25)  # load the default font, size 25
-        self.color = (0, 0, 0)         # our font color in rgb
-        self.text = text
-        self.generateImage() # generate the image
-
-    def generateImage(self):
-        # draw text with a solid background - about as simple as we can get
-        self.image = self.font.render(self.text, True, self.color, (200,200,200))
-        self.rect = self.image.get_rect()
-        self.rect.center = self.xy
-
-class TextSprite(pygame.sprite.Sprite):
-    """An extremely simple text sprite."""
-
-    def __init__(self, xy, text=''):
-        pygame.sprite.Sprite.__init__(self)
-        self.xy = xy    # save xy -- will center our rect on it when we change the text
-        self.font = pygame.font.Font(None, 25)  # load the default font, size 25
-        self.color = (255, 165, 0)         # our font color in rgb
-        self.text = text
-        self.generateImage() # generate the image
-
-    def setText(self, text):
-        self.text = text
-        self.generateImage()
-
-    def generateImage(self):
-        """Updates the text. Renders a new image and re-centers at the initial coordinates."""
-        self.image = self.font.render(self.text, True, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = self.xy
-
-# runs the program
 if __name__ == '__main__':
-    debug = False
-    load = False
-    size = 512
-    # parse our options and arguments
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdls:")
-    except getopt.GetoptError:
-        #usage()
-        print "Unable to parse arguments"
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-d"):
-            debug = True
-            print "Debugging turned on."
-        elif opt in ("-s"):
-            size = int(arg)
-            print "Size of map:",size
-        elif opt in ("-l"):
-            load = True
-            print "Loading last export."
-        elif opt in ("-h", "--help"):
-            #usage()
-            print "No help for you..."
-            sys.exit()
-
-    world = mapGen(size=size,debug=debug,load=load)
-    world.run()
+    #import cProfile
+    #cProfile.run('main()')    
+    main()
