@@ -4,3 +4,5 @@ syntax: glob
 #ignore bytecode
 *.pyc
 *~
+.pydevproject
+.project
