@@ -1,14 +1,26 @@
 #!/usr/bin/env python
 """
-Map Generator 
+World Generator: Generating worlds 
 
 This program is a world generator using various simulations based
-on real world phenomenon. The output data should be reusable by other
-applications. 
+on real world phenomenon.
 
 author:  Bret Curtis
-website: http://www.mindwerks.net 
-license: LGPL
+license: LGPL v2
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2 as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
 """
 #system libraries
 import random, sys, os, getopt, tables
@@ -71,8 +83,12 @@ class MapGen( QtGui.QMainWindow ):
     def initUI( self ):
         '''Initialize the GUI for usage'''
         self.setMinimumSize( self.width, self.height )
-        self.setWindowTitle( 'Map Generator' )
+        self.setWindowTitle( 'WorldGen: Generating Worlds' )
         self.sb = self.statusBar()
+
+        self.setWindowIcon(QtGui.QIcon('./data/images/icon.png'))  
+        self.trayIcon = QtGui.QSystemTrayIcon(QtGui.QIcon('./data/images/icon.png'),self)
+        self.trayIcon.show()
 
         self.menuBar = self.menuBar()
         mapGenGui = Menu( self )
@@ -123,7 +139,7 @@ class MapGen( QtGui.QMainWindow ):
         found = False
         while not found: # loop until we have something workable
             heightObject.run( globe = True, seaLevel = WGEN_SEA_LEVEL - 0.1, method = HM_MDA )
-            break
+            #break
             if heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage( 'Too little land mass' )
             elif heightObject.landMassPercent() > 0.85:
