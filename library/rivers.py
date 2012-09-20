@@ -20,18 +20,72 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 import math, random, sys
-from time import time
 from numpy import *
 from PySide import QtGui
 from constants import *
 from aStar import *
 
 
+class DictWrap(object):
+    """ Wrap an existing dict, or create a new one, and access with dot notation
+    
+    The attribute _data is reserved and stores the underlying dictionary
+    
+    args:
+      d: Existing dict to wrap, an empty dict created by default
+      create: Create an empty, nested dict instead of raising a KeyError
+    
+    """
+    
+    def __init__(self, d=None, create=True):
+        if d is None:
+          d = {}
+        supr = super( DictWrap, self )
+        supr.__setattr__( '_data', d )
+        supr.__setattr__( '__create', create )
+
+    def __getattr__(self, name):
+        if name.startswith('__'):
+            return super(DictWrap, self).__getattribute__(name)
+        
+        try:
+            value = self._data[name]
+        except KeyError:
+            if not super(DictWrap, self).__getattribute__('__create'):
+              raise
+            value = {}
+            self._data[name] = value
+        
+        if hasattr(value, 'items'):
+            create = super(DictWrap, self).__getattribute__('__create')
+            return DictWrap(value, create)
+        
+        return value
+    
+    def __setattr__(self, name, value):
+        self._data[name] = value
+    
+    def __delattr__(self, name):
+        if name == '_data':
+          self._data = {}
+        else:
+          del self._data[name]
+
+
 class Rivers():
     '''Generates fresh water sources, rivers and lakes either randomly or with 
     a rainmap.'''
 
-    def __init__( self, heightmap, rainmap = None ):
+    def __init__( self ):
+        pass
+
+    def generate( self, heightmap, rainmap = None, sb = None ):
+        if sb:
+            progressValue = 0
+            progress = QtGui.QProgressBar()
+            progress.setRange( 0, 5 )
+            sb.addPermanentWidget( progress )
+            progress.setValue( 0 )
         self.heightmap = heightmap
         self.worldW = len( self.heightmap )
         self.worldH = len( self.heightmap[0] )
@@ -42,14 +96,7 @@ class Rivers():
         self.riverList = []
         self.rainmap = rainmap
         self.waterFlow = zeros( ( self.worldW, self.worldH ) )
-
-    def run( self, sb ):
-        if sb != None:
-            progressValue = 0
-            progress = QtGui.QProgressBar()
-            progress.setRange( 0, 5 )
-            sb.addPermanentWidget( progress )
-            progress.setValue( 0 )
+        
 
         # step one: water flow per cell based on rainfall 
         self.findWaterFlow()
@@ -246,8 +293,8 @@ class Rivers():
 
             else:
                 lowerElevation = self.findLowerElevation( currentLocation )
-                if lowerElevation:
-                    lowerPath = self.findPath( currentLocation, lowerElevation )
+                if lowerElevation:                                   
+                    lowerPath = pathFinder().find( self.heightmap, currentLocation, lowerElevation )            
                     if lowerPath:
                         path += lowerPath
                         currentLocation = lowerPath[-1]
@@ -405,41 +452,10 @@ class Rivers():
 
             currentRadius += 1
         return destination
-
-    def findPath( self, source, destination ):
-        '''Using the a* algo we will try to find the best path between two
-        points'''
-        sx, sy = source
-        dx, dy = destination
-        path = []
-
-        # flatten array
-        heightmap = self.heightmap.reshape( self.worldW * self.worldH )
-
-        pathFinder = AStar( SQ_MapHandler( heightmap, self.worldW, self.worldH ) )
-        start = SQ_Location( sx, sy )
-        end = SQ_Location( dx, dy )
-
-        s = time()
-        p = pathFinder.findPath( start, end )
-        e = time()
-
-        if not p:
-            #print "      No path found! It took %f seconds." % (e-s)
-            pass
-        else:
-            #print "      Found path in %d moves and %f seconds." % (len(p.nodes), (e-s))
-            for n in p.nodes:
-                path.append( [n.location.x, n.location.y] )
-                if self.riverMap[n.location.x, n.location.y] > 0.0:
-                    #print "aStar: A river found another river"
-                    break #TODO: add more river strength
-
-                if self.heightmap[n.location.x, n.location.y] <= WGEN_SEA_LEVEL:
-                    #print "aStar: A river made it to the sea."
-                    break
-        return path
-
+    
+    
+    
+#### experimental code ####
     def simulateFloodi( self, x, y, elevation ):
         '''Flood fill area based on elevation.
         The recursive algorithm. Starting at x and y, changes and marks any

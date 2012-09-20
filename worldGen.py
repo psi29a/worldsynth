@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 #system libraries
-import random, sys, os, getopt, tables
+import random, sys, os, getopt, tables, png
 from numpy import *
 from PySide import QtGui, QtCore
 
@@ -297,8 +297,8 @@ class MapGen( QtGui.QMainWindow ):
         if self.wind.sum() == 0 or self.rainfall.sum() == 0:
             self.statusBar().showMessage( 'Error: No weather!' )
             return
-        riversObject = Rivers( self.elevation, self.rainfall )
-        riversObject.run( self.sb )
+        riversObject = Rivers()
+        riversObject.generate( self.elevation, self.rainfall, self.sb )
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         del riversObject
@@ -326,7 +326,24 @@ class MapGen( QtGui.QMainWindow ):
           'biomeColour': self.biomeColour,
           }
 
-    def importWorld( self ):
+    def saveWorld( self ):
+        '''Dump all data to disk.'''
+        self.updateWorld()
+        file = self.homeDir + os.sep + 'worldData.h5'
+        filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
+        h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
+        for k in self.world:
+            atom = tables.Atom.from_dtype(self.world[k].dtype)
+            shape = self.world[k].shape
+            cArray = h5file.createCArray( h5file.root, k, atom, shape )
+            cArray[:] = self.world[k]
+        h5file.close()
+        del h5file,filter,file
+    
+    def saveWorldAs( self ):
+        pass
+    
+    def openWorld( self ):
         file = self.homeDir + os.sep + 'worldData.h5'
         if tables.isHDF5File( file ) < 0 :
              self.statusBar().showMessage( 'worldData.h5 file does not exist' )
@@ -343,19 +360,18 @@ class MapGen( QtGui.QMainWindow ):
         self.statusBar().showMessage( 'Imported world.' )
         self.viewBiomeMap()
 
+    def importWorld( self ):
+        pass
+
     def exportWorld( self ):
-        '''Dump all data to disk.'''
-        self.updateWorld()
-        file = self.homeDir + os.sep + 'worldData.h5'
-        filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
-        h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
-        for k in self.world:
-            atom = tables.Atom.from_dtype(self.world[k].dtype)
-            shape = self.world[k].shape
-            cArray = h5file.createCArray( h5file.root, k, atom, shape )
-            cArray[:] = self.world[k]
-        h5file.close()
-        del h5file,filter,file
+        '''Eventually allow exporting to all formats, but initially only heightmap
+        as 16-bit greyscale png'''
+        heightmap = self.elevation * 65536
+        pngObject = png.Writer(self.width, self.height, greyscale=True, bitdepth=16 )
+        file = open('./heightmap.png', 'wb')
+        pngObject.write(file, heightmap)
+        file.close()
+        
 
     def aboutApp( self ):
         '''All about the application'''
