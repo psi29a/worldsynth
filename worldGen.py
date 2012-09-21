@@ -327,9 +327,10 @@ class MapGen( QtGui.QMainWindow ):
           }
 
     def saveWorld( self ):
-        '''Dump all data to disk.'''
+        '''TODO: check if we are currently working on a world, save it.
+        if not, we ignore the command. '''        
         self.updateWorld()
-        file = self.homeDir + os.sep + 'worldData.h5'
+        file, _ = QtGui.QFileDialog.getSaveFileName(self, 'Open file')        
         filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
         h5file = tables.openFile( file, mode = 'w', title = "worldData", filters = filter )
         for k in self.world:
@@ -341,16 +342,23 @@ class MapGen( QtGui.QMainWindow ):
         del h5file,filter,file
     
     def saveWorldAs( self ):
+        '''TODO: save as file dialog'''
         pass
     
     def openWorld( self ):
-        file = self.homeDir + os.sep + 'worldData.h5'
+        '''Open existing world project'''
+        file, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
+        if not file:
+            self.statusBar().showMessage( 'Canceled open world.' )
+            return
+        
         if tables.isHDF5File( file ) < 0 :
-             self.statusBar().showMessage( 'worldData.h5 file does not exist' )
+             self.statusBar().showMessage( file+' does not exist' )
              return
         elif tables.isHDF5File( file ) == 0 :
-             self.statusBar().showMessage( 'worldData.h5 file is not valid' )
+             self.statusBar().showMessage( file+' is not valid' )
              return
+         
         h5file = tables.openFile( file, mode = 'r' )
         for k in self.world:
             exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
@@ -371,6 +379,9 @@ class MapGen( QtGui.QMainWindow ):
         file = open('./heightmap.png', 'wb')
         pngObject.write(file, heightmap)
         file.close()
+        #ugly hack for raw support
+        heightmap.astype('uint16').tofile('./heightmap.raw')
+        
         
 
     def aboutApp( self ):
