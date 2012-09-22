@@ -39,7 +39,7 @@ from library.biomes import *
 
 class MapGen( QtGui.QMainWindow ):
 
-    def __init__( self, size = 512, debug = False, load = False ):
+    def __init__( self, size = 64, debug = False, load = False ):
         '''Attempt to allocate the necessary resources'''
         super( MapGen, self ).__init__()
 
@@ -374,13 +374,20 @@ class MapGen( QtGui.QMainWindow ):
     def exportWorld( self ):
         '''Eventually allow exporting to all formats, but initially only heightmap
         as 16-bit greyscale png'''
-        heightmap = self.elevation * 65536
+        heightmap = self.elevation.copy() * 65536
         pngObject = png.Writer(self.width, self.height, greyscale=True, bitdepth=16 )
         file = open('./heightmap.png', 'wb')
         pngObject.write(file, heightmap)
         file.close()
-        #ugly hack for raw support
-        heightmap.astype('uint16').tofile('./heightmap.raw')
+        
+        # flat heightmap
+        heightmap.astype('uint16').flatten('C').tofile('./heightmapCRowMajor.raw', format='C')
+        heightmap.astype('uint16').flatten('F').tofile('./heightmapFortranColumnMajor.raw', format='F')
+        
+        # flat to text file
+        heightmap.astype('uint16').flatten('C').tofile('./heightmapCRowMajor.csv', sep=",")
+        heightmap.astype('uint16').flatten('F').tofile('./heightmapFortranColumnMajor.csv', sep=",")     
+        
         
         
 
