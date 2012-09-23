@@ -388,7 +388,12 @@ class MapGen( QtGui.QMainWindow ):
         heightmap.astype('uint16').flatten('C').tofile('./heightmapCRowMajor.csv', sep=",")
         heightmap.astype('uint16').flatten('F').tofile('./heightmapFortranColumnMajor.csv', sep=",")     
         
-        
+        # write binary directly
+        import struct
+        file = open('./heightmap.raw', 'wb')
+        for element in heightmap.astype('uint16').flatten('C'):
+            file.write(struct.pack('@H',element))
+        file.close()
         
 
     def aboutApp( self ):
