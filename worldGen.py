@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #system libraries
 import random, sys, os, getopt, tables, png
 from numpy import *
-from PySide import QtGui, QtCore
+from PySide import QtGui, QtCore, QtUiTools
 
 # mapGen libraries
 from library.constants import *
@@ -39,7 +39,7 @@ from library.biomes import *
 
 class MapGen( QtGui.QMainWindow ):
 
-    def __init__( self, size = 64, debug = False, load = False ):
+    def __init__( self, size = 512, debug = False, load = False ):
         '''Attempt to allocate the necessary resources'''
         super( MapGen, self ).__init__()
 
@@ -87,8 +87,6 @@ class MapGen( QtGui.QMainWindow ):
         self.sb = self.statusBar()
 
         self.setWindowIcon(QtGui.QIcon('./data/images/icon.png'))  
-        self.trayIcon = QtGui.QSystemTrayIcon(QtGui.QIcon('./data/images/icon.png'),self)
-        self.trayIcon.show()
 
         self.menuBar = self.menuBar()
         mapGenGui = Menu( self )
@@ -131,6 +129,23 @@ class MapGen( QtGui.QMainWindow ):
             message = 'Biome type is: ' + Biomes().biomeType( self.biome[x, y] )
 
         self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
+
+    def genWorld(self):
+        self.genHeightMap()
+        self.genHeatMap()
+        self.genWeatherMap()
+        self.genDrainageMap()
+        self.genRiverMap()                
+        self.genBiomeMap()              
+
+    def confWorld(self):
+        '''World settings'''
+        loader = QtUiTools.QUiLoader()
+        file = QtCore.QFile("./data/qt4/dWorldConf.ui")
+        file.open(QtCore.QFile.ReadOnly)
+        dWorldConf = loader.load(file, self)
+        file.close()
+        dWorldConf.show()
 
     def genHeightMap( self ):
         '''Generate our heightmap'''
@@ -326,6 +341,10 @@ class MapGen( QtGui.QMainWindow ):
           'biomeColour': self.biomeColour,
           }
 
+
+    def newWorld( self ):
+        pass
+
     def saveWorld( self ):
         '''TODO: check if we are currently working on a world, save it.
         if not, we ignore the command. '''        
@@ -386,14 +405,7 @@ class MapGen( QtGui.QMainWindow ):
         
         # flat to text file
         heightmap.astype('uint16').flatten('C').tofile('./heightmapCRowMajor.csv', sep=",")
-        heightmap.astype('uint16').flatten('F').tofile('./heightmapFortranColumnMajor.csv', sep=",")     
-        
-        # write binary directly
-        import struct
-        file = open('./heightmap.raw', 'wb')
-        for element in heightmap.astype('uint16').flatten('C'):
-            file.write(struct.pack('@H',element))
-        file.close()
+        heightmap.astype('uint16').flatten('F').tofile('./heightmapFortranColumnMajor.csv', sep=",")
         
 
     def aboutApp( self ):
