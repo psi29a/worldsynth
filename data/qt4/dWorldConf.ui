@@ -21,7 +21,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>240</y>
+     <y>260</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -36,20 +36,20 @@
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>20</x>
      <y>20</y>
-     <width>341</width>
-     <height>201</height>
+     <width>361</width>
+     <height>231</height>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="wsGeneral">
     <attribute name="title">
      <string>General</string>
     </attribute>
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="cSize">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -99,7 +99,7 @@
       </property>
      </item>
     </widget>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lSize">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -117,6 +117,121 @@
     <attribute name="title">
      <string>Heightmap</string>
     </attribute>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>270</x>
+       <y>10</y>
+       <width>81</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Roughness</string>
+     </property>
+     <widget class="QSpinBox" name="sbDblRoughness">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>51</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+     </widget>
+     <widget class="QSlider" name="vsRoughness">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>50</y>
+        <width>29</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+      <property name="singleStep">
+       <number>1</number>
+      </property>
+      <property name="value">
+       <number>5</number>
+      </property>
+      <property name="sliderPosition">
+       <number>5</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>181</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Algorithm</string>
+     </property>
+     <widget class="QRadioButton" name="rMDA">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>40</y>
+        <width>181</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Midpoint Displacment</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="rDSA">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>90</y>
+        <width>181</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Diamond-Square</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="rSPH">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>140</y>
+        <width>181</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Sphere Cutting</string>
+      </property>
+     </widget>
+    </widget>
    </widget>
    <widget class="QWidget" name="wsWeather">
     <attribute name="title">
@@ -161,6 +276,70 @@
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>vsRoughness</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbDblRoughness</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>329</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rSPH</sender>
+   <signal>clicked()</signal>
+   <receiver>groupBox</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>183</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>128</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rDSA</sender>
+   <signal>clicked()</signal>
+   <receiver>groupBox</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>140</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>289</x>
+     <y>150</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rMDA</sender>
+   <signal>clicked()</signal>
+   <receiver>groupBox</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>115</x>
+     <y>102</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>100</y>
     </hint>
    </hints>
   </connection>

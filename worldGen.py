@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 #system libraries
-import random, sys, os, getopt, tables, png
+import random, sys, os, getopt, tables, png, math
 from numpy import *
 from PySide import QtGui, QtCore, QtUiTools
 
@@ -39,7 +39,7 @@ from library.biomes import *
 
 class MapGen( QtGui.QMainWindow ):
 
-    def __init__( self, size = 512, debug = False, load = False ):
+    def __init__( self, size = 512, debug = False ):
         '''Attempt to allocate the necessary resources'''
         super( MapGen, self ).__init__()
 
@@ -100,6 +100,17 @@ class MapGen( QtGui.QMainWindow ):
 
         self.size = QtCore.QSize( self.geometry().width(), self.geometry().height() )
         self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
+        
+        # load our gui files
+        loader = QtUiTools.QUiLoader()
+        file = QtCore.QFile("./data/qt4/dWorldConf.ui")
+        file.open(QtCore.QFile.ReadOnly)
+        self.dWorldConf = loader.load(file, self)
+        file.close()
+        
+        # set defaults and attach signals
+        self.dWorldConf.cSize.setCurrentIndex(math.log(self.width,2)-5)
+        self.dWorldConf.cSize.currentIndexChanged.connect(self.resizeWorld)
 
     def mouseMoveEvent( self, e ):
         x, y = e.pos().toTuple()
@@ -140,12 +151,24 @@ class MapGen( QtGui.QMainWindow ):
 
     def confWorld(self):
         '''World settings'''
-        loader = QtUiTools.QUiLoader()
-        file = QtCore.QFile("./data/qt4/dWorldConf.ui")
-        file.open(QtCore.QFile.ReadOnly)
-        dWorldConf = loader.load(file, self)
-        file.close()
-        dWorldConf.show()
+        self.dWorldConf.show()     
+    
+    def resizeWorld(self):
+        size = 2**(self.dWorldConf.cSize.currentIndex()+5)
+        self.newWorld(size)
+        
+        if size < 256:
+            self.setMinimumSize( 256, 256 + 48 )
+            self.resize(256, 256 + 48)
+        else:
+            self.setMinimumSize( size, size + 48 )
+            self.resize(size, size + 48)
+            
+        self.mainImage.setGeometry( 0, 0 , self.width, self.height )
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )        
+        
+        self.size = QtCore.QSize( self.geometry().width(), self.geometry().height() )
+        self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()        
 
     def genHeightMap( self ):
         '''Generate our heightmap'''
@@ -342,8 +365,18 @@ class MapGen( QtGui.QMainWindow ):
           }
 
 
-    def newWorld( self ):
-        pass
+    def newWorld(self, size):
+        self.height = self.width = size
+        self.elevation = zeros( ( self.width, self.height ) )
+        self.wind = None
+        self.rainfall = None
+        self.temperature = None
+        self.rivers = None
+        self.lakes = None
+        self.drainage = None
+        self.biome = None
+        self.biomeColour = None
+        self.updateWorld()
 
     def saveWorld( self ):
         '''TODO: check if we are currently working on a world, save it.
