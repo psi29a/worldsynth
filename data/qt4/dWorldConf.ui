@@ -117,7 +117,7 @@
     <attribute name="title">
      <string>Heightmap</string>
     </attribute>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="gbRoughness">
      <property name="geometry">
       <rect>
        <x>270</x>
@@ -129,7 +129,7 @@
      <property name="title">
       <string>Roughness</string>
      </property>
-     <widget class="QSpinBox" name="sbDblRoughness">
+     <widget class="QSpinBox" name="sbRoughness">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -142,7 +142,7 @@
        <number>10</number>
       </property>
       <property name="value">
-       <number>1</number>
+       <number>5</number>
       </property>
      </widget>
      <widget class="QSlider" name="vsRoughness">
@@ -155,7 +155,7 @@
        </rect>
       </property>
       <property name="minimum">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="maximum">
        <number>10</number>
@@ -175,9 +175,12 @@
       <property name="tickPosition">
        <enum>QSlider::TicksBelow</enum>
       </property>
+      <property name="tickInterval">
+       <number>1</number>
+      </property>
      </widget>
     </widget>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="gbAlgo">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -232,6 +235,69 @@
       </property>
      </widget>
     </widget>
+    <widget class="QGroupBox" name="gbScale">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>10</y>
+       <width>81</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Scale</string>
+     </property>
+     <widget class="QSpinBox" name="sbScale">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>51</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+     </widget>
+     <widget class="QSlider" name="vsScale">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>50</y>
+        <width>29</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+      <property name="singleStep">
+       <number>1</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+      <property name="sliderPosition">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+      <property name="tickInterval">
+       <number>1</number>
+      </property>
+     </widget>
+    </widget>
    </widget>
    <widget class="QWidget" name="wsWeather">
     <attribute name="title">
@@ -282,7 +348,7 @@
   <connection>
    <sender>vsRoughness</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>sbDblRoughness</receiver>
+   <receiver>sbRoughness</receiver>
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -298,39 +364,39 @@
   <connection>
    <sender>rSPH</sender>
    <signal>clicked()</signal>
-   <receiver>groupBox</receiver>
+   <receiver>gbRoughness</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>90</x>
-     <y>183</y>
+     <x>92</x>
+     <y>214</y>
     </hint>
     <hint type="destinationlabel">
-     <x>287</x>
-     <y>128</y>
+     <x>292</x>
+     <y>159</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>rDSA</sender>
    <signal>clicked()</signal>
-   <receiver>groupBox</receiver>
+   <receiver>gbRoughness</receiver>
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>80</x>
-     <y>140</y>
+     <x>82</x>
+     <y>171</y>
     </hint>
     <hint type="destinationlabel">
-     <x>289</x>
-     <y>150</y>
+     <x>292</x>
+     <y>181</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>rMDA</sender>
    <signal>clicked()</signal>
-   <receiver>groupBox</receiver>
+   <receiver>gbRoughness</receiver>
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -338,8 +404,72 @@
      <y>102</y>
     </hint>
     <hint type="destinationlabel">
-     <x>287</x>
-     <y>100</y>
+     <x>292</x>
+     <y>131</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rSPH</sender>
+   <signal>clicked()</signal>
+   <receiver>gbScale</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>139</x>
+     <y>208</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>217</x>
+     <y>193</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rDSA</sender>
+   <signal>clicked()</signal>
+   <receiver>gbScale</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>184</x>
+     <y>164</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>219</x>
+     <y>178</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rMDA</sender>
+   <signal>clicked()</signal>
+   <receiver>gbScale</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>162</x>
+     <y>106</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>251</x>
+     <y>71</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>vsScale</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbScale</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>236</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>237</x>
+     <y>94</y>
     </hint>
    </hints>
   </connection>
