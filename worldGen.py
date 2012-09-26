@@ -110,7 +110,8 @@ class MapGen( QtGui.QMainWindow ):
         
         # set defaults and attach signals
         self.dWorldConf.cSize.setCurrentIndex(math.log(self.width,2)-5)
-        self.dWorldConf.cSize.currentIndexChanged.connect(self.resizeWorld)
+        #self.dWorldConf.cSize.currentIndexChanged.connect(self.resizeWorld)
+        self.dWorldConf.pbApply.clicked.connect(self.applySettings)
 
     def mouseMoveEvent( self, e ):
         x, y = e.pos().toTuple()
@@ -153,7 +154,7 @@ class MapGen( QtGui.QMainWindow ):
         '''World settings'''
         self.dWorldConf.show()     
     
-    def resizeWorld(self):
+    def applySettings(self):
         size = 2**(self.dWorldConf.cSize.currentIndex()+5)
         self.newWorld(size)
         
