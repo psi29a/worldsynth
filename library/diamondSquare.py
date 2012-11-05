@@ -25,23 +25,98 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #   roughness - a roughness constant for how rough the terrain should be
 #   scale - a scaling factor for the maximum y height of the geometry
 
-import math, random, sys
 from numpy import *
+from random import gauss,random
 
 class DSA():
+    def __init__(self, size, roughness=0.5, scale=10.0, deviation=5.0, iterations= 10):
+        # initialise arguments to constructor
+        self.iterations = iterations
+        self.seed = float(scale)
+        self.deviation = float(deviation)
+        self.roughness = float(roughness) / 10.0
+        self.size = size + 1
+        self.heightmap = zeros((self.size, self.size))
+            
+    def run(self, globe = True, sealevel = 0.25):
+        self.heightmap[0][0] = gauss(self.seed, self.deviation)
+        self.heightmap[0,self.size-1] = gauss(self.seed, self.deviation)
+        self.heightmap[self.size-1][0] = gauss(self.seed, self.deviation)
+        self.heightmap[self.size-1][self.size-1] = gauss(self.seed, self.deviation)
+        
+        # how many units (width/height) the array is
+        size = self.size - 1
+        deviation = self.deviation
+        roughness = self.roughness
+        
+        for i in range(self.iterations):
+        
+            span = size / 2**(i+1)
+            span2 = span*2
+        
+            for x in range(2**i):
+                for y in range(2**i):
+                    dx = x * span2
+                    dy = y * span2
+                
+                    # diamond step
+                    A = self.heightmap[dx][dy]
+                    B = self.heightmap[dx + span2][dy]
+                    C = self.heightmap[dx + span2][dy + span2]
+                    D = self.heightmap[dx][dy + span2]
+                    E = gauss(((A + B + C + D) / 4.0), deviation)
+                    
+                    if self.heightmap[dx + span][dy + span] == 0.0:
+                        self.heightmap[dx + span][dy + span] = E
+                        
+                    # squared step
+                    if self.heightmap[dx][dy + span] == 0.0:
+                        self.heightmap[dx][dy + span] = gauss(((A + C + E) / 3.0), deviation) # F
+                        
+                    if self.heightmap[dx + span][dy] == 0.0:
+                        self.heightmap[dx + span][dy] = gauss(((A + B + E) / 3.0), deviation) # G
+                        
+                    if self.heightmap[dx + span2][dy + span] == 0.0:
+                        self.heightmap[dx + span2][dy + span] = gauss(((B + D + E) / 3.0), deviation) # H
+                        
+                    if self.heightmap[dx + span][dy + span2] == 0.0:
+                        self.heightmap[dx + span][dy + span2] = gauss(((C + D + E) / 3.0), deviation) # I
+                    
+            deviation = deviation * (2**-roughness)
+
+        # compress the range while maintaining ratio
+        newMin = 0.0; newMax = 1.0;
+        oldMin = 0.0; oldMax = 0.0
+        for x in range(0,self.size):
+            for y in range(0,self.size):
+                if self.heightmap[x,y] < oldMin:
+                    oldMin = self.heightmap[x,y]
+                if self.heightmap[x,y] > oldMax:
+                    oldMax = self.heightmap[x,y]
+        for x in range(0,self.size):
+            for y in range(0,self.size):
+                self.heightmap[x,y] = (((self.heightmap[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin
+                    
+        # trim up heightmap to be power of 2
+        self.heightmap = delete(self.heightmap,1,0)
+        self.heightmap = delete(self.heightmap,1,1)
+
+class DSAv1():
     #def __init__( self, depth=9, roughness=0.5, scale=1.0):
-    def __init__(self, width, height, roughness=0.5, scale=1.0):
+    def __init__(self, width, height, roughness=0.5, scale=10.0):
         # initialise arguments to constructor
         #self.depth = int(depth)
         self.width = width
         self.height = height
         self.depth = int(math.log(width,2))        
-        self.roughness = float(roughness)
+        self.roughness = float(roughness) / 10.0 
         self.scale = float(scale)
         self.size = (1 << self.depth)+1         # grid size, 2^depth+1
         self.heightmap = zeros((self.size,self.size))
 
-    # Itterative terrain deformer using classic diamond-square algorithm.
+        print self.roughness, self.scale
+
+    # Iterative terrain deformer using classic diamond-square algorithm.
     def run(self, globe = True, sealevel = 0.25):
         # Seeds an initial random altitude for the four corners of the dataset.
         self.heightmap[0,0]                     = self.scale*(random.random()-self.roughness)

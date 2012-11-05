@@ -24,7 +24,7 @@ from numpy import *
 from PySide import QtGui
 
 class MDA():
-    def __init__( self, width, height, roughness = 8 ):
+    def __init__( self, width, height, roughness = 8, scale = 1.0 ):
         self.size = width + height
         self.width = width
         self.height = height

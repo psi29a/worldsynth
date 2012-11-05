@@ -30,24 +30,27 @@ from sphere import Sphere
 class HeightMap():
     '''An heightmap generator with various backends'''
     
-    def __init__( self, width, height, roughness = 8 ):
+    def __init__( self, width, height, roughness, scale ):
         self.width = width
         self.height = height
+        self.size = width
         self.roughness = roughness
+        self.scale = scale
         self.heightmap = None
 
-    def run(self, globe = False, seaLevel = WGEN_SEA_LEVEL, method = HM_MDA):
+    def run(self, planet = False, seaLevel = WGEN_SEA_LEVEL, method = HM_MDA):
         if method == HM_MDA:
-            heightObject = MDA(self.width, self.height, self.roughness)
+            heightObject = MDA(self.width, self.height, self.roughness, self.scale)
         elif method == HM_DSA:
-            heightObject = DSA(self.width, self.height)
+            heightObject = DSA(self.size, self.roughness, self.scale)
         elif method == HM_SPH:
             heightObject = Sphere(self.width, self.height)
         else:
             print "No method for generating heightmap found!"
             
-        heightObject.run(globe, seaLevel)
+        heightObject.run(planet, seaLevel)
         self.heightmap = heightObject.heightmap
+        del heightObject
 
     def landMassPercent( self ):
         return self.heightmap.sum() / ( self.width * self.height )
