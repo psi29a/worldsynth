@@ -112,6 +112,7 @@ class MapGen(QtGui.QMainWindow):
         self.dWorldConf.cSize.setCurrentIndex(math.log(self.width, 2) - 5)
         #self.dWorldConf.cSize.currentIndexChanged.connect(self.resizeWorld)
         self.dWorldConf.pbApply.clicked.connect(self.applySettings)
+        self.dWorldConf.buttonBox.accepted.connect(self.applySettings)
 
     def mouseMoveEvent(self, e):
         x, y = e.pos().toTuple()
@@ -174,25 +175,49 @@ class MapGen(QtGui.QMainWindow):
     def genHeightMap(self):
         '''Generate our heightmap'''
         self.sb.showMessage('Generating heightmap...')
-        heightObject = HeightMap(self.width, self.height, roughness=15)
+        
+        # grab our values from config
+        roughness = self.dWorldConf.sbRoughness.value()
+        scale = self.dWorldConf.sbScale.value()
+        
+        if self.dWorldConf.rMDA.isChecked():
+            method = HM_MDA
+        elif self.dWorldConf.rDSA.isChecked():
+            method = HM_DSA
+        elif self.dWorldConf.rSPH.isChecked():
+            method = HM_SPH
+        else:
+            print "Error: no heightmap algo selected."
+            return
+        
+        if self.dWorldConf.cbPlanet.isChecked():
+            planet = True
+        else:
+            planet = False
+        
+        seaLevel = WGEN_SEA_LEVEL - 0.1
+        
+        # create our heightmap
+        heightObject = HeightMap(self.width, self.height, roughness, scale)
         found = False
         while not found: # loop until we have something workable
-            heightObject.run(globe=True, seaLevel=WGEN_SEA_LEVEL - 0.1, method=HM_MDA)
+            heightObject.run(planet, seaLevel, method)
             #break
-            if heightObject.landMassPercent() < 0.15:
+            if self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage('Too little land mass')
-            elif heightObject.landMassPercent() > 0.85:
+            elif self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
                 self.statusBar().showMessage('Too much land mass')
-            elif heightObject.averageElevation() < 0.2:
+            elif self.dWorldConf.cbAvgElevation.isChecked() and heightObject.averageElevation() < 0.2:
                 self.statusBar().showMessage('Average elevation is too low')
-            elif heightObject.averageElevation() > 0.8:
+            elif self.dWorldConf.cbAvgElevation.isChecked() and heightObject.averageElevation() > 0.8:
                 self.statusBar().showMessage('Average elevation is too high')
-            elif heightObject.hasNoMountains():
+            elif self.dWorldConf.cbMountains.isChecked() and heightObject.hasNoMountains():
                 self.statusBar().showMessage('Not enough mountains')
-            elif heightObject.landTouchesEastWest():
-                self.statusBar().showMessage('Cannot wrap around a sphere.')
+            elif self.dWorldConf.cbPlanet.isChecked() and heightObject.landTouchesEastWest():
+                self.statusBar().showMessage('Cannot wrap around a sphere')
             else:
                 found = True
+            
         self.elevation = heightObject.heightmap
         del heightObject
         self.viewHeightMap()
