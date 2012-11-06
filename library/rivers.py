@@ -345,6 +345,8 @@ class Rivers():
             radius = 2
             for x in range( rx - radius, rx + radius ):
                 for y in range( ry - radius, ry + radius ):
+                    if self.isOutOfBounds( (x,y) ): # ignore edges of map
+                        continue           
                     curve = 1.0
                     if [x, y] == [0, 0]: # ignore center
                         continue

@@ -25,10 +25,154 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #   roughness - a roughness constant for how rough the terrain should be
 #   scale - a scaling factor for the maximum y height of the geometry
 
+#from numpy import *
+from random import gauss,random,uniform
 from numpy import *
-from random import gauss,random
 
-class DSA():
+def avg(*args):
+    return sum(args)/len(args)    
+
+class DSAv3():
+    def __init__(self, size, roughness=0.5, scale=10.0, deviation=5.0, iterations= 10):
+        ''' Create our initial heightmap '''
+        self.size = size
+        width = height = self.size + 1
+        import numpy
+        self.space = zeros((width,height))
+    
+    def randomHeightGen(self, height):
+        ''' Random uniform distribution based on on min/max '''
+        noise_min = -1.0
+        noise_max = 1.0
+        return uniform(noise_min*2**-height, noise_max*2**-height)
+    
+    def run(self, planet, seaLevel):
+        ''' Square Diamond Algo '''
+        corner = self.randomHeightGen(0)
+        self.space[0,0] = corner
+        self.space[0,-1] = corner
+        self.space[-1,0] = corner
+        self.space[-1,-1] = corner
+                
+        x_max,y_max = self.space.shape
+        x_min = y_min = 0
+        x_max -= 1; y_max -= 1
+    
+        side = x_max
+        squares = 1
+        i = 0
+    
+        while side > 1:
+            for x in range(squares):
+                for y in range(squares):
+                    #Locations
+                    x_left = x*side
+                    x_right = (x+1)*side
+                    y_top = y*side
+                    y_bottom = (y+1)*side
+    
+                    dx = side/2
+                    dy = side/2
+    
+                    xm = x_left + dx
+                    ym = y_top + dy
+    
+                    #Diamond step- create center avg for each square
+                    self.space[xm,ym] = avg(self.space[x_left, y_top],
+                    self.space[x_left, y_bottom],
+                    self.space[x_right, y_top],
+                    self.space[x_right, y_bottom])
+                    self.space[xm,ym] += self.randomHeightGen(i)
+    
+                    #Square step- create squares for each diamond
+                    #Top Square
+                    if (y_top - dy) < y_min:
+                        temp = y_max - dy
+                    else:
+                        temp = y_top - dy
+                    self.space[xm,y_top] = avg(self.space[x_left,y_top],
+                                          self.space[x_right,y_top],
+                                          self.space[xm,ym],
+                                          self.space[xm,temp])
+                    self.space[xm,y_top] += self.randomHeightGen(i)
+    
+                    #Top Wrapping
+                    if y_top == y_min:
+                        self.space[xm,y_max] = self.space[xm,y_top]
+    
+                    #Bottom Square
+                    if (y_bottom + dy) > y_max:
+                        temp = y_top + dy
+                    else:
+                        temp = y_bottom - dy
+                    self.space[xm, y_bottom] = avg(self.space[x_left,y_bottom],
+                                              self.space[x_right,y_bottom],
+                                              self.space[xm,ym],
+                                              self.space[xm,temp])
+                    self.space[xm, y_bottom] += self.randomHeightGen(i)
+    
+                    #Bottom Wrapping
+                    if y_bottom == y_max:
+                        self.space[xm,y_min] = self.space[xm,y_bottom]
+    
+                    #Left Square
+                    if (x_left - dx) < x_min:
+                        temp = x_max - dx
+                    else:
+                        temp = x_left - dx
+                    self.space[x_left, ym] = avg(self.space[x_left,y_top],
+                                            self.space[x_left,y_bottom],
+                                            self.space[xm,ym],
+                                            self.space[temp,ym])
+                    self.space[x_left, ym] += self.randomHeightGen(i)
+    
+                    #Left Wrapping
+                    if x_left == x_min:
+                        self.space[x_max,ym] = self.space[x_left,ym]
+    
+                    #Right Square
+                    if (x_right + dx) > x_max:
+                        temp = x_min + dx
+                    else:
+                        temp = x_right + dx
+                    self.space[x_right, ym] = avg(self.space[x_right,y_top],
+                                             self.space[x_right,y_bottom],
+                                             self.space[xm,ym],
+                                             self.space[temp,ym])
+                    self.space[x_right, ym] += self.randomHeightGen(i)
+    
+                    #Right Wrapping
+                    if x_right == x_max:
+                        self.space[x_min,ym] = self.space[x_right,ym]
+    
+            #Refine the pass
+            side /= 2
+            squares *= 2
+            i += 1
+            print "Pass {0} complete.".format(i)
+            self.heightmap = self.space
+        
+        # trim up heightmap to be power of 2
+        self.heightmap = delete(self.heightmap,1,0)
+        self.heightmap = delete(self.heightmap,1,1)        
+        
+        # compress the range while maintaining ratio
+        newMin = 0.0; newMax = 1.0;
+        oldMin = 0.0; oldMax = 0.0
+        for x in range(0,self.size):
+            for y in range(0,self.size):
+                if self.heightmap[x,y] < oldMin:
+                    oldMin = self.heightmap[x,y]
+                if self.heightmap[x,y] > oldMax:
+                    oldMax = self.heightmap[x,y]
+        for x in range(0,self.size):
+            for y in range(0,self.size):
+                self.heightmap[x,y] = (((self.heightmap[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin
+                    
+        
+                
+
+class DSAv2():
     def __init__(self, size, roughness=0.5, scale=10.0, deviation=5.0, iterations= 10):
         # initialise arguments to constructor
         self.iterations = iterations
