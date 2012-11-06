@@ -430,14 +430,14 @@ class MapGen(QtGui.QMainWindow):
             self.statusBar().showMessage('Canceled open world.')
             return
         
-        if tables.isHDF5File(file) < 0 :
-            self.statusBar().showMessage(file + ' does not exist')
+        if tables.isHDF5File(fileLocation) < 0 :
+            self.statusBar().showMessage(fileLocation + ' does not exist')
             return
-        elif tables.isHDF5File(file) == 0 :
-            self.statusBar().showMessage(file + ' is not valid')
+        elif tables.isHDF5File(fileLocation) == 0 :
+            self.statusBar().showMessage(fileLocation + ' is not valid')
             return
          
-        h5file = tables.openFile(file, mode='r')
+        h5file = tables.openFile(fileLocation, mode='r')
         for k in self.world:
             exec('self.' + k + ' = h5file.getNode("/",k).read()') # read object out of pytables
         h5file.close()

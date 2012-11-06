@@ -24,7 +24,7 @@ from numpy import *
 from PySide import QtGui
 from constants import *
 from midpointDisplacement import MDA
-from diamondSquare import DSA
+from diamondSquare import DSAv3
 from sphere import Sphere
 
 class HeightMap():
@@ -42,7 +42,7 @@ class HeightMap():
         if method == HM_MDA:
             heightObject = MDA(self.width, self.height, self.roughness, self.scale)
         elif method == HM_DSA:
-            heightObject = DSA(self.size, self.roughness, self.scale)
+            heightObject = DSAv3(self.size)
         elif method == HM_SPH:
             heightObject = Sphere(self.width, self.height)
         else:
