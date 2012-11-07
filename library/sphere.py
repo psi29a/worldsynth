@@ -33,14 +33,13 @@ from math import ceil
 from numpy import *
 
 class Sphere():
-    def __init__( self, width, height ):
+    def __init__( self, size, roughness ):
             self.percentWater = .70
-            self.mapSize = width #width (same as height) in pixels
+            self.mapSize = size[0] #width (same as height) in pixels
             self.maxSize = 1.40 # 1 to 5 How big should the slices be cut, smaller slices create more islands
             self.shape = 1.40 # 1 has round continents .5 is twice as tall as it is wide, 2.0 is twice as wide as tall
             self.driftRate = .70 # As the world ages how much slower does it drift. 1 creates a more textured world but takes longer
-            self.roughness = 1 #High numbers make a world faster, with more "ridges", but also makes things less "smooth"
-            self.filename = 'heightmap.bmp'
+            self.roughness = roughness #1 High numbers make a world faster, with more "ridges", but also makes things less "smooth"
             self.heightmap = zeros( ( self.mapSize, self.mapSize ) )
             self.randType = random.uniform #change to alter variability
             self.xrand = lambda ms = self.mapSize * 3: int( self.randType( 0, ms ) )
@@ -111,7 +110,7 @@ class Sphere():
         del img
         return sphere
 
-    def run( self, globe = True, seaLevel = 0.25, displayInterval = 50 ):
+    def run( self ):
         sphere = self.createSphere()
         extrema = self.highestPointOnSphere( sphere )
         while extrema > self.driftRate / ( self.roughness * 10 * self.maxSize ):
@@ -125,7 +124,7 @@ class Sphere():
         del sphere
 
 if __name__ == '__main__':
-    sphere = Sphere(512,512)
+    sphere = Sphere((512,512),1)
     import cProfile
     cProfile.run( 'sphere.run()' )
 

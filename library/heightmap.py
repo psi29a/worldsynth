@@ -24,31 +24,29 @@ from numpy import *
 from PySide import QtGui
 from constants import *
 from midpointDisplacement import MDA
-from diamondSquare import DSAv3
+from diamondSquare import DSA
 from sphere import Sphere
 
 class HeightMap():
     '''An heightmap generator with various backends'''
     
-    def __init__( self, width, height, roughness, scale ):
-        self.width = width
-        self.height = height
-        self.size = width
+    def __init__( self, size, roughness = 0.5 ):
+        self.size = size
+        self.width, self.height = self.size
         self.roughness = roughness
-        self.scale = scale
         self.heightmap = None
 
-    def run(self, planet = False, seaLevel = WGEN_SEA_LEVEL, method = HM_MDA):
+    def run(self, method = None):
         if method == HM_MDA:
-            heightObject = MDA(self.width, self.height, self.roughness, self.scale)
+            heightObject = MDA(self.size, self.roughness)
         elif method == HM_DSA:
-            heightObject = DSAv3(self.size)
+            heightObject = DSA(self.size)
         elif method == HM_SPH:
-            heightObject = Sphere(self.width, self.height)
+            heightObject = Sphere(self.size, self.roughness)
         else:
             print "No method for generating heightmap found!"
             
-        heightObject.run(planet, seaLevel)
+        heightObject.run()
         self.heightmap = heightObject.heightmap
         del heightObject
 
