@@ -24,26 +24,18 @@ from numpy import *
 from PySide import QtGui
 
 class MDA():
-    def __init__( self, width, height, roughness = 8, scale = 1.0 ):
-        self.size = width + height
-        self.width = width
-        self.height = height
+    def __init__( self, size, roughness = 8 ):
+        self.width, self.height = size
+        self.size = self.width + self.height
         self.roughness = roughness
         self.heightmap = None
 
-    def run( self, globe = False, seaLevel = 0.25 ):
+    def run( self ):
         self.heightmap = zeros( ( self.width, self.height ) ) # reset on run
-
-        if globe: # try to create world that wraps around on a globe/sphere
-            c1 = random.uniform( 0.00, seaLevel )     # top
-            c3 = random.uniform( 0.00, seaLevel )     # bottom
-            c2 = random.uniform( 0.00, seaLevel )    # right
-            c4 = random.uniform( 0.00, seaLevel )    # left
-        else:
-            c1 = random.random()    # top
-            c3 = random.random()    # bottom
-            c2 = random.random()    # right
-            c4 = random.random()    # left
+        c1 = random.random()    # top
+        c3 = random.random()    # bottom
+        c2 = random.random()    # right
+        c4 = random.random()    # left
         self.divideRect( 0, 0, self.width, self.height, c1, c2, c3, c4 )
 
     def normalize( self, point ): # +/- infinity are reset to 1 and 1 values
@@ -91,15 +83,14 @@ class MDA():
 
 # runs the program
 if __name__ == '__main__':
-    if len( sys.argv ) != 4:
-        print "You must pass a width, height, and roughness!"
+    if len( sys.argv ) != 3:
+        print "You must pass the size and roughness of the map you wish to make!"
         sys.exit()
 
-    width = int( sys.argv[1] )
-    height = int( sys.argv[2] )
-    roughness = int( sys.argv[3] )
+    size = int( sys.argv[1] )
+    roughness = int( sys.argv[2] )
 
-    mda = MDA( width, height, roughness )
+    mda = MDA( (size,size), roughness )
     print "Thinking..."
     import cProfile
     cProfile.run( 'mda.run()' )

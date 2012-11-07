@@ -44,7 +44,8 @@ class MapGen(QtGui.QMainWindow):
         super(MapGen, self).__init__()
 
         # application variables
-        self.height = self.width = size
+        self.size = (size,size)
+        self.height, self.width = self.size
 
         # setup our working directories
         self.homeDir = os.environ['HOME'] + os.sep + '.mapGen'
@@ -98,7 +99,7 @@ class MapGen(QtGui.QMainWindow):
 
         self.show()
 
-        self.size = QtCore.QSize(self.geometry().width(), self.geometry().height())
+        self.windowSize = QtCore.QSize(self.geometry().width(), self.geometry().height())
         self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
         
         # load our gui files
@@ -113,6 +114,7 @@ class MapGen(QtGui.QMainWindow):
         #self.dWorldConf.cSize.currentIndexChanged.connect(self.resizeWorld)
         self.dWorldConf.pbApply.clicked.connect(self.applySettings)
         self.dWorldConf.buttonBox.accepted.connect(self.applySettings)
+        self.dWorldConf.gbRoughness.hide()
 
     def mouseMoveEvent(self, e):
         x, y = e.pos().toTuple()
@@ -169,7 +171,7 @@ class MapGen(QtGui.QMainWindow):
         self.mainImage.setGeometry(0, 0 , self.width, self.height)
         self.mainImage.setPixmap(QtGui.QPixmap.fromImage(render(self.world).convert('heightmap')))        
         
-        self.size = QtCore.QSize(self.geometry().width(), self.geometry().height())
+        self.windowSize = QtCore.QSize(self.geometry().width(), self.geometry().height())
         self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()        
 
     def genHeightMap(self):
@@ -178,7 +180,6 @@ class MapGen(QtGui.QMainWindow):
         
         # grab our values from config
         roughness = self.dWorldConf.sbRoughness.value()
-        scale = self.dWorldConf.sbScale.value()
         
         if self.dWorldConf.rMDA.isChecked():
             method = HM_MDA
@@ -190,18 +191,11 @@ class MapGen(QtGui.QMainWindow):
             print "Error: no heightmap algo selected."
             return
         
-        if self.dWorldConf.cbPlanet.isChecked():
-            planet = True
-        else:
-            planet = False
-        
-        seaLevel = WGEN_SEA_LEVEL - 0.1
-        
         # create our heightmap
-        heightObject = HeightMap(self.width, self.height, roughness, scale)
+        heightObject = HeightMap(self.size, roughness)
         found = False
         while not found: # loop until we have something workable
-            heightObject.run(planet, seaLevel, method)
+            heightObject.run(method)
             #break
             if self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage('Too little land mass')
@@ -213,8 +207,6 @@ class MapGen(QtGui.QMainWindow):
                 self.statusBar().showMessage('Average elevation is too high')
             elif self.dWorldConf.cbMountains.isChecked() and heightObject.hasNoMountains():
                 self.statusBar().showMessage('Not enough mountains')
-            elif self.dWorldConf.cbPlanet.isChecked() and heightObject.landTouchesEastWest():
-                self.statusBar().showMessage('Cannot wrap around a sphere')
             else:
                 found = True
             
@@ -222,7 +214,7 @@ class MapGen(QtGui.QMainWindow):
         del heightObject
         self.viewHeightMap()
         self.statusBar().showMessage('Successfully generated a heightmap!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewHeightMap(self):
         self.updateWorld()
@@ -255,7 +247,7 @@ class MapGen(QtGui.QMainWindow):
         del tempObject
         self.viewHeatMap()
         self.statusBar().showMessage('Successfully generated a heatmap!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewHeatMap(self):
         self.updateWorld()
@@ -285,7 +277,7 @@ class MapGen(QtGui.QMainWindow):
         del weatherObject
         self.viewWeatherMap()
         self.statusBar().showMessage('Successfully generated weather!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewWeatherMap(self):
         self.updateWorld()
@@ -308,13 +300,13 @@ class MapGen(QtGui.QMainWindow):
     def genDrainageMap(self):
         '''Generate a fractal drainage map'''
         self.sb.showMessage('Generating drainage...')
-        drainObject = MDA(self.width, self.height, 10)
+        drainObject = DSA(self.size)
         drainObject.run()
         self.drainage = drainObject.heightmap
         del drainObject
         self.viewDrainageMap()
         self.statusBar().showMessage('Successfully generated drainage!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewDrainageMap(self):
         self.updateWorld()
@@ -344,7 +336,7 @@ class MapGen(QtGui.QMainWindow):
         del biomeObject
         self.viewBiomeMap()
         self.statusBar().showMessage('Successfully generated biomes!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewBiomeMap(self):
         self.updateWorld()
@@ -368,7 +360,7 @@ class MapGen(QtGui.QMainWindow):
         del riversObject
         self.viewRiverMap()
         self.statusBar().showMessage('Successfully generated rivers and lakes!')
-        self.resize(self.size)
+        self.resize(self.windowSize)
 
     def viewRiverMap(self):
         self.updateWorld()
