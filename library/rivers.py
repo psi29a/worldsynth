@@ -257,9 +257,10 @@ class Rivers():
         # first check that our source is not next to a river
         x, y = currentLocation
         for tx, ty in DIR_NEIGHBORS: # do we have any river neighbors?
-            if self.isOutOfBounds( (tx,ty) ): # ignore edges of map
+            ftx, fty = (x+tx,y+ty)
+            if self.isOutOfBounds( [ftx, fty] ): # ignore edges of map
                 continue              
-            if self.riverMap[x + tx, y + ty] > 0.0:
+            if self.riverMap[ftx, fty] > 0.0:
                 return [] # return empty set, ignore the source        
 
         # start the flow
