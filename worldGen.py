@@ -236,11 +236,14 @@ class MapGen(QtGui.QMainWindow):
 
     def genHeatMap(self):
         '''Generate a heatmap based on heightmap'''
-        self.statusBar().showMessage('Generating heatmap...')
         if self.elevation.sum() == 0:
             self.statusBar().showMessage('Error: You have not yet generated a heightmap.')
             return
-        hemisphere = random.randint(1, 3)
+        
+        if self.dWorldConf.rbHemisphereRandom.isChecked():
+            hemisphere = random.randint(1, 3)
+            
+        self.statusBar().showMessage('Generating heatmap...')
         tempObject = Temperature(self.elevation, hemisphere)
         tempObject.run(sb=self.sb)
         self.temperature = tempObject.temperature
@@ -409,7 +412,7 @@ class MapGen(QtGui.QMainWindow):
             cArray = h5file.createCArray(h5file.root, k, atom, shape)
             cArray[:] = self.world[k]
         h5file.close()
-        del h5file, filter, fileLocation
+        del h5file, h5Filter, fileLocation
     
     def saveWorldAs(self):
         '''TODO: save as file dialog'''
@@ -433,7 +436,7 @@ class MapGen(QtGui.QMainWindow):
         for k in self.world:
             exec('self.' + k + ' = h5file.getNode("/",k).read()') # read object out of pytables
         h5file.close()
-        del h5file, file
+        del h5file, fileLocation
         self.updateWorld()
         self.statusBar().showMessage('Imported world.')
         self.viewBiomeMap()

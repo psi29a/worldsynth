@@ -52,7 +52,7 @@ def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
 class DSA():
     def __init__(self, size):
         ''' Create our initial heightmap '''
-        self.size = size
+        self.size = map(lambda x: x+1, size)
         self.space = numpy.zeros(self.size)
         self.noise_min = -1.0
         self.noise_max = 1.0
@@ -64,7 +64,7 @@ class DSA():
     def run(self):
         ''' Square Diamond Algo '''
 
-        corner = self.randomHeightGen(0)
+        corner = self.randomHeightGen(0.0)
         self.space[0,0]   = corner
         self.space[0,-1]  = corner
         self.space[-1,0]  = corner
@@ -165,7 +165,7 @@ class DSA():
             side /= 2
             squares *= 2
             i += 1
-            
+        
         self.heightmap = trimHeightmap(self.space)
         self.heightmap = compressHeightmap(self.heightmap, 0.0, 1.0)    
 
