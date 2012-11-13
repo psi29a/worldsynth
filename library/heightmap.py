@@ -45,7 +45,7 @@ class HeightMap():
             heightObject = Sphere(self.size, self.roughness)
         else:
             print "No method for generating heightmap found!"
-            
+        
         heightObject.run()
         self.heightmap = heightObject.heightmap
         del heightObject
