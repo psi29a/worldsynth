@@ -19,57 +19,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import math, random, sys
-from numpy import *
+import math, random, numpy
 from PySide import QtGui
 from constants import *
 from aStar import *
-
-
-class DictWrap(object):
-    """ Wrap an existing dict, or create a new one, and access with dot notation
-    
-    The attribute _data is reserved and stores the underlying dictionary
-    
-    args:
-      d: Existing dict to wrap, an empty dict created by default
-      create: Create an empty, nested dict instead of raising a KeyError
-    
-    """
-    
-    def __init__(self, d=None, create=True):
-        if d is None:
-          d = {}
-        supr = super( DictWrap, self )
-        supr.__setattr__( '_data', d )
-        supr.__setattr__( '__create', create )
-
-    def __getattr__(self, name):
-        if name.startswith('__'):
-            return super(DictWrap, self).__getattribute__(name)
-        
-        try:
-            value = self._data[name]
-        except KeyError:
-            if not super(DictWrap, self).__getattribute__('__create'):
-              raise
-            value = {}
-            self._data[name] = value
-        
-        if hasattr(value, 'items'):
-            create = super(DictWrap, self).__getattribute__('__create')
-            return DictWrap(value, create)
-        
-        return value
-    
-    def __setattr__(self, name, value):
-        self._data[name] = value
-    
-    def __delattr__(self, name):
-        if name == '_data':
-          self._data = {}
-        else:
-          del self._data[name]
 
 
 class Rivers():
@@ -89,13 +42,13 @@ class Rivers():
         self.heightmap = heightmap
         self.worldW = len( self.heightmap )
         self.worldH = len( self.heightmap[0] )
-        self.riverMap = zeros( ( self.worldW, self.worldH ) )
-        self.lakeMap = zeros( ( self.worldW, self.worldH ) )
-        self.waterPath = zeros( ( self.worldW, self.worldH ), dtype = int )
+        self.riverMap = numpy.zeros( ( self.worldW, self.worldH ) )
+        self.lakeMap = numpy.zeros( ( self.worldW, self.worldH ) )
+        self.waterPath = numpy.zeros( ( self.worldW, self.worldH ), dtype = int )
         self.lakeList = []
         self.riverList = []
         self.rainmap = rainmap
-        self.waterFlow = zeros( ( self.worldW, self.worldH ) )
+        self.waterFlow = numpy.zeros( ( self.worldW, self.worldH ) )
         
 
         # step one: water flow per cell based on rainfall 
@@ -157,8 +110,8 @@ class Rivers():
                         continue # to not bother with cells below sealevel
                     flowDir = [tx - x, ty - y]
                     key = 0
-                    for dir in DIR_NEIGHBORS_CENTER:
-                        if dir == flowDir:
+                    for direction in DIR_NEIGHBORS_CENTER:
+                        if direction == flowDir:
                             self.waterPath[x, y] = key
                         key += 1
 
@@ -252,7 +205,6 @@ class Rivers():
         lowest available point'''
         currentLocation = source
         path = [source]
-        direction = []
 
         # first check that our source is not next to a river
         x, y = currentLocation
@@ -290,8 +242,6 @@ class Rivers():
 
             if quickSection:
                 path.append( quickSection )
-                qx, qy = quickSection
-                direction = [x - qx, y - qy]
                 currentLocation = quickSection
 
             else:
@@ -377,16 +327,18 @@ class Rivers():
     def riverMapUpdate( self, river ):
         '''Update the rivermap with the rainfall that is to become the waterflow'''
         isSeed = True
+        px, py = (0,0)
         for x, y in river:
             if isSeed:
                 self.riverMap[x, y] = self.waterFlow[x, y]
+                isSeed = False
             else:
                 self.riverMap[x, y] = self.rainmap[x, y] + self.riverMap[px, py]
             px, py = x, y
 
 
     def findQuickPath( self, river ):
-        # Water flows based on cost, seeking the higest elevation difference
+        # Water flows based on cost, seeking the highest elevation difference
         # highest positive number is the path of least resistance (lowest point)
         # Cost
         # *** 1,0 ***
@@ -410,7 +362,6 @@ class Rivers():
 
             if elevation < lowestElevation:
                 lowestElevation = elevation
-                #lowestDirection = direction
                 newPath = tempDir
 
         #print newPath, lowestDirection, elevation

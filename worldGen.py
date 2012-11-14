@@ -188,7 +188,7 @@ class MapGen( QtGui.QMainWindow ):
         else:
             print "Error: no heightmap algo selected."
             return
-        print self.size
+
         # create our heightmap
         heightObject = HeightMap( self.size, roughness )
         found = False
