@@ -416,10 +416,11 @@ class MapGen( QtGui.QMainWindow ):
         h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
         h5file = tables.openFile( fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
         for k in self.world:
-            atom = tables.Atom.from_dtype( self.world[k].dtype )
-            shape = self.world[k].shape
-            cArray = h5file.createCArray( h5file.root, k, atom, shape )
-            cArray[:] = self.world[k]
+            if self.world[k] is not None:
+                atom = tables.Atom.from_dtype( self.world[k].dtype )
+                shape = self.world[k].shape
+                cArray = h5file.createCArray( h5file.root, k, atom, shape )
+                cArray[:] = self.world[k]
         h5file.close()
         del h5file, h5Filter, fileLocation
 
@@ -441,15 +442,17 @@ class MapGen( QtGui.QMainWindow ):
             self.statusBar().showMessage( fileLocation + ' is not valid' )
             return
 
+        self.newWorld(self.size[0]) # reset data
         h5file = tables.openFile( fileLocation, mode = 'r' )
-        for k in self.world:
-            exec( 'self.' + k + ' = h5file.getNode("/",k).read()' ) # read object out of pytables
+        for array in h5file.walkNodes("/", "Array"):
+            exec( 'self.' + array.name + '= array.read()')
+            
         h5file.close()
         del h5file, fileLocation
         
         self.updateWorld()
         self.statusBar().showMessage( 'Imported world.' )
-        self.viewBiomeMap()
+        self.viewHeightMap()
 
     def importWorld( self ):
         pass
