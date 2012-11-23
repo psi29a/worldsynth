@@ -163,7 +163,6 @@ class MapGen( QtGui.QMainWindow ):
         size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
         if self.mapSize[0] != size:
             self.newWorld( size )
-            self.resizeMap()
 
     def rejectSettings( self ):
         size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
@@ -385,6 +384,7 @@ class MapGen( QtGui.QMainWindow ):
           }
         self.mapSize = self.elevation.shape
         self.resizeMap()
+        #self.viewHeightMap()
 
 
     def newWorld( self, size ):
@@ -471,7 +471,6 @@ class MapGen( QtGui.QMainWindow ):
         width, height = self.mapSize
         offset = 32
         self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
 
     def aboutApp( self ):
         '''All about the application'''
