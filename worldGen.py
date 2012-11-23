@@ -97,6 +97,7 @@ class MapGen( QtGui.QMainWindow ):
         Menu( self )
 
         self.mainImage = QtGui.QLabel( self )
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)) )
         self.scrollArea = QtGui.QScrollArea( self )
         self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
         self.scrollArea.setWidget(self.mainImage)
@@ -388,6 +389,7 @@ class MapGen( QtGui.QMainWindow ):
 
 
     def newWorld( self, size ):
+        width = height = size
         self.mapSize = ( size, size )
         self.elevation = numpy.zeros( self.mapSize )
         self.wind = None
@@ -398,6 +400,8 @@ class MapGen( QtGui.QMainWindow ):
         self.drainage = None
         self.biome = None
         self.biomeColour = None
+        
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)) )
         self.updateWorld()
 
     def saveWorld( self ):
@@ -469,7 +473,8 @@ class MapGen( QtGui.QMainWindow ):
 
     def resizeMap( self ):
         width, height = self.mapSize
-        offset = 32
+        offset = 128
+        #self.scrollArea.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
         self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
 
     def aboutApp( self ):
