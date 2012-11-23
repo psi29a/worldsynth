@@ -38,12 +38,12 @@ from library.biomes import *
 
 class MapGen( QtGui.QMainWindow ):
 
-    def __init__( self, size = 512, debug = False ):
+    def __init__( self, mapSize = 256, debug = False ):
         '''Attempt to allocate the necessary resources'''
         super( MapGen, self ).__init__()
 
         # application variables
-        self.size = ( size, size )
+        self.mapSize = ( mapSize, mapSize )
 
         # setup our working directories
         self.homeDir = os.environ['HOME'] + os.sep + '.mapGen'
@@ -55,7 +55,7 @@ class MapGen( QtGui.QMainWindow ):
         self.viewState = VIEWER_HEIGHTMAP
 
         # set initial world data
-        self.elevation      = numpy.zeros(self.size)
+        self.elevation      = numpy.zeros(self.mapSize)
         self.wind           = None
         self.rainfall       = None
         self.temperature    = None
@@ -86,8 +86,8 @@ class MapGen( QtGui.QMainWindow ):
 
     def initUI( self ):
         '''Initialize the GUI for usage'''
-        width, height = self.size
-        self.setMinimumSize( width, height )
+        width, height = self.mapSize
+        self.setMinimumSize( 512, 512 )
         self.setWindowTitle( 'WorldGen: Generating Worlds' )
         self.sb = self.statusBar()
 
@@ -97,14 +97,12 @@ class MapGen( QtGui.QMainWindow ):
         Menu( self )
 
         self.mainImage = QtGui.QLabel( self )
-        self.mainImage.setGeometry( 0, 0 , width, height )
-        #self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
-        self.setCentralWidget( self.mainImage )        
+        self.scrollArea = QtGui.QScrollArea( self )
+        self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
+        self.scrollArea.setWidget(self.mainImage)
+        self.setCentralWidget(self.scrollArea)
 
         self.show()
-
-        self.windowSize = QtCore.QSize( self.geometry().width(), self.geometry().height() )
-        self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()
 
         # load our gui files
         loader = QtUiTools.QUiLoader()
@@ -120,9 +118,9 @@ class MapGen( QtGui.QMainWindow ):
         self.dWorldConf.buttonBox.rejected.connect( self.rejectSettings )
         self.dWorldConf.gbRoughness.hide()
 
-    def mouseMoveEvent( self, e ):
+    def mouseMoveEvent( self, e ): #TODO: Fix this to reflect new scrollarea and offsets
         x, y = e.pos().toTuple()
-        width, height = self.size
+        width, height = self.mapSize
         if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
             y -= 25 # offset from menu
 
@@ -163,14 +161,14 @@ class MapGen( QtGui.QMainWindow ):
 
     def acceptSettings( self ):
         size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
-        if self.size[0] != size:
+        if self.mapSize[0] != size:
             self.newWorld( size )
-            self.resizeEnvironment()
+            self.resizeMap()
 
     def rejectSettings( self ):
         size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
-        if self.size[0] != size:
-            self.dWorldConf.cSize.setCurrentIndex( math.log( self.size[0], 2 ) - 5 )
+        if self.mapSize[0] != size:
+            self.dWorldConf.cSize.setCurrentIndex( math.log( self.mapSize[0], 2 ) - 5 )
 
     def genHeightMap( self ):
         '''Generate our heightmap'''
@@ -190,7 +188,7 @@ class MapGen( QtGui.QMainWindow ):
             return
 
         # create our heightmap
-        heightObject = HeightMap( self.size, roughness )
+        heightObject = HeightMap( self.mapSize, roughness )
         found = False
         while not found: # loop until we have something workable
             heightObject.run( method )
@@ -212,7 +210,6 @@ class MapGen( QtGui.QMainWindow ):
         del heightObject
         self.viewHeightMap()
         self.statusBar().showMessage( 'Successfully generated a heightmap!' )
-        self.resize( self.windowSize )
 
     def viewHeightMap( self ):
         self.updateWorld()
@@ -257,7 +254,6 @@ class MapGen( QtGui.QMainWindow ):
         del tempObject
         self.viewHeatMap()
         self.statusBar().showMessage( 'Successfully generated a heatmap!' )
-        self.resize( self.windowSize )
 
     def viewHeatMap( self ):
         self.updateWorld()
@@ -287,7 +283,6 @@ class MapGen( QtGui.QMainWindow ):
         del weatherObject
         self.viewWeatherMap()
         self.statusBar().showMessage( 'Successfully generated weather!' )
-        self.resize( self.windowSize )
 
     def viewWeatherMap( self ):
         self.updateWorld()
@@ -310,13 +305,12 @@ class MapGen( QtGui.QMainWindow ):
     def genDrainageMap( self ):
         '''Generate a fractal drainage map'''
         self.sb.showMessage( 'Generating drainage...' )
-        drainObject = DSA( self.size )
+        drainObject = DSA( self.mapSize )
         drainObject.run()
         self.drainage = drainObject.heightmap
         del drainObject
         self.viewDrainageMap()
         self.statusBar().showMessage( 'Successfully generated drainage!' )
-        self.resize( self.windowSize )
 
     def viewDrainageMap( self ):
         self.updateWorld()
@@ -346,7 +340,6 @@ class MapGen( QtGui.QMainWindow ):
         del biomeObject
         self.viewBiomeMap()
         self.statusBar().showMessage( 'Successfully generated biomes!' )
-        self.resize( self.windowSize )
 
     def viewBiomeMap( self ):
         self.updateWorld()
@@ -370,7 +363,6 @@ class MapGen( QtGui.QMainWindow ):
         del riversObject
         self.viewRiverMap()
         self.statusBar().showMessage( 'Successfully generated rivers and lakes!' )
-        self.resize( self.windowSize )
 
     def viewRiverMap( self ):
         self.updateWorld()
@@ -391,13 +383,13 @@ class MapGen( QtGui.QMainWindow ):
           'biome': self.biome,
           'biomeColour': self.biomeColour,
           }
-        self.size = self.elevation.shape
-        self.resizeEnvironment()
+        self.mapSize = self.elevation.shape
+        self.resizeMap()
 
 
     def newWorld( self, size ):
-        self.size = ( size, size )
-        self.elevation = numpy.zeros( self.size )
+        self.mapSize = ( size, size )
+        self.elevation = numpy.zeros( self.mapSize )
         self.wind = None
         self.rainfall = None
         self.temperature = None
@@ -442,7 +434,7 @@ class MapGen( QtGui.QMainWindow ):
             self.statusBar().showMessage( fileLocation + ' is not valid' )
             return
 
-        self.newWorld(self.size[0]) # reset data
+        self.newWorld(self.mapSize[0]) # reset data
         h5file = tables.openFile( fileLocation, mode = 'r' )
         for array in h5file.walkNodes("/", "Array"):
             exec( 'self.' + array.name + '= array.read()')
@@ -460,7 +452,7 @@ class MapGen( QtGui.QMainWindow ):
     def exportWorld( self ):
         '''Eventually allow exporting to all formats, but initially only heightmap
         as 16-bit greyscale png'''
-        width, height = self.size
+        width, height = self.mapSize
         heightmap = self.elevation.copy() * 65536
         pngObject = png.Writer( width, height, greyscale = True, bitdepth = 16 )
         fileLocation = open( './heightmap.png', 'wb' )
@@ -475,19 +467,11 @@ class MapGen( QtGui.QMainWindow ):
         heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( './heightmapCRowMajor.csv', sep = "," )
         heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( './heightmapFortranColumnMajor.csv', sep = "," )
 
-    def resizeEnvironment( self ):
-        width, height = self.size
-        if height < 256:
-            self.setMinimumSize( 256, 256 + 48 )
-            self.resize( 256, 256 + 48 )
-        else:
-            self.setMinimumSize( width, height + 48 )
-            self.resize( width, height + 48 )
-        self.mainImage.setGeometry( 0, 0 , width, height )
+    def resizeMap( self ):
+        width, height = self.mapSize
+        offset = 32
+        self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
         self.mainImage.setPixmap( QtGui.QPixmap.fromImage( render( self.world ).convert( 'heightmap' ) ) )
-
-        self.windowSize = QtCore.QSize( self.geometry().width(), self.geometry().height() )
-        self.heightOffset = self.geometry().height() - self.mainImage.geometry().height()        
 
     def aboutApp( self ):
         '''All about the application'''
