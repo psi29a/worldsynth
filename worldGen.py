@@ -407,6 +407,10 @@ class MapGen( QtGui.QMainWindow ):
     def saveWorld( self ):
         '''TODO: check if we are currently working on a world, save it.
         if not, we ignore the command. '''
+        pass
+
+    def saveWorldAs( self ):
+        '''TODO: save as file dialog'''
         self.updateWorld()
         fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Open fileLocation' )
         h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
@@ -419,10 +423,6 @@ class MapGen( QtGui.QMainWindow ):
                 cArray[:] = self.world[k]
         h5file.close()
         del h5file, h5Filter, fileLocation
-
-    def saveWorldAs( self ):
-        '''TODO: save as file dialog'''
-        pass
 
     def openWorld( self ):
         '''Open existing world project'''
