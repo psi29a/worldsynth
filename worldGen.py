@@ -473,9 +473,11 @@ class MapGen( QtGui.QMainWindow ):
 
     def resizeMap( self ):
         width, height = self.mapSize
-        offset = 128
+        offset = 0
         #self.scrollArea.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
-        self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
+        #self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
+        self.mainImage.setGeometry( offset, offset , 640, 640 ) # TODO: make it a real offset
+        self.mainImage.setAlignment(QtCore.Qt.AlignCenter) # center our image
 
     def aboutApp( self ):
         '''All about the application'''
