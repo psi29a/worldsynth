@@ -119,14 +119,33 @@ class MapGen( QtGui.QMainWindow ):
         self.dWorldConf.buttonBox.rejected.connect( self.rejectSettings )
         self.dWorldConf.gbRoughness.hide()
 
-    def mouseMoveEvent( self, e ): #TODO: Fix this to reflect new scrollarea and offsets
-        x, y = e.pos().toTuple()
+    def resizeEvent(self, e):
+        # Capture resize event, and align to new layout
         width, height = self.mapSize
-        if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
-            y -= 25 # offset from menu
+        offset = 2
+        sa = self.scrollArea.geometry()
+        self.mainImage.setGeometry( sa.x(), sa.y(), sa.width()-offset, sa.height()-offset ) # set to be just as big as our scrollarea
+        self.mainImage.setAlignment(QtCore.Qt.AlignCenter) # center our image        
 
-        if x < 0 or y < 0 or x > width - 1 or y > height - 1:
+    def mouseMoveEvent( self, e ): 
+        # Give information about graphics being shown
+        width, height = self.mapSize
+        mx, my = e.pos().toTuple()
+        
+        if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
+            offset = 25 # offset from menu        
+        else:
+            offset = 0
+            
+        # calculate our imagearea offsets
+        sa = self.scrollArea.geometry()
+        ox = sa.width()/2 - width/2
+        oy = sa.height()/2+offset - height/2
+
+        if mx < ox or my < oy or mx > width+ox-1 or my > height+oy-1:
             return # do not bother going out of range of size
+
+        x,y = mx-ox,my-oy # transpose
 
         sX, sY = str( x ).zfill( 4 ), str( y ).zfill( 4 ) # string formatting
 
@@ -384,7 +403,7 @@ class MapGen( QtGui.QMainWindow ):
           'biomeColour': self.biomeColour,
           }
         self.mapSize = self.elevation.shape
-        self.resizeMap()
+        self.resizeEvent(e)
         #self.viewHeightMap()
 
 
@@ -470,14 +489,6 @@ class MapGen( QtGui.QMainWindow ):
         # flat to text file
         heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( './heightmapCRowMajor.csv', sep = "," )
         heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( './heightmapFortranColumnMajor.csv', sep = "," )
-
-    def resizeMap( self ):
-        width, height = self.mapSize
-        offset = 0
-        #self.scrollArea.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
-        #self.mainImage.setGeometry( offset, offset , width+offset, height+offset ) # TODO: center widget
-        self.mainImage.setGeometry( offset, offset , 640, 640 ) # TODO: make it a real offset
-        self.mainImage.setAlignment(QtCore.Qt.AlignCenter) # center our image
 
     def aboutApp( self ):
         '''All about the application'''
