@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # random terrain generation.
 
 from random import gauss,random,uniform
-import numpy
+import numpy, sys
 
 def avg(*args):
     return sum(args)/len(args)    
@@ -36,7 +36,7 @@ def trimHeightmap(heightmap):
 
 def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
     # compress the range while maintaining ratio
-    oldMin = 0.0; oldMax = 0.0
+    oldMin = sys.float_info.max; oldMax = sys.float_info.min;
     width,height = heightmap.shape
     for x in xrange(0,width):
         for y in xrange(0,height):

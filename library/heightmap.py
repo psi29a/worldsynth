@@ -26,6 +26,7 @@ from constants import *
 from midpointDisplacement import MDA
 from diamondSquare import DSA
 from sphere import Sphere
+from perlinNoise import Perlin
 
 class HeightMap():
     '''An heightmap generator with various backends'''
@@ -43,6 +44,8 @@ class HeightMap():
             heightObject = DSA(self.size)
         elif method == HM_SPH:
             heightObject = Sphere(self.size, self.roughness)
+        elif method == HM_PERLIN:
+            heightObject = Perlin(self.size)
         else:
             print "No method for generating heightmap found!"
         

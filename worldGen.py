@@ -202,6 +202,8 @@ class MapGen( QtGui.QMainWindow ):
             method = HM_DSA
         elif self.dWorldConf.rSPH.isChecked():
             method = HM_SPH
+#        elif self.dWorldConf.rPerlin.isChecked():
+#            method = HM_PERLIN         
         else:
             print "Error: no heightmap algo selected."
             return
@@ -209,9 +211,10 @@ class MapGen( QtGui.QMainWindow ):
         # create our heightmap
         heightObject = HeightMap( self.mapSize, roughness )
         found = False
+        #method = 3 #testing
         while not found: # loop until we have something workable
             heightObject.run( method )
-            #break
+            break
             if self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage( 'Too little land mass' )
             elif self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
