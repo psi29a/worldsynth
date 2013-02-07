@@ -1,0 +1,35 @@
+The WorldSynth project was started in 2005 by Bret Curtis.
+
+Scholarly Resources:
+"An Erosion Model Based on Velocity Fields
+for the Visual Simulation of Mountain
+Scenery" THE JOURNAL OF VISUALIZATION AND COMPUTER ANIMATION
+J. Visual. Comput. Animat. 9 185–194 (1998)
+
+River and Coastal Action in Automatic Terrain Generation
+Soon Tee Teoh
+Department of Computer Science
+
+Sufficent Conditions for River Meandereing: A Simulation Approach
+Alan D. Howard
+Water Resources Research, VOL. 20, NO 11, PAGES 1659-1667, November 1984
+
+A Fractal Model of Mountains with Rivers
+Przemyslaw Prusinkiewicz and Mark Hammel
+Department of Computer Science, University of Calgary
+
+Terrain Simulation Using a Model of Stream Erosion
+Department of Computer Science and Department of Geology
+Arizona State University
+
+A Nonlinear River Meandering Model and its
+Incorporation in a Landscape Evolution Model
+Stephen Thomas Lancaster
+Bachelor of Arts, Cum Laude in General Studies, Harvard
+University, Cambridge, Massachusetts (1990)
+
+Online Resources:
+http://code.google.com/p/mudpie/ - Python routines for noise synthesis, erosion, etc. for creation of realistic terrain heightmaps.
+http://libnoise.sourceforge.net/glossary/index.html#perlinnoise
+http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
+http://disneyfriedhistory.blogspot.be/2011/03/i-spent-morning-toying-with-python.html
