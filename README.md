@@ -2,9 +2,9 @@ WorldSynth: Synthesizing Worlds
 
 WorldSynth uses procedural techniques to simulate real world phenomenon and render usable maps in different formats.
 
-Version: 0.9 
-License: LGPL v2 (See COPYRIGHT for more information) 
-Website: http://www.mindwerks.net/worldsynth 
+Version: 0.9  
+License: LGPL v2 (See COPYRIGHT for more information)  
+Website: http://www.mindwerks.net/worldsynth  
 
 FEATURES:
 * Heightmap generation using midpoint displacement
