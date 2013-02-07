@@ -4,7 +4,7 @@ WorldSynth uses procedural techniques to simulate real world phenomenon and rend
 
 Version: 0.9  
 License: LGPL v2 (See COPYRIGHT for more information)  
-Website: http://www.mindwerks.net/worldsynth  
+Website: http://www.mindwerks.net/projects/worldsynth  
 
 FEATURES:
 * Heightmap generation using midpoint displacement
