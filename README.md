@@ -1,13 +1,20 @@
 WorldSynth: Synthesizing Worlds
 
-This program is a world sythesizer that uses procedural techniques to 
-simulate real world phenomenon and render usable maps in different formats. 
+This program uses procedural techniques to simulate real world phenomenon and render usable maps in different formats. 
 
-Version: 0.8  
+VERSION: 0.9  
 Author:  Bret Curtis
 License: LGPL v2 (See COPYRIGHT for more information)
-Website: [a link](http://www.mindwerks.net/worldsynth)
+Website: [http://www.mindwerks.net/worldsynth](http://www.mindwerks.net/worldsynth)
 
+FEATURES:
+* Heightmap generation using midpoint displacement
+* Heatmap based on full hemisphere or half-hemisphere (north or south)
+* Windmap using contours of heightmap to dictate general wind direction and strength
+* Precipitation based on map topography and wind currents
+* Drainage to show how fast water can be absorbed by terrain
+* Rivers based on rainfall and topography
+* Biomes taking into account everything above to give natural zones of nature
 
 REQUIREMENTS
 * Python >= 2.7
