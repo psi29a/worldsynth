@@ -2,10 +2,10 @@ WorldSynth: Synthesizing Worlds
 
 This program uses procedural techniques to simulate real world phenomenon and render usable maps in different formats. 
 
-VERSION: 0.9  
+VERSION: 0.9
 Author:  Bret Curtis
 License: LGPL v2 (See COPYRIGHT for more information)
-Website: [http://www.mindwerks.net/worldsynth](http://www.mindwerks.net/worldsynth)
+Website: http://www.mindwerks.net/worldsynth
 
 FEATURES:
 * Heightmap generation using midpoint displacement
