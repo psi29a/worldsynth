@@ -17,11 +17,10 @@ FEATURES:
 
 REQUIREMENTS
 * Python >= 2.7
-* Libs: 
-** NumPy:    http://www.numpy.org/
-** PySide:   http://qt-project.org/wiki/PySide
-** PyTables: http://www.pytables.org/
-** PyPNG:    http://pythonhosted.org/pypng/index.html
+* PySide:   http://qt-project.org/wiki/PySide
+* NumPy:    http://www.numpy.org/
+* PyTables: http://www.pytables.org/
+* PyPNG:    http://pythonhosted.org/pypng/index.html
 
 INSTALLATION
 * Verify that all requirements above are met
