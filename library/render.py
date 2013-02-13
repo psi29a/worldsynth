@@ -20,11 +20,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 from constants import *
-from numpy import *
 from PySide import QtGui
 from PySide.QtGui import QImage
 
-class render():
+class Render():
     '''Transform the numpy data into a renderable image suitable for screen'''
 
     def __init__( self, world ):
@@ -36,7 +35,7 @@ class render():
         self.height = self.width
         self.image = QImage( self.width, self.height, QImage.Format_RGB32 )
 
-    def hex2rgb( self, hex ):
+    def hex2rgb( self, hexcolor ):
         r = ( hexcolor >> 16 ) & 0xFF;
         g = ( hexcolor >> 8 ) & 0xFF;
         b = hexcolor & 0xFF;
@@ -140,6 +139,7 @@ class render():
         else: # something bad happened...
             print "did not get a valid map type, check your bindings programmer man!"
             print len( background ), background, mapType
+            from numpy import zeros
             background = zeros( ( self.width, self.height ), dtype = "int32" )
 
         return self.image

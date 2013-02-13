@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 import sys
-from numpy import *
+from numpy import zeros
 from constants import *
 
 class Biomes():
@@ -40,9 +40,6 @@ class Biomes():
             sys.exit('0 or 4 arguments only')
 
     def run(self):
-        # setup or local variables
-        steps = 0
-
         # calculate biome -- from scale of 0-400 ((oldValue-0) * (100-0)) / (400-0) + 0
         for x in xrange(self.worldW):
             for y in xrange(self.worldH):
@@ -68,8 +65,8 @@ class Biomes():
                 else: # all other biomes are between elevations of 100 and 299 (25-74)
                     if self.rainmap[x, y] < 0.10: # all rainfall between 0 and 9
                         if self.drainmap[x, y] < 0.33:    # Desert (Sand): d0-32
-                             self.biome[x, y] = BIOME_TYPE_DESERT_SAND
-                             self.biomeColourCode[x, y] = COLOR_GOLDEN_YELLOW
+                            self.biome[x, y] = BIOME_TYPE_DESERT_SAND
+                            self.biomeColourCode[x, y] = COLOR_GOLDEN_YELLOW
                         elif self.drainmap[x, y] < 0.50:    # Desert (Rock): d33-49
                             self.biome[x, y] = BIOME_TYPE_DESERT_ROCK
                             self.biomeColourCode[x, y] = COLOR_DARK_CHESTNUT

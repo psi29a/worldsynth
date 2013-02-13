@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #    The wind travels in direction of worldWinDir
 
 import math, random
-from numpy import *
+from numpy import zeros
 from PySide import QtGui
 from constants import *
 
@@ -54,6 +54,7 @@ class Weather():
             progress.setValue( 0 )
         self.windMap = zeros( ( worldW, worldH ) )
         self.rainMap = zeros( ( worldW, worldH ) )
+        self.erosionMap = zeros( ( worldW, worldH ) )
         worldWindDir = random.randint( 0, 360 )
         theta1 = worldWindDir * WIND_PARITY + WIND_OFFSET
         theta2 = 180 - 90 - ( worldWindDir * WIND_PARITY + WIND_OFFSET )

@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # A simple implementation of the diamond-square fractal algorithm for
 # random terrain generation.
 
-from random import gauss,random,uniform
+from random import uniform #,gauss,random
 import numpy, sys
 
 def avg(*args):
