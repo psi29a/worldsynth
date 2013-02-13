@@ -19,18 +19,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import math, random, sys
-from numpy import *
-from PySide import QtGui
 from constants import *
-from midpointDisplacement import MDA
-from diamondSquare import DSA
-from sphere import Sphere
-from perlinNoise import Perlin
 
 class HeightMap():
     '''An heightmap generator with various backends'''
-    
     def __init__( self, size, roughness = 0.5 ):
         self.size = size
         self.width, self.height = self.size
@@ -39,12 +31,16 @@ class HeightMap():
 
     def run(self, method = None):
         if method == HM_MDA:
+            from midpointDisplacement import MDA            
             heightObject = MDA(self.size, self.roughness)
         elif method == HM_DSA:
+            from diamondSquare import DSA
             heightObject = DSA(self.size)
         elif method == HM_SPH:
+            from sphere import Sphere
             heightObject = Sphere(self.size, self.roughness)
         elif method == HM_PERLIN:
+            from perlinNoise import Perlin
             heightObject = Perlin(self.size)
         else:
             print "No method for generating heightmap found!"
@@ -57,7 +53,8 @@ class HeightMap():
         return self.heightmap.sum() / ( self.width * self.height )
 
     def averageElevation( self ):
-        return average( self.heightmap )
+        import numpy
+        return numpy.average( self.heightmap )
 
     def hasNoMountains( self ):
         if self.heightmap.max() > BIOME_ELEVATION_MOUNTAIN:

@@ -45,6 +45,7 @@ class Rivers():
         self.riverMap = numpy.zeros( ( self.worldW, self.worldH ) )
         self.lakeMap = numpy.zeros( ( self.worldW, self.worldH ) )
         self.waterPath = numpy.zeros( ( self.worldW, self.worldH ), dtype = int )
+        self.erosionMap = numpy.zeros( ( self.worldW, self.worldH ) )
         self.lakeList = []
         self.riverList = []
         self.rainmap = rainmap
@@ -269,7 +270,7 @@ class Rivers():
             if relevation <= celevation:
                 celevation = relevation
             elif relevation > celevation:
-                self.heightmap[rx, ry] = celevation
+                self.erosionMap[rx, ry] += celevation - self.heightmap[rx, ry]
         return river
 
 
@@ -280,7 +281,7 @@ class Rivers():
             * sides of river are also eroded to slope into riverbed.
             '''
 
-        # erosion of riverbed
+        # erosion of riverbed itself
         maxElevation = 1.0
         for r in river:
             rx, ry = r
@@ -290,7 +291,8 @@ class Rivers():
             if minElevation < WGEN_SEA_LEVEL:
                 minElevation = WGEN_SEA_LEVEL
             maxElevation = random.uniform( minElevation, maxElevation )
-            self.heightmap[rx, ry] = maxElevation
+            self.erosionMap[rx, ry]  += maxElevation - self.heightmap[rx, ry]
+            
 
         # erosion around river, create river valley
         for r in river:
@@ -321,7 +323,7 @@ class Rivers():
                     if newElevation <= self.heightmap[rx, ry]:
                         print 'newElevation is <= than river, fix me...'
                         newElevation = self.heightmap[x, y]
-                    self.heightmap[x, y] = newElevation
+                    self.erosionMap[x, y] += newElevation - self.heightmap[x, y]
         return
 
     def riverMapUpdate( self, river ):
