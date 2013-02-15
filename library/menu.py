@@ -135,7 +135,13 @@ class Menu():
         viewRiverMapAction.triggered.connect( mapGen.viewRiverMap )
         viewBiomeMapAction = QtGui.QAction( 'Biome Map', mapGen )
         viewBiomeMapAction.setStatusTip( 'Display biome map.' )
-        viewBiomeMapAction.triggered.connect( mapGen.viewBiomeMap )
+        viewBiomeMapAction.triggered.connect( mapGen.viewErosionMap )
+        viewErosionMapAction = QtGui.QAction( 'Erosion Map', mapGen )
+        viewErosionMapAction.setStatusTip( 'Display erosion map.' )
+        viewErosionMapAction.triggered.connect( mapGen.viewErosionMap )
+        viewErosionAppliedMapAction = QtGui.QAction( 'Erosion Applied', mapGen )
+        viewErosionAppliedMapAction.setStatusTip( 'Display applied erosion map.' )
+        viewErosionAppliedMapAction.triggered.connect( mapGen.viewErosionAppliedMap )                
         
         viewMenu = menuBar.addMenu( '&View' )
         viewHeightmapMenu = viewMenu.addMenu( '&Heightmap' )
@@ -151,7 +157,9 @@ class Menu():
         viewGeographyMenu = viewMenu.addMenu( '&Geography' )
         viewGeographyMenu.addAction( viewDrainageAction )
         viewGeographyMenu.addAction( viewRiverMapAction )
-        viewGeographyMenu.addAction( viewBiomeMapAction )        
+        viewGeographyMenu.addAction( viewBiomeMapAction )
+        viewGeographyMenu.addAction( viewErosionMapAction )
+        viewGeographyMenu.addAction( viewErosionAppliedMapAction )    
         
 
         # Help actions

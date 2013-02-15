@@ -164,6 +164,10 @@ class MapGen( QtGui.QMainWindow ):
             message = 'River flow is: ' + "{:4.2f}".format( self.rivers[x, y] )
         elif self.viewState == VIEWER_BIOMES:
             message = 'Biome type is: ' + Biomes().biomeType( self.biome[x, y] )
+        elif self.viewState == VIEWER_EROSION:
+            message = 'Erosion amount is: ' + "{:4.2f}".format( self.erosion[x, y] )
+        elif self.viewState == VIEWER_EROSIONAPP:
+            message = 'Elevation in eroded heightmap is: ' + "{:4.2f}".format( self.elevation[x, y] - self.erosion[x, y] )
 
         self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
 
@@ -398,6 +402,18 @@ class MapGen( QtGui.QMainWindow ):
         self.viewState = VIEWER_RIVERS
         self.statusBar().showMessage( 'Viewing rivers and lakes.' )
 
+    def viewErosionMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'erosionmap' ) ) )
+        self.viewState = VIEWER_EROSION
+        self.statusBar().showMessage( 'Viewing raw erosion.' )
+    
+    def viewErosionAppliedMap( self ):
+        self.updateWorld()
+        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'erosionappliedmap' ) ) )
+        self.viewState = VIEWER_EROSIONAPP
+        self.statusBar().showMessage( 'Viewing applied erosion map.' )
+    
     def updateWorld( self ):
         # update and package up our world data
         self.world = {
@@ -427,7 +443,7 @@ class MapGen( QtGui.QMainWindow ):
         self.drainage = None
         self.rivers = None
         self.lakes = None
-        self.erosion = None        
+        self.erosion = numpy.zeros( self.mapSize )        
         self.biome = None
         self.biomeColour = None
         
