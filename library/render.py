@@ -136,6 +136,24 @@ class Render():
                 for y in xrange( self.height ):
                     self.image.setPixel( x, y, self.biomeColour[x, y] )
 
+        elif mapType == "erosionmap":
+            # TODO: why are there negative numbers?
+            erosion = self.erosion * 255 # convert to greyscale
+            for x in xrange( self.width ):
+                for y in xrange( self.height ):
+                    gValue = erosion[x, y]
+                    if gValue < 0 or gValue > 255:
+                        print "FIXME, this shouldn't be negatives: ", gValue, x , y
+                        gValue = 0          
+                    self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
+
+        elif mapType == "erosionappliedmap":
+            erosion = ( self.elevation - self.erosion ) *  255 # convert to greyscale
+            for x in xrange( self.width ):
+                for y in xrange( self.height ):
+                    gValue = erosion[x, y]
+                    self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
+
         else: # something bad happened...
             print "did not get a valid map type, check your bindings programmer man!"
             print len( background ), background, mapType

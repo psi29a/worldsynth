@@ -39,7 +39,7 @@ class Rivers():
             progress.setRange( 0, 5 )
             sb.addPermanentWidget( progress )
             progress.setValue( 0 )
-        self.heightmap = heightmap
+        self.heightmap = heightmap.copy()
         self.worldW = len( self.heightmap )
         self.worldH = len( self.heightmap[0] )
         self.riverMap = numpy.zeros( ( self.worldW, self.worldH ) )
@@ -48,19 +48,18 @@ class Rivers():
         self.erosionMap = numpy.zeros( ( self.worldW, self.worldH ) )
         self.lakeList = []
         self.riverList = []
-        self.rainmap = rainmap
+        self.rainMap = rainmap
         self.waterFlow = numpy.zeros( ( self.worldW, self.worldH ) )
         
-
         # step one: water flow per cell based on rainfall 
         self.findWaterFlow()
-        if sb != None:
+        if sb:
             progress.setValue( progressValue )
             progressValue += 1
 
         # step two: find river sources (seeds)
         riverSources = self.riverSources()
-        if sb != None:
+        if sb:
             progress.setValue( progressValue )
             progressValue += 1
 
@@ -73,7 +72,7 @@ class Rivers():
                 rx, ry = river[-1] # find last cell in river                
                 if ( self.heightmap[rx, ry] > WGEN_SEA_LEVEL ):
                     self.lakeList.append( river[-1] ) # river flowed into a lake         
-        if sb != None:
+        if sb:
             progress.setValue( progressValue )
             progressValue += 1
 
@@ -81,7 +80,7 @@ class Rivers():
         for river in self.riverList:
             self.riverErosion( river )
             self.riverMapUpdate( river )
-        if sb != None:
+        if sb:
             progress.setValue( progressValue )
             progressValue += 1
 
@@ -91,7 +90,11 @@ class Rivers():
             lx, ly = lake
             self.lakeMap[lx, ly] = 0.1 #TODO: make this based on rainfall/flow
             #lakeWater = self.simulateFlood(lake['x'], lake['y'], self.heightmap[lake['x'], lake['y']] + 0.001)
-        if sb != None:
+        
+        # step six: generate an erosion map that gives us the height difference from original heightmap
+        self.erosionMap = heightmap - self.heightmap # erosion is of positive values
+        
+        if sb:
             progress.setValue( progressValue )
             progressValue += 1
             sb.removeWidget( progress )
@@ -160,7 +163,7 @@ class Rivers():
             #    above sea level are marked as 'sources'.
             for x in range( 0, self.worldW - 1 ):
                 for y in range( 0, self.worldH - 1 ):
-                    rainFall = self.rainmap[x, y]
+                    rainFall = self.rainMap[x, y]
                     self.waterFlow[x, y] = rainFall
 
                     if self.waterPath[x, y] == 0:
@@ -270,7 +273,7 @@ class Rivers():
             if relevation <= celevation:
                 celevation = relevation
             elif relevation > celevation:
-                self.erosionMap[rx, ry] += celevation - self.heightmap[rx, ry]
+                self.heightmap[rx, ry] = celevation
         return river
 
 
@@ -280,7 +283,6 @@ class Rivers():
             * riverbed is carved out by % of volume/flow
             * sides of river are also eroded to slope into riverbed.
             '''
-
         # erosion of riverbed itself
         maxElevation = 1.0
         for r in river:
@@ -291,8 +293,7 @@ class Rivers():
             if minElevation < WGEN_SEA_LEVEL:
                 minElevation = WGEN_SEA_LEVEL
             maxElevation = random.uniform( minElevation, maxElevation )
-            self.erosionMap[rx, ry]  += maxElevation - self.heightmap[rx, ry]
-            
+            self.heightmap[rx, ry] = maxElevation
 
         # erosion around river, create river valley
         for r in river:
@@ -323,7 +324,7 @@ class Rivers():
                     if newElevation <= self.heightmap[rx, ry]:
                         print 'newElevation is <= than river, fix me...'
                         newElevation = self.heightmap[x, y]
-                    self.erosionMap[x, y] += newElevation - self.heightmap[x, y]
+                    self.heightmap[x, y] = newElevation
         return
 
     def riverMapUpdate( self, river ):
@@ -335,7 +336,7 @@ class Rivers():
                 self.riverMap[x, y] = self.waterFlow[x, y]
                 isSeed = False
             else:
-                self.riverMap[x, y] = self.rainmap[x, y] + self.riverMap[px, py]
+                self.riverMap[x, y] = self.rainMap[x, y] + self.riverMap[px, py]
             px, py = x, y
 
 
