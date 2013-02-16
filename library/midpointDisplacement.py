@@ -19,9 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import math, random, sys
-from numpy import *
-from PySide import QtGui
+import math, random, numpy
 
 class MDA():
     def __init__( self, size, roughness = 8 ):
@@ -31,7 +29,7 @@ class MDA():
         self.heightmap = None
 
     def run( self ):
-        self.heightmap = zeros( ( self.width, self.height ) ) # reset on run
+        self.heightmap = numpy.zeros( ( self.width, self.height ) ) # reset on run
         c1 = random.random()    # top
         c3 = random.random()    # bottom
         c2 = random.random()    # right
@@ -83,6 +81,7 @@ class MDA():
 
 # runs the program
 if __name__ == '__main__':
+    import sys
     if len( sys.argv ) != 3:
         print "You must pass the size and roughness of the map you wish to make!"
         sys.exit()
