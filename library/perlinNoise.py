@@ -20,7 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 #from noise import pnoise2
-import numpy, noise, random, sys
+import numpy, sys
+from noise.perlin import SimplexNoise
 
 def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
     # compress the range while maintaining ratio
@@ -45,7 +46,6 @@ class Perlin():
     def run( self ):
         noiseMap = numpy.zeros((self.width, self.height))
         
-        from noise.perlin import SimplexNoise
         sn = SimplexNoise()
         
         octaves = 1

@@ -24,4 +24,5 @@ REQUIREMENTS
 
 INSTALLATION
 * Verify that all requirements above are met
+* pip install pypng noise
 * Untar/unzip and run worldsynth.py
