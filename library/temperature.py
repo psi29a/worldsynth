@@ -20,19 +20,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 
-import math, random
-from numpy import *
+import math, random, numpy
 from PySide import QtGui
 from constants import *
 
 class Temperature():
-    def __init__( self, heightmap = zeros( 1 ), hemisphere = 2, resolution = TEMPERATURE_BAND_RESOLUTION ):
+    def __init__( self, heightmap = numpy.zeros( 1 ), hemisphere = 2, resolution = TEMPERATURE_BAND_RESOLUTION ):
         self.heightmap = heightmap
         self.hemisphere = hemisphere
         self.resolution = resolution
         self.worldW = len( self.heightmap )
         self.worldH = len( self.heightmap[0] )
-        self.temperature = zeros( ( self.worldW, self.worldH ) )
+        self.temperature = numpy.zeros( ( self.worldW, self.worldH ) )
 
     def run( self, sb = None ):
         # setup or local variables
@@ -76,7 +75,7 @@ class Temperature():
             direction = 1.0
             diradj = 1
             dirsin = random.randint( 1, 8 )
-            band = zeros( self.worldW )
+            band = numpy.zeros( self.worldW )
             for x in xrange( self.worldW ):
                 band[x] = bandy
                 band[x] += direction
@@ -104,7 +103,7 @@ class Temperature():
             del progress
 
 if __name__ == '__main__':
-    heightmap = zeros( ( 256, 256 ) )
+    heightmap = numpy.zeros( ( 256, 256 ) )
     tempObject = Temperature( heightmap )
     #tempObject.run()
     import cProfile
