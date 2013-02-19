@@ -285,13 +285,12 @@ class Rivers():
             '''
         # erosion of riverbed itself
         maxElevation = 1.0
+        minElevation = 0.0
         for r in river:
             rx, ry = r
             if self.heightmap[rx, ry] < maxElevation:
                 maxElevation = self.heightmap[rx, ry]
-            minElevation = maxElevation - ( maxElevation * 0.01 )
-            if minElevation < WGEN_SEA_LEVEL:
-                minElevation = WGEN_SEA_LEVEL
+            minElevation = maxElevation * 0.99
             maxElevation = random.uniform( minElevation, maxElevation )
             self.heightmap[rx, ry] = maxElevation
 

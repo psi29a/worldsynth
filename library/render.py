@@ -141,10 +141,7 @@ class Render():
             erosion = self.erosion * 255 # convert to greyscale
             for x in xrange( self.width ):
                 for y in xrange( self.height ):
-                    gValue = erosion[x, y]
-                    if gValue < 0 or gValue > 255:
-                        print "FIXME, this shouldn't be negatives: ", gValue, x , y
-                        gValue = 0          
+                    gValue = erosion[x, y] 
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == "erosionappliedmap":
