@@ -20,12 +20,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 
-import math, random, numpy
+import math, random, numpy, constants
 from PySide import QtGui
-from constants import *
 
 class Temperature():
-    def __init__( self, heightmap = numpy.zeros( 1 ), hemisphere = 2, resolution = TEMPERATURE_BAND_RESOLUTION ):
+    def __init__( self, heightmap = numpy.zeros( 1 ), hemisphere = 2, resolution = constants.TEMPERATURE_BAND_RESOLUTION ):
         self.heightmap = heightmap
         self.hemisphere = hemisphere
         self.resolution = resolution
@@ -51,17 +50,17 @@ class Temperature():
             bandy = i
             bandrange = 7
 
-            if self.hemisphere == WGEN_HEMISPHERE_NORTH:
+            if self.hemisphere == constants.WGEN_HEMISPHERE_NORTH:
                     # 0, 0.5, 1
                     bandtemp = float( i ) / self.worldH
-            elif self.hemisphere == WGEN_HEMISPHERE_EQUATOR:
+            elif self.hemisphere == constants.WGEN_HEMISPHERE_EQUATOR:
                     # 0, 1, 0
                     if i < ( self.worldH / 2 ):
                         bandtemp = float( i ) / self.worldH
                     else:
                         bandtemp = 1.0 - float( i ) / self.worldH
                     bandtemp *= 2.0
-            elif self.hemisphere == WGEN_HEMISPHERE_SOUTH:
+            elif self.hemisphere == constants.WGEN_HEMISPHERE_SOUTH:
                     # 1, 0.5, 0
                     bandtemp = 1.0 - float( i ) / self.worldH
             else:
@@ -92,10 +91,10 @@ class Temperature():
             for x in xrange( self.worldW ):
                 bandx = int( band[x] )
                 for y in xrange(bandx+1, self.worldH ):
-                    if self.heightmap[x, y] <= WGEN_SEA_LEVEL: # typical temp at sea level
+                    if self.heightmap[x, y] <= constants.WGEN_SEA_LEVEL: # typical temp at sea level
                             self.temperature[x, y] = bandtemp * 0.7
                     else: # typical temp at elevation
-                            self.temperature[x, y] = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
+                            self.temperature[x, y] = bandtemp * ( 1.0 - ( self.heightmap[x, y] - constants.WGEN_SEA_LEVEL ) )
 
             #break # for profiling 
         if sb != None:

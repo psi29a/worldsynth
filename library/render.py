@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-from constants import *
+import constants
 from PySide import QtGui
 from PySide.QtGui import QImage
 
@@ -60,7 +60,7 @@ class Render():
                 for y in xrange( self.height ):
                     elevation = self.elevation[x, y]
                     gValue = elevation * 255
-                    if elevation <= WGEN_SEA_LEVEL: # sealevel
+                    if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
@@ -69,11 +69,11 @@ class Render():
             for x in xrange( self.width ):
                 for y in xrange( self.height ):
                     elevation = self.elevation[x, y]
-                    if elevation <= WGEN_SEA_LEVEL: # sealevel
+                    if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, 128 ).rgb() )
-                    elif elevation < BIOME_ELEVATION_HILLS: # grasslands
+                    elif elevation < constants.BIOME_ELEVATION_HILLS: # grasslands
                         self.image.setPixel( x, y, QtGui.QColor( 128, 255, 0 ).rgb() )
-                    elif elevation < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
+                    elif elevation < constants.BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
                         self.image.setPixel( x, y, QtGui.QColor( 90, 128, 90 ).rgb() )
                     else:
                         self.image.setPixel( x, y, QtGui.QColor( 255, 255, 255 ).rgb() )
@@ -121,14 +121,14 @@ class Render():
             for x in xrange( self.width ):
                 for y in xrange( self.height ):
                     gValue = self.elevation[x, y] * 255
-                    if self.elevation[x, y] <= WGEN_SEA_LEVEL: # sealevel
+                    if self.elevation[x, y] <= constants.WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         rgb = QtGui.QColor( gValue, gValue, gValue ).rgb()
                         if self.rivers[x, y] > 0.0:
-                            rgb = COLOR_COBALT
+                            rgb = constants.COLOR_COBALT
                         if self.lakes[x, y] > 0.0:
-                            rgb = COLOR_AZURE
+                            rgb = constants.COLOR_AZURE
                         self.image.setPixel( x, y, rgb )
 
         elif mapType == 'biomemap':
@@ -137,7 +137,6 @@ class Render():
                     self.image.setPixel( x, y, self.biomeColour[x, y] )
 
         elif mapType == "erosionmap":
-            # TODO: why are there negative numbers?
             erosion = self.erosion * 255 # convert to greyscale
             for x in xrange( self.width ):
                 for y in xrange( self.height ):

@@ -19,7 +19,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-from constants import *
 
 class Path:
 
@@ -169,13 +168,9 @@ class SQ_MapHandler:
             return None
         d = self.m[( y * self.w ) + x]
 
-        #d += 1 # we need to modify this for best effect (0s make a* crazy)
-        # we make higher elevations have more cost
-        #if d > WGEN_SEA_LEVEL + 1:
-        #    d *= d
-
-        if d >= ( BIOME_ELEVATION_MOUNTAIN ): # not over mountains
-            return None
+        #import constants
+        #if d >= ( constants.BIOME_ELEVATION_MOUNTAIN ): # not over mountains
+        #    return None
 
         return Node( location, d, ( ( y * self.w ) + x ) )
 
