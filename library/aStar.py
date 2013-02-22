@@ -168,9 +168,9 @@ class SQ_MapHandler:
             return None
         d = self.m[( y * self.w ) + x]
 
-        #import constants
-        #if d >= ( constants.BIOME_ELEVATION_MOUNTAIN ): # not over mountains
-        #    return None
+#        import constants
+#        if d >= ( constants.BIOME_ELEVATION_MOUNTAIN ): # not over mountains
+#            return None
 
         return Node( location, d, ( ( y * self.w ) + x ) )
 
