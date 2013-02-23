@@ -256,17 +256,47 @@ class Rivers():
                     #TODO: make this more natural
                     print 'Found a lower elevation on wrapped path, searching path!'
                     print 'We go from',currentLocation,'to',lowerElevation
+                    cx,cy = currentLocation
+                    lx,ly = lowerElevation
+                    if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
+                        print "BUG: fix me... we shouldn't here", currentLocation
+                        break
+
+                    
+                    stepX = 1 # we go right
+                    if cx < lx:
+                        stepX = -1 # we go left
+                    stepY = 1 # we go down
+                    if cy < ly:
+                        stepY = -1 # we go up
+                    
+                    # step our way to edge
+                    switch = 0
+                    while (x != 0 or x != self.worldW-1) or (y != 0 or y != self.worldH-1):
+                        if switch%2:
+                            x += stepX
+                        else:
+                            y += stepY
+                        switch += 1  
+                        currentLocation = [x,y]
+                        path.append(currentLocation)
+                        print "stepping to: ", currentLocation
+                        if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
+                            break
+                    
+                    # if we are on edge of map, overflow to otherside    
                     if x == 0:
-                        x = 255
-                    elif x == 255:
+                        x = self.worldW-1
+                    elif x == self.worldW-1:
                         x = 0
                     if y == 0:
-                        y = 255
-                    elif y == 255:
+                        y = self.worldH-1
+                    elif y == self.worldH-1:
                         y = 0
-                    path.append([x, y])
-
-                    currentLocation = path[-1]
+                    
+                    currentLocation = [x,y]
+                    path.append(currentLocation)
+                    #break
                 else:
                     self.lakeList.append(currentLocation)
                     break
