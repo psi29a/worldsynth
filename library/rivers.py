@@ -254,6 +254,8 @@ class Rivers():
                         break
                 elif lowerElevation and isWrapped:
                     #TODO: make this more natural
+                    maxRadius = 40
+                    wrappedX = wrappedY = False
                     print 'Found a lower elevation on wrapped path, searching path!'
                     print 'We go from',currentLocation,'to',lowerElevation
                     cx,cy = currentLocation
@@ -261,15 +263,29 @@ class Rivers():
                     if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
                         print "BUG: fix me... we shouldn't here", currentLocation
                         break
-
+                    # TODO: attempt to find which thing overlaps
+                    # use astar to find path to that edge
+                    # then add last set in path to wraps over to otherside 
                     
-                    stepX = 1 # we go right
-                    if cx < lx:
-                        stepX = -1 # we go left
-                    stepY = 1 # we go down
-                    if cy < ly:
-                        stepY = -1 # we go up
+                    diffX = math.fabs(cx-lx)
+                    diffY = math.fabs(cy-ly)
                     
+                    stepX = stepY = 0
+                    #find over which edge overflow
+                    if cx-lx < 0 and diffX > maxRadius: # we go left
+                        stepX = -1
+                        wrappedX = True
+                    elif cx+lx >= self.worldW: # we go right
+                        stepX = 1
+                        wrappedX = True
+                    
+                    if cy-ly < 0 and diffY > maxRadius: #we go up
+                        stepY = -1
+                        wrappedY = True
+                    elif cy+ly >= self.worldH: # we go south
+                        stepY = 1
+                        wrappedY = True
+                                        
                     # step our way to edge
                     switch = 0
                     while (x != 0 or x != self.worldW-1) or (y != 0 or y != self.worldH-1):
