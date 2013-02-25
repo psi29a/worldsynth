@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 """
 #system libraries
 import os, math, numpy, tables
-from PySide import QtGui, QtCore, QtUiTools
+from PySide import QtGui, QtCore, QtUiTools, QtXml
 
 # mapGen libraries
 from library.constants import *
