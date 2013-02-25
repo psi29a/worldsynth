@@ -260,60 +260,54 @@ class Rivers():
                     print 'We go from',currentLocation,'to',lowerElevation
                     cx,cy = currentLocation
                     lx,ly = lowerElevation
+                    nx,ny = lowerElevation
+                    
                     if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
-                        print "BUG: fix me... we shouldn't here", currentLocation
+                        print "BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation
                         break
-                    # TODO: attempt to find which thing overlaps
-                    # use astar to find path to that edge
-                    # then add last set in path to wraps over to otherside 
                     
-                    diffX = math.fabs(cx-lx)
-                    diffY = math.fabs(cy-ly)
-                    
-                    stepX = stepY = 0
-                    #find over which edge overflow
-                    if cx-lx < 0 and diffX > maxRadius: # we go left
-                        stepX = -1
-                        wrappedX = True
-                    elif cx+lx >= self.worldW: # we go right
-                        stepX = 1
-                        wrappedX = True
-                    
-                    if cy-ly < 0 and diffY > maxRadius: #we go up
-                        stepY = -1
-                        wrappedY = True
-                    elif cy+ly >= self.worldH: # we go south
-                        stepY = 1
-                        wrappedY = True
-                                        
-                    # step our way to edge
-                    switch = 0
-                    while (x != 0 or x != self.worldW-1) or (y != 0 or y != self.worldH-1):
-                        if switch%2:
-                            x += stepX
+                    if not self.inCircle(maxRadius, cx, cy, lx, cy):
+                        # are we wrapping on x axis?
+                        print "We found wrapping along x-axis"
+                        if cx-lx < 0:
+                            lx = 0 # move to left edge
+                            nx = self.worldW-1 # next step is wrapped around
                         else:
-                            y += stepY
-                        switch += 1  
-                        currentLocation = [x,y]
-                        path.append(currentLocation)
-                        print "stepping to: ", currentLocation
-                        if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
-                            break
+                            lx = self.worldW-1 # move to right edge
+                            nx = 0 # next step is wrapped around
+                        ly = ny = int( (cy+ly)/2 ) # move halfway
+                    elif not self.inCircle(maxRadius, cx, cy, cx, ly):
+                        # are we wrapping on y axis?
+                        print "We found wrapping along y-axis"
+                        if cy-ly < 0:
+                            ly = 0 # move to top edge
+                            ny = self.worldH-1 # next step is wrapped around
+                        else:
+                            ly = self.worldH-1 # move to bottom edge
+                            ny = 0 # next step is wrapped around
+                        lx = nx = int( (cx+lx)/2 ) # move halfway
+                    else:
+                        print "BUG: fix me... we are not in circle:", currentLocation, lowerElevation
+                        break
                     
-                    # if we are on edge of map, overflow to otherside    
-                    if x == 0:
-                        x = self.worldW-1
-                    elif x == self.worldW-1:
-                        x = 0
-                    if y == 0:
-                        y = self.worldH-1
-                    elif y == self.worldH-1:
-                        y = 0
+                    # find our way to the edge
+                    edgePath = None  
+                    edgePath = aStar.pathFinder().find(self.heightmap, [cx,cy], [lx,ly])
+                    if not edgePath:
+                        print "We've reached the end of this river, we cannot get through."
+                        # can't find another other path, make it a lake
+                        self.lakeList.append(currentLocation)
+                        break
                     
-                    currentLocation = [x,y]
-                    path.append(currentLocation)
-                    #break
-                else:
+                    path += edgePath # add our newly found path
+                    path.append([nx,ny]) # finally add our overflow to other side
+                    currentLocation = lowerPath[-1]
+                    print "Path found from ", currentLocation, 'to', [lx,ly], 'via:'
+                    print edgePath
+                    print "We then wrap on: ", [nx, ny]
+                    print " "
+                    
+                else: # can't find any other path, make it a lake
                     self.lakeList.append(currentLocation)
                     break
 
