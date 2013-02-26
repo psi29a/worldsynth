@@ -213,18 +213,21 @@ class Rivers():
         # start the flow
         while True:
             x, y = currentLocation
+            lowerElevation = None
+            quickSection = None            
+            isWrapped = False
 
             for dx, dy in constants.DIR_NEIGHBORS:  # is there a river nearby, flow into it
-                nx, ny = x + dx, y + dy
+                ax, ay = x + dx, y + dy
                 if self.wrap:
-                    nx, ny = overflow(nx, self.worldW), overflow(ny, self.worldH)
+                    ax, ay = overflow(ax, self.worldW), overflow(ay, self.worldH)
                     
                 for river in self.riverList:
-                    if [nx, ny] in river:
-                        #print "Found another river at:", x, y, " -> ", nx, ny, " Thus, using that river's path."
+                    if [ax, ay] in river:
+                        #print "Found another river at:", x, y, " -> ", ax, ay, " Thus, using that river's path."
                         merge = False
                         for rx, ry in river:
-                            if [nx, ny] == [rx, ry]:
+                            if [ax, ay] == [rx, ry]:
                                 merge = True
                                 path.append([rx, ry])
                             elif merge == True:
@@ -241,75 +244,87 @@ class Rivers():
             if quickSection:
                 path.append(quickSection)
                 currentLocation = quickSection
-
-            else:
-                isWrapped, lowerElevation = self.findLowerElevation(currentLocation)
-                if lowerElevation and not isWrapped:
-                    lowerPath = None                                   
-                    lowerPath = aStar.pathFinder().find(self.heightmap, currentLocation, lowerElevation)            
-                    if lowerPath:
-                        path += lowerPath
-                        currentLocation = lowerPath[-1]
+                continue # stop here and enter back into loop
+            
+            isWrapped, lowerElevation = self.findLowerElevation(currentLocation)
+            if lowerElevation and not isWrapped:
+                lowerPath = None                                   
+                lowerPath = aStar.pathFinder().find(self.heightmap, currentLocation, lowerElevation)            
+                if lowerPath:
+                    path += lowerPath
+                    currentLocation = path[-1]
+                else:
+                    break
+            elif lowerElevation and isWrapped:
+                #TODO: make this more natural
+                maxRadius = 40
+                wrappedX = wrappedY = False
+#                print 'Found a lower elevation on wrapped path, searching path!'
+#                print 'We go from',currentLocation,'to',lowerElevation
+                cx,cy = currentLocation
+                lx,ly = lowerElevation
+                nx,ny = lowerElevation
+                
+                if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
+                    print "BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation
+                    break
+                
+                if not self.inCircle(maxRadius, cx, cy, lx, cy):
+                    # are we wrapping on x axis?
+                    #print "We found wrapping along x-axis"
+                    if cx-lx < 0:
+                        lx = 0 # move to left edge
+                        nx = self.worldW-1 # next step is wrapped around
                     else:
-                        break
-                elif lowerElevation and isWrapped:
-                    #TODO: make this more natural
-                    maxRadius = 40
-                    wrappedX = wrappedY = False
-                    print 'Found a lower elevation on wrapped path, searching path!'
-                    print 'We go from',currentLocation,'to',lowerElevation
-                    cx,cy = currentLocation
-                    lx,ly = lowerElevation
-                    nx,ny = lowerElevation
-                    
-                    if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
-                        print "BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation
-                        break
-                    
-                    if not self.inCircle(maxRadius, cx, cy, lx, cy):
-                        # are we wrapping on x axis?
-                        print "We found wrapping along x-axis"
-                        if cx-lx < 0:
-                            lx = 0 # move to left edge
-                            nx = self.worldW-1 # next step is wrapped around
-                        else:
-                            lx = self.worldW-1 # move to right edge
-                            nx = 0 # next step is wrapped around
-                        ly = ny = int( (cy+ly)/2 ) # move halfway
-                    elif not self.inCircle(maxRadius, cx, cy, cx, ly):
-                        # are we wrapping on y axis?
-                        print "We found wrapping along y-axis"
-                        if cy-ly < 0:
-                            ly = 0 # move to top edge
-                            ny = self.worldH-1 # next step is wrapped around
-                        else:
-                            ly = self.worldH-1 # move to bottom edge
-                            ny = 0 # next step is wrapped around
-                        lx = nx = int( (cx+lx)/2 ) # move halfway
+                        lx = self.worldW-1 # move to right edge
+                        nx = 0 # next step is wrapped around
+                    ly = ny = int( (cy+ly)/2 ) # move halfway
+                elif not self.inCircle(maxRadius, cx, cy, cx, ly):
+                    # are we wrapping on y axis?
+#                    print "We found wrapping along y-axis"
+                    if cy-ly < 0:
+                        ly = 0 # move to top edge
+                        ny = self.worldH-1 # next step is wrapped around
                     else:
-                        print "BUG: fix me... we are not in circle:", currentLocation, lowerElevation
-                        break
-                    
-                    # find our way to the edge
-                    edgePath = None  
-                    edgePath = aStar.pathFinder().find(self.heightmap, [cx,cy], [lx,ly])
-                    if not edgePath:
-                        print "We've reached the end of this river, we cannot get through."
-                        # can't find another other path, make it a lake
-                        self.lakeList.append(currentLocation)
-                        break
-                    
-                    path += edgePath # add our newly found path
-                    path.append([nx,ny]) # finally add our overflow to other side
-                    currentLocation = lowerPath[-1]
-                    print "Path found from ", currentLocation, 'to', [lx,ly], 'via:'
-                    print edgePath
-                    print "We then wrap on: ", [nx, ny]
-                    print " "
-                    
-                else: # can't find any other path, make it a lake
+                        ly = self.worldH-1 # move to bottom edge
+                        ny = 0 # next step is wrapped around
+                    lx = nx = int( (cx+lx)/2 ) # move halfway
+                else:
+#                    print "BUG: fix me... we are not in circle:", currentLocation, lowerElevation
+                    break
+                
+                # find our way to the edge
+                edgePath = None  
+                edgePath = aStar.pathFinder().find(self.heightmap, [cx,cy], [lx,ly])
+                if not edgePath:
+#                    print "We've reached the end of this river, we cannot get through."
+                    # can't find another other path, make it a lake
                     self.lakeList.append(currentLocation)
                     break
+                path += edgePath # add our newly found path
+                path.append([nx,ny]) # finally add our overflow to other side
+                currentLocation = path[-1]
+#                print "Path found from ", [cx,cy], 'to', [lx,ly], 'via:'
+#                print edgePath
+#                print "We then wrap on: ", [nx, ny]
+                
+                # find our way to lowest position original found
+                lowerPath = aStar.pathFinder().find(self.heightmap, currentLocation, lowerElevation)
+                path += lowerPath
+                currentLocation = path[-1]
+#                print "We then go to our destination: ", lowerElevation
+#                print lowerPath
+#                print " "                    
+#                print "Full path begin and end ", path[0], path[-1]
+                hx,hy = path[0]
+                hlx,hly = path[-1]
+#                print "Elevations: ", self.heightmap[hx,hy], self.heightmap[hlx,hly]
+#                print "Erosion: ", self.erosionMap[hx,hy], self.erosionMap[hlx,hly]
+#                print " "
+                #break
+            else: # can't find any other path, make it a lake
+                self.lakeList.append(currentLocation)
+                break # end of river
 
         return path
 
@@ -476,10 +491,8 @@ class Rivers():
             
         if destination in wrapped:
             isWrapped = True
-            print "Wrapped lower elevation found:", rx, ry, "!"
+#            print "Wrapped lower elevation found:", rx, ry, "!"
         return isWrapped, destination
-    
-    
     
 #### experimental code ####
     def simulateFloodi(self, x, y, elevation):
