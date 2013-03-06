@@ -15,14 +15,24 @@ FEATURES:
 * Rivers: based on rainfall and terrain
 * Biomes: taking into account everything above to give natural zones of nature
 
-REQUIREMENTS
+REQUIREMENTS:
 * Python >= 2.7
 * PySide:   http://qt-project.org/wiki/PySide
 * NumPy:    http://www.numpy.org/
 * PyTables: http://www.pytables.org/
 * PyPNG:    http://pythonhosted.org/pypng/index.html
 
-INSTALLATION
+INSTALLATION:
 * Verify that all requirements above are met
-* pip install pypng noise
+* pip install pypng
 * Untar/unzip and run worldsynth.py
+
+CHANGELOG:
+
+0.10.0  
+* Just-in-time library loading: lazy loading libraries as necessary
+* Try to reduce the number of dependancies necessary to start and be able to use base functions
+* Add accumulating erosion model to prevent original heightmap from being modified
+* Add overflow flag to models where maps could be seamless to help 'overflow'
+* Rivers can flow through edges of maps, overflow into other side
+* Initial changelog
