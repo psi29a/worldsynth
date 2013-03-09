@@ -135,7 +135,7 @@ class Menu():
         viewRiverMapAction.triggered.connect( mapGen.viewRiverMap )
         viewBiomeMapAction = QtGui.QAction( 'Biome Map', mapGen )
         viewBiomeMapAction.setStatusTip( 'Display biome map.' )
-        viewBiomeMapAction.triggered.connect( mapGen.viewErosionMap )
+        viewBiomeMapAction.triggered.connect( mapGen.viewBiomeMap )
         viewErosionMapAction = QtGui.QAction( 'Erosion Map', mapGen )
         viewErosionMapAction.setStatusTip( 'Display erosion map.' )
         viewErosionMapAction.triggered.connect( mapGen.viewErosionMap )
