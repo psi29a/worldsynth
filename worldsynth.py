@@ -458,7 +458,7 @@ class MapGen( QtGui.QMainWindow ):
     def saveWorldAs( self ):
         '''Present a save world dialog'''
         self.updateWorld()
-        fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Open fileLocation' )
+        fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Save world as...' )
         h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
         h5file = tables.openFile( fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
         for k in self.world:
@@ -503,20 +503,23 @@ class MapGen( QtGui.QMainWindow ):
         '''Eventually allow exporting to all formats, but initially only heightmap
         as 16-bit greyscale png'''
         import png
+        fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Export heightmap as...' )
         width, height = self.mapSize
         heightmap = self.elevation.copy() * 65536
+
+        # png heightmap
         pngObject = png.Writer( width, height, greyscale = True, bitdepth = 16 )
-        fileLocation = open( './heightmap.png', 'wb' )
-        pngObject.write( fileLocation, heightmap )
-        file.close()
+        fileObject = open( fileLocation+'.png', 'wb' )
+        pngObject.write( fileObject, heightmap )
+        fileObject.close()
 
-        # flat heightmap
-        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( './heightmapCRowMajor.raw', format = 'C' )
-        heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( './heightmapFortranColumnMajor.raw', format = 'F' )
+        # raw heightmap
+        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( fileLocation+'.raw', format = 'C' )
+        #heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.raw', format = 'F' )
 
-        # flat to text file
-        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( './heightmapCRowMajor.csv', sep = "," )
-        heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( './heightmapFortranColumnMajor.csv', sep = "," )
+        # csv heightmap
+        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( fileLocation+'.csv', sep = "," )
+        #heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.csv', sep = "," )
 
     def aboutApp( self ):
         '''All about the application'''
