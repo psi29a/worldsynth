@@ -505,8 +505,8 @@ class MapGen( QtGui.QMainWindow ):
         import png
         fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Export heightmap as...' )
         width, height = self.mapSize
-        heightmap = self.elevation.copy() * 65536
-
+        heightmap = self.elevation.copy() * 65535
+        
         # png heightmap
         pngObject = png.Writer( width, height, greyscale = True, bitdepth = 16 )
         fileObject = open( fileLocation+'.png', 'wb' )
