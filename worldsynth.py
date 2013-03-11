@@ -193,13 +193,7 @@ class MapGen( QtGui.QMainWindow ):
         if self.mapSize[0] != size:
             self.dWorldConf.cSize.setCurrentIndex( math.log( self.mapSize[0], 2 ) - 5 )
 
-    def genHeightMap( self ):
-        '''Generate our heightmap'''
-        self.sb.showMessage( 'Generating heightmap...' )
-
-        # grab our values from config
-        roughness = self.dWorldConf.sbRoughness.value()
-
+    def getAlgorithm( self ):
         if self.dWorldConf.rMDA.isChecked():
             method = HM_MDA
         elif self.dWorldConf.rDSA.isChecked():
@@ -209,8 +203,18 @@ class MapGen( QtGui.QMainWindow ):
         elif self.dWorldConf.rPerlin.isChecked():
             method = HM_PERLIN         
         else:
+            method = None
             print "Error: no heightmap algo selected."
-            return
+            
+        return method
+
+    def genHeightMap( self ):
+        '''Generate our heightmap'''
+        self.sb.showMessage( 'Generating heightmap...' )
+
+        # grab our values from config
+        roughness = self.dWorldConf.sbRoughness.value()
+        method = self.getAlgorithm()
 
         # create our heightmap
         heightObject = HeightMap( self.mapSize, roughness )
@@ -218,8 +222,8 @@ class MapGen( QtGui.QMainWindow ):
         #method = 3 #testing
         while not found: # loop until we have something workable
             heightObject.run( method )
-            break
-            if self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() < 0.15:
+            #break #testing
+            if self.dWorldConf.cbAvgLandmass.isChecked() and heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage( 'Too little land mass' )
             elif self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
                 self.statusBar().showMessage( 'Too much land mass' )
@@ -255,13 +259,8 @@ class MapGen( QtGui.QMainWindow ):
         self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage( 'Viewing sealevel.' )
 
-    def genHeatMap( self ):
-        '''Generate a heatmap based on heightmap'''
+    def getHemisphere( self ):
         from random import randint
-        if self.elevation is None:
-            self.statusBar().showMessage( 'Error: You have not yet generated a heightmap.' )
-            return
-
         if self.dWorldConf.rbHemisphereRandom.isChecked():
             hemisphere = randint( 1, 3 )
         elif self.dWorldConf.rbHemisphereBoth.isChecked():
@@ -271,10 +270,18 @@ class MapGen( QtGui.QMainWindow ):
         elif self.dWorldConf.rbHemisphereSouth.isChecked():
             hemisphere = WGEN_HEMISPHERE_SOUTH
         else:
+            hemisphere = None
             self.statusBar().showMessage( 'Error: No Hemisphere chosen for heatmap.' )
-            return
+        return hemisphere
 
+    def genHeatMap( self ):
+        '''Generate a heatmap based on heightmap'''
+        if self.elevation is None:
+            self.statusBar().showMessage( 'Error: You have not yet generated a heightmap.' )
+            return
+        
         self.statusBar().showMessage( 'Generating heatmap...' )
+        hemisphere = self.getHemisphere()
         tempObject = Temperature( self.elevation, hemisphere )
         tempObject.run( sb = self.sb )
         self.temperature = tempObject.temperature
@@ -461,12 +468,39 @@ class MapGen( QtGui.QMainWindow ):
         fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Save world as...' )
         h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
         h5file = tables.openFile( fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
+        
+        # store our numpy datasets
         for k in self.world:
             if self.world[k] is not None:
                 atom = tables.Atom.from_dtype( self.world[k].dtype )
                 shape = self.world[k].shape
                 cArray = h5file.createCArray( h5file.root, k, atom, shape )
                 cArray[:] = self.world[k]
+    
+       
+        # store our world settings
+        pyDict = {
+            'key'         : tables.StringCol(itemsize=40),
+            'value'       : tables.IntCol(),
+        }
+        settingsTable = h5file.createTable('/', 'settings', pyDict)
+        
+        settings = dict(
+                        height=self.mapSize[1],
+                        width=self.mapSize[0],
+                        algorithm=self.getAlgorithm(),
+                        roughness = self.dWorldConf.sbRoughness.value(),
+                        avgLandmass = self.dWorldConf.cbAvgLandmass.isChecked(),
+                        avgElevation = self.dWorldConf.cbAvgElevation.isChecked(),
+                        hasMountains = self.dWorldConf.cbMountains.isChecked(),
+                        hemisphere = self.getHemisphere(),
+                        )
+        
+        #print settings, settings.items()
+        
+        settingsTable.append(settings.items())
+        settingsTable.cols.key.createIndex() # create an index
+        
         h5file.close()
         del h5file, h5Filter, fileLocation
 
@@ -488,7 +522,10 @@ class MapGen( QtGui.QMainWindow ):
         h5file = tables.openFile( fileLocation, mode = 'r' )
         for array in h5file.walkNodes("/", "Array"):
             exec( 'self.' + array.name + '= array.read()')
-            
+        
+        #print h5file
+        #print dict(h5file.root.settings.read())
+        
         h5file.close()
         del h5file, fileLocation
         
