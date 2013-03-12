@@ -68,6 +68,7 @@ class MapGen( QtGui.QMainWindow ):
 
         # to give us something to display
         self.world = {'elevation': self.elevation}
+        self.fileLocation   = None 
 
         # display the GUI!
         self.initUI()
@@ -208,6 +209,21 @@ class MapGen( QtGui.QMainWindow ):
             
         return method
 
+    def setAlgorithm( self, method ): 
+        if method == HM_MDA:
+            self.dWorldConf.rMDA.click()
+        elif method == HM_DSA:
+            self.dWorldConf.rDSA.click()
+        elif method == HM_SPH:
+            self.dWorldConf.rSPH.click()
+        elif method == HM_PERLIN:
+            self.dWorldConf.rPerlin.click()
+        else:
+            print "Error: no heightmap algo selected."
+            
+        return
+
+
     def genHeightMap( self ):
         '''Generate our heightmap'''
         self.sb.showMessage( 'Generating heightmap...' )
@@ -272,6 +288,18 @@ class MapGen( QtGui.QMainWindow ):
         else:
             hemisphere = None
             self.statusBar().showMessage( 'Error: No Hemisphere chosen for heatmap.' )
+        return hemisphere
+
+    def setHemisphere( self, hemisphere ):
+        if hemisphere == WGEN_HEMISPHERE_EQUATOR:
+            self.dWorldConf.rbHemisphereBoth.click()
+        elif hemisphere == WGEN_HEMISPHERE_NORTH:
+            self.dWorldConf.rbHemisphereNorth.click()
+        elif hemisphere == WGEN_HEMISPHERE_SOUTH:
+            self.dWorldConf.rbHemisphereSouth.click()
+        else:
+            self.statusBar().showMessage( 'Error: No Hemisphere chosen for heatmap.' )
+            
         return hemisphere
 
     def genHeatMap( self ):
@@ -460,49 +488,54 @@ class MapGen( QtGui.QMainWindow ):
     def saveWorld( self ):
         '''TODO: check if we are currently working on a world, save it.
         if not, we ignore the command. '''
-        pass
+        self.updateWorld()
+        alreadyTried = False
+        if not self.fileLocation and not alreadyTried:
+            alreadyTried = True
+            self.saveWorldAs()
+        else:
+            h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
+            h5file = tables.openFile( self.fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
+            
+            # store our numpy datasets
+            for k in self.world:
+                if self.world[k] is not None:
+                    atom = tables.Atom.from_dtype( self.world[k].dtype )
+                    shape = self.world[k].shape
+                    cArray = h5file.createCArray( h5file.root, k, atom, shape )
+                    cArray[:] = self.world[k]
+        
+            # store our world settings
+            pyDict = {
+                'key'         : tables.StringCol(itemsize=40),
+                'value'       : tables.IntCol(),
+            }
+            settingsTable = h5file.createTable('/', 'settings', pyDict)
+            
+            settings = dict(
+                            height=self.mapSize[1],
+                            width=self.mapSize[0],
+                            algorithm=self.getAlgorithm(),
+                            roughness = self.dWorldConf.sbRoughness.value(),
+                            avgLandmass = self.dWorldConf.cbAvgLandmass.isChecked(),
+                            avgElevation = self.dWorldConf.cbAvgElevation.isChecked(),
+                            hasMountains = self.dWorldConf.cbMountains.isChecked(),
+                            hemisphere = self.getHemisphere(),
+                            )
+            
+            settingsTable.append(settings.items())
+            settingsTable.cols.key.createIndex() # create an index
+            
+            h5file.close()
+            del h5file, h5Filter            
 
     def saveWorldAs( self ):
         '''Present a save world dialog'''
-        self.updateWorld()
-        fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Save world as...' )
-        h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
-        h5file = tables.openFile( fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
-        
-        # store our numpy datasets
-        for k in self.world:
-            if self.world[k] is not None:
-                atom = tables.Atom.from_dtype( self.world[k].dtype )
-                shape = self.world[k].shape
-                cArray = h5file.createCArray( h5file.root, k, atom, shape )
-                cArray[:] = self.world[k]
-    
-       
-        # store our world settings
-        pyDict = {
-            'key'         : tables.StringCol(itemsize=40),
-            'value'       : tables.IntCol(),
-        }
-        settingsTable = h5file.createTable('/', 'settings', pyDict)
-        
-        settings = dict(
-                        height=self.mapSize[1],
-                        width=self.mapSize[0],
-                        algorithm=self.getAlgorithm(),
-                        roughness = self.dWorldConf.sbRoughness.value(),
-                        avgLandmass = self.dWorldConf.cbAvgLandmass.isChecked(),
-                        avgElevation = self.dWorldConf.cbAvgElevation.isChecked(),
-                        hasMountains = self.dWorldConf.cbMountains.isChecked(),
-                        hemisphere = self.getHemisphere(),
-                        )
-        
-        #print settings, settings.items()
-        
-        settingsTable.append(settings.items())
-        settingsTable.cols.key.createIndex() # create an index
-        
-        h5file.close()
-        del h5file, h5Filter, fileLocation
+        self.fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Save world as...' )
+        if self.fileLocation:
+            self.saveWorld()
+        else:
+            self.statusBar().showMessage( 'Canceled save world as.' )
 
     def openWorld( self ):
         '''Open existing world project'''
@@ -518,8 +551,21 @@ class MapGen( QtGui.QMainWindow ):
             self.statusBar().showMessage( fileLocation + ' is not valid' )
             return
 
-        self.newWorld(self.mapSize[0]) # reset data
         h5file = tables.openFile( fileLocation, mode = 'r' )
+        
+        # restore our world settings
+        settings = dict(h5file.root.settings.read())
+        self.newWorld(int(settings['width'])) # reset data 
+        self.mapSize = (int(settings['width']),int(settings['height']))
+        self.dWorldConf.cSize.setCurrentIndex( math.log( self.mapSize[0], 2 ) - 5 )       
+        self.dWorldConf.sbRoughness.setValue(int(settings['roughness']))
+        self.dWorldConf.cbAvgLandmass.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgLandmass']])
+        self.dWorldConf.cbAvgElevation.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgElevation']])
+        self.dWorldConf.cbMountains.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['hasMountains']])
+        self.setAlgorithm(settings['algorithm'])
+        self.setHemisphere(settings['hemisphere'])
+        
+        # restore our numpy datasets
         for array in h5file.walkNodes("/", "Array"):
             exec( 'self.' + array.name + '= array.read()')
         
@@ -527,7 +573,8 @@ class MapGen( QtGui.QMainWindow ):
         #print dict(h5file.root.settings.read())
         
         h5file.close()
-        del h5file, fileLocation
+        self.fileLocation = fileLocation
+        del h5file
         
         self.updateWorld()
         self.statusBar().showMessage( 'Imported world.' )
