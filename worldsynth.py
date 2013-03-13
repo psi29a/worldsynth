@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-#system libraries
+# system libraries
 import os, math, numpy, tables
 from PySide import QtGui, QtCore, QtUiTools, QtXml
 
@@ -36,40 +36,30 @@ from library.weather import Weather
 from library.rivers import Rivers
 from library.biomes import Biomes
 
-class MapGen( QtGui.QMainWindow ):
+class MapGen(QtGui.QMainWindow):
 
-    def __init__( self, mapSize = 256, debug = False ):
+    def __init__(self, mapSize=256, debug=False):
         '''Attempt to allocate the necessary resources'''
-        super( MapGen, self ).__init__()
+        super(MapGen, self).__init__()
 
         # application variables
-        self.mapSize = ( mapSize, mapSize )
+        self.mapSize = (mapSize, mapSize)
 
         # setup our working directories
+        self.fileLocation = None 
         self.homeDir = os.environ['HOME'] + os.sep + '.mapGen'
-        if not os.path.exists( self.homeDir ):
-            os.makedirs( self.homeDir )
+        if not os.path.exists(self.homeDir):
+            os.makedirs(self.homeDir)
 
         # set our state
-        #self.settings = QSettings("Mindwerks", "mapGen")
+        # self.settings = QSettings("Mindwerks", "mapGen")
         self.viewState = VIEWER_HEIGHTMAP
 
         # set initial world data
-        self.elevation      = numpy.zeros(self.mapSize)
-        self.wind           = None
-        self.rainfall       = None
-        self.temperature    = None 
-        self.drainage       = None
-        self.rivers         = None
-        self.lakes          = None           
-        self.erosion        = numpy.zeros(self.mapSize)        
-        self.biome          = None
-        self.biomeColour    = None
-
-        # to give us something to display
+        self.resetDatasets()
+        self.elevation = numpy.zeros(self.mapSize)
         self.world = {'elevation': self.elevation}
-        self.fileLocation   = None 
-
+        
         # display the GUI!
         self.initUI()
 
@@ -80,27 +70,27 @@ class MapGen( QtGui.QMainWindow ):
         if debug:
             print "Going on full autopilot..."
             self.createHeightmap()
-            #self.createTemperature()
-            #self.createWindAndRain()
-            #self.createRiversAndLakes()
-            #self.createDrainage()
-            #self.createBiomes()          
+            # self.createTemperature()
+            # self.createWindAndRain()
+            # self.createRiversAndLakes()
+            # self.createDrainage()
+            # self.createBiomes()          
 
-    def initUI( self ):
+    def initUI(self):
         '''Initialize the GUI for usage'''
         width, height = self.mapSize
-        self.setMinimumSize( 512, 512 )
-        self.setWindowTitle( 'WorldGen: Generating Worlds' )
+        self.setMinimumSize(512, 512)
+        self.setWindowTitle('WorldGen: Generating Worlds')
         self.sb = self.statusBar()
 
-        self.setWindowIcon( QtGui.QIcon( './data/images/icon.png' ) )
+        self.setWindowIcon(QtGui.QIcon('./data/images/icon.png'))
 
         self.menuBar = self.menuBar()
-        Menu( self )
+        Menu(self)
 
-        self.mainImage = QtGui.QLabel( self )
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)) )
-        self.scrollArea = QtGui.QScrollArea( self )
+        self.mainImage = QtGui.QLabel(self)
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)))
+        self.scrollArea = QtGui.QScrollArea(self)
         self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
         self.scrollArea.setWidget(self.mainImage)
         self.setCentralWidget(self.scrollArea)
@@ -109,70 +99,77 @@ class MapGen( QtGui.QMainWindow ):
 
         # load our gui files
         loader = QtUiTools.QUiLoader()
-        fileLocation = QtCore.QFile( "./data/qt4/dWorldConf.ui" )
-        fileLocation.open( QtCore.QFile.ReadOnly )
-        self.dWorldConf = loader.load( fileLocation, self )
+        fileLocation = QtCore.QFile("./data/qt4/dNewWorld.ui")
+        fileLocation.open(QtCore.QFile.ReadOnly)
+        self.dNewWorld = loader.load(fileLocation, self)
         fileLocation.close()
 
-        # set defaults and attach signals
-        self.dWorldConf.cSize.setCurrentIndex( math.log( width, 2 ) - 5 )
-        self.dWorldConf.pbResize.clicked.connect( self.acceptSettings )
-        self.dWorldConf.buttonBox.accepted.connect( self.acceptSettings )
-        self.dWorldConf.buttonBox.rejected.connect( self.rejectSettings )
-        self.dWorldConf.gbRoughness.hide()
+        # New World defaults and attach signals
+        self.dNewWorld.cSymmetricSize.setCurrentIndex(math.log(width, 2) - 5)
+        self.dNewWorld.buttonBox.accepted.connect(self.acceptNewWorld)
+        self.dNewWorld.buttonBox.rejected.connect(self.rejectNewWorld)
+        self.dNewWorld.gbRoughness.hide()
+
+        # Load our default values from UI
+        self.algorithm      = self.getAlgorithm()
+        self.roughness      = self.dNewWorld.sbRoughness.value()
+        self.avgLandmass    = self.dNewWorld.cbAvgLandmass.isChecked()
+        self.avgElevation   = self.dNewWorld.cbAvgElevation.isChecked()
+        self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
+        self.hemisphere     = self.getHemisphere()        
 
     def resizeEvent(self, e):
         # Capture resize event, and align to new layout
         offset = 2
         sa = self.scrollArea.geometry()
-        self.mainImage.setGeometry( sa.x(), sa.y(), sa.width()-offset, sa.height()-offset ) # set to be just as big as our scrollarea
-        self.mainImage.setAlignment(QtCore.Qt.AlignCenter) # center our image        
+        self.mainImage.setGeometry(sa.x(), sa.y(), sa.width() - offset, sa.height() - offset)  # set to be just as big as our scrollarea
+        self.mainImage.setAlignment(QtCore.Qt.AlignCenter)  # center our image        
 
-    def mouseMoveEvent( self, e ): 
+    def mouseMoveEvent(self, e): 
         # Give information about graphics being shown
         width, height = self.mapSize
         mx, my = e.pos().toTuple()
         
-        if not self.menuBar.isNativeMenuBar(): # Does menu exists in parent window?
-            offset = 25 # offset from menu        
+        if not self.menuBar.isNativeMenuBar():  # Does menu exists in parent window?
+            offset = 25  # offset from menu        
         else:
             offset = 0
             
         # calculate our imagearea offsets
         sa = self.scrollArea.geometry()
-        ox = sa.width()/2 - width/2
-        oy = sa.height()/2+offset - height/2
+        ox = sa.width() / 2 - width / 2
+        oy = sa.height() / 2 + offset - height / 2
 
-        if mx < ox or my < oy or mx > width+ox-1 or my > height+oy-1:
-            return # do not bother going out of range of size
+        if mx < ox or my < oy or mx > width + ox - 1 or my > height + oy - 1:
+            return  # do not bother going out of range of size
 
-        x,y = mx-ox,my-oy # transpose
+        x, y = mx - ox, my - oy  # transpose
 
-        sX, sY = str( x ).zfill( 4 ), str( y ).zfill( 4 ) # string formatting
+        sX, sY = str(x).zfill(4), str(y).zfill(4)  # string formatting
 
         message = ''
         if self.viewState == VIEWER_HEIGHTMAP:
-            message = 'Elevation is: ' + "{:4.2f}".format( self.elevation[x, y] )
+            message = 'Elevation is: ' + "{:4.2f}".format(self.elevation[x, y])
         elif self.viewState == VIEWER_HEATMAP:
-            message = 'Temperature is: ' + "{:4.2f}".format( self.temperature[x, y] )
+            message = 'Temperature is: ' + "{:4.2f}".format(self.temperature[x, y])
         elif self.viewState == VIEWER_RAINFALL:
-            message = 'Precipitation is: ' + "{:4.2f}".format( self.rainfall[x, y] )
+            message = 'Precipitation is: ' + "{:4.2f}".format(self.rainfall[x, y])
         elif self.viewState == VIEWER_WIND:
-            message = 'Wind strength is: ' + "{:4.2f}".format( self.wind[x, y] )
+            message = 'Wind strength is: ' + "{:4.2f}".format(self.wind[x, y])
         elif self.viewState == VIEWER_DRAINAGE:
-            message = 'Drainage is: ' + "{:4.2f}".format( self.drainage[x, y] )
+            message = 'Drainage is: ' + "{:4.2f}".format(self.drainage[x, y])
         elif self.viewState == VIEWER_RIVERS:
-            message = 'River flow is: ' + "{:4.2f}".format( self.rivers[x, y] )
+            message = 'River flow is: ' + "{:4.2f}".format(self.rivers[x, y])
         elif self.viewState == VIEWER_BIOMES:
-            message = 'Biome type is: ' + Biomes().biomeType( self.biome[x, y] )
+            message = 'Biome type is: ' + Biomes().biomeType(self.biome[x, y])
         elif self.viewState == VIEWER_EROSION:
-            message = 'Erosion amount is: ' + "{:4.2f}".format( self.erosion[x, y] )
+            message = 'Erosion amount is: ' + "{:4.2f}".format(self.erosion[x, y])
         elif self.viewState == VIEWER_EROSIONAPP:
-            message = 'Elevation in eroded heightmap is: ' + "{:4.2f}".format( self.elevation[x, y] - self.erosion[x, y] )
+            message = 'Elevation in eroded heightmap is: ' + "{:4.2f}".format(self.elevation[x, y] - self.erosion[x, y])
 
-        self.statusBar().showMessage( ' At position: ' + sX + ',' + sY + ' - ' + message )
+        self.statusBar().showMessage(' At position: ' + sX + ',' + sY + ' - ' + message)
 
-    def genWorld( self ):
+    def genWorld(self):
         self.genHeightMap()
         self.genHeatMap()
         self.genWeatherMap()
@@ -180,276 +177,261 @@ class MapGen( QtGui.QMainWindow ):
         self.genRiverMap()
         self.genBiomeMap()
 
-    def confWorld( self ):
-        '''World settings'''
-        self.dWorldConf.show()
-
-    def acceptSettings( self ):
-        size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
-        if self.mapSize[0] != size:
-            self.newWorld( size )
-
-    def rejectSettings( self ):
-        size = 2 ** ( self.dWorldConf.cSize.currentIndex() + 5 )
-        if self.mapSize[0] != size:
-            self.dWorldConf.cSize.setCurrentIndex( math.log( self.mapSize[0], 2 ) - 5 )
-
-    def getAlgorithm( self ):
-        if self.dWorldConf.rMDA.isChecked():
+    def getAlgorithm(self):
+        if self.dNewWorld.rMDA.isChecked():
             method = HM_MDA
-        elif self.dWorldConf.rDSA.isChecked():
+        elif self.dNewWorld.rDSA.isChecked():
             method = HM_DSA
-        elif self.dWorldConf.rSPH.isChecked():
+        elif self.dNewWorld.rSPH.isChecked():
             method = HM_SPH
-        elif self.dWorldConf.rPerlin.isChecked():
+        elif self.dNewWorld.rPerlin.isChecked():
             method = HM_PERLIN         
         else:
             method = None
             print "Error: no heightmap algo selected."
-            
+        
         return method
 
-    def setAlgorithm( self, method ): 
+    def setAlgorithm(self, method): 
         if method == HM_MDA:
-            self.dWorldConf.rMDA.click()
+            self.dNewWorld.rMDA.click()
         elif method == HM_DSA:
-            self.dWorldConf.rDSA.click()
+            self.dNewWorld.rDSA.click()
         elif method == HM_SPH:
-            self.dWorldConf.rSPH.click()
+            self.dNewWorld.rSPH.click()
         elif method == HM_PERLIN:
-            self.dWorldConf.rPerlin.click()
+            self.dNewWorld.rPerlin.click()
         else:
             print "Error: no heightmap algo selected."
             
         return
 
-
-    def genHeightMap( self ):
+    def genHeightMap(self):
         '''Generate our heightmap'''
-        self.sb.showMessage( 'Generating heightmap...' )
+        self.sb.showMessage('Generating heightmap...')
 
         # grab our values from config
-        roughness = self.dWorldConf.sbRoughness.value()
+        roughness = self.dNewWorld.sbRoughness.value()
         method = self.getAlgorithm()
 
         # create our heightmap
-        heightObject = HeightMap( self.mapSize, roughness )
+        heightObject = HeightMap(self.mapSize, roughness)
         found = False
-        #method = 3 #testing
-        while not found: # loop until we have something workable
-            heightObject.run( method )
-            #break #testing
-            if self.dWorldConf.cbAvgLandmass.isChecked() and heightObject.landMassPercent() < 0.15:
-                self.statusBar().showMessage( 'Too little land mass' )
-            elif self.dWorldConf.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
-                self.statusBar().showMessage( 'Too much land mass' )
-            elif self.dWorldConf.cbAvgElevation.isChecked() and heightObject.averageElevation() < 0.2:
-                self.statusBar().showMessage( 'Average elevation is too low' )
-            elif self.dWorldConf.cbAvgElevation.isChecked() and heightObject.averageElevation() > 0.8:
-                self.statusBar().showMessage( 'Average elevation is too high' )
-            elif self.dWorldConf.cbMountains.isChecked() and heightObject.hasNoMountains():
-                self.statusBar().showMessage( 'Not enough mountains' )
+        # method = 3 #testing
+        while not found:  # loop until we have something workable
+            heightObject.run(method)
+            # break #testing
+            if self.dNewWorld.cbAvgLandmass.isChecked() and heightObject.landMassPercent() < 0.15:
+                self.statusBar().showMessage('Too little land mass')
+            elif self.dNewWorld.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
+                self.statusBar().showMessage('Too much land mass')
+            elif self.dNewWorld.cbAvgElevation.isChecked() and heightObject.averageElevation() < 0.2:
+                self.statusBar().showMessage('Average elevation is too low')
+            elif self.dNewWorld.cbAvgElevation.isChecked() and heightObject.averageElevation() > 0.8:
+                self.statusBar().showMessage('Average elevation is too high')
+            elif self.dNewWorld.cbMountains.isChecked() and heightObject.hasNoMountains():
+                self.statusBar().showMessage('Not enough mountains')
             else:
                 found = True
 
         self.elevation = heightObject.heightmap
         del heightObject
         self.viewHeightMap()
-        self.statusBar().showMessage( 'Successfully generated a heightmap!' )
+        self.statusBar().showMessage('Successfully generated a heightmap!')
 
-    def viewHeightMap( self ):
+    def viewHeightMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'heightmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('heightmap')))
         self.viewState = VIEWER_HEIGHTMAP
-        self.statusBar().showMessage( 'Viewing raw heatmap.' )
+        self.statusBar().showMessage('Viewing heightmap.')
 
-    def viewElevation( self ):
+    def viewElevation(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'elevation' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('elevation')))
         self.viewState = VIEWER_HEIGHTMAP
-        self.statusBar().showMessage( 'Viewing elevation.' )
+        self.statusBar().showMessage('Viewing elevation.')
 
-    def viewSeaLevel( self ):
+    def viewSeaLevel(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'sealevel' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('sealevel')))
         self.viewState = VIEWER_HEIGHTMAP
-        self.statusBar().showMessage( 'Viewing sealevel.' )
+        self.statusBar().showMessage('Viewing sealevel.')
 
-    def getHemisphere( self ):
+    def getHemisphere(self):
         from random import randint
-        if self.dWorldConf.rbHemisphereRandom.isChecked():
-            hemisphere = randint( 1, 3 )
-        elif self.dWorldConf.rbHemisphereBoth.isChecked():
+        if self.dNewWorld.rbHemisphereRandom.isChecked():
+            hemisphere = randint(1, 3)
+        elif self.dNewWorld.rbHemisphereBoth.isChecked():
             hemisphere = WGEN_HEMISPHERE_EQUATOR
-        elif self.dWorldConf.rbHemisphereNorth.isChecked():
+        elif self.dNewWorld.rbHemisphereNorth.isChecked():
             hemisphere = WGEN_HEMISPHERE_NORTH
-        elif self.dWorldConf.rbHemisphereSouth.isChecked():
+        elif self.dNewWorld.rbHemisphereSouth.isChecked():
             hemisphere = WGEN_HEMISPHERE_SOUTH
         else:
             hemisphere = None
-            self.statusBar().showMessage( 'Error: No Hemisphere chosen for heatmap.' )
+            self.statusBar().showMessage('Error: No Hemisphere chosen for heatmap.')
         return hemisphere
 
-    def setHemisphere( self, hemisphere ):
+    def setHemisphere(self, hemisphere):
         if hemisphere == WGEN_HEMISPHERE_EQUATOR:
-            self.dWorldConf.rbHemisphereBoth.click()
+            self.dNewWorld.rbHemisphereBoth.click()
         elif hemisphere == WGEN_HEMISPHERE_NORTH:
-            self.dWorldConf.rbHemisphereNorth.click()
+            self.dNewWorld.rbHemisphereNorth.click()
         elif hemisphere == WGEN_HEMISPHERE_SOUTH:
-            self.dWorldConf.rbHemisphereSouth.click()
+            self.dNewWorld.rbHemisphereSouth.click()
         else:
-            self.statusBar().showMessage( 'Error: No Hemisphere chosen for heatmap.' )
+            self.statusBar().showMessage('Error: No Hemisphere chosen for heatmap.')
             
         return hemisphere
 
-    def genHeatMap( self ):
+    def genHeatMap(self):
         '''Generate a heatmap based on heightmap'''
         if self.elevation is None:
-            self.statusBar().showMessage( 'Error: You have not yet generated a heightmap.' )
+            self.statusBar().showMessage('Error: You have not yet generated a heightmap.')
             return
         
-        self.statusBar().showMessage( 'Generating heatmap...' )
+        self.statusBar().showMessage('Generating heatmap...')
         hemisphere = self.getHemisphere()
-        tempObject = Temperature( self.elevation, hemisphere )
-        tempObject.run( sb = self.sb )
+        tempObject = Temperature(self.elevation, hemisphere)
+        tempObject.run(sb=self.sb)
         self.temperature = tempObject.temperature
         del tempObject
         self.viewHeatMap()
-        self.statusBar().showMessage( 'Successfully generated a heatmap!' )
+        self.statusBar().showMessage('Successfully generated a heatmap!')
 
-    def viewHeatMap( self ):
+    def viewHeatMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'heatmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('heatmap')))
         self.viewState = VIEWER_HEATMAP
-        self.statusBar().showMessage( 'Viewing heatmap.' )
+        self.statusBar().showMessage('Viewing heatmap.')
 
-    def viewRawHeatMap( self ):
+    def viewRawHeatMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'rawheatmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('rawheatmap')))
         self.viewState = VIEWER_HEATMAP
-        self.statusBar().showMessage( 'Viewing raw heatmap.' )
+        self.statusBar().showMessage('Viewing raw heatmap.')
 
-    def genWeatherMap( self ):
+    def genWeatherMap(self):
         '''Generate a weather based on heightmap and heatmap'''
-        self.sb.showMessage( 'Generating weather...' )
+        self.sb.showMessage('Generating weather...')
         if self.elevation is None:
-            self.statusBar().showMessage( 'Error: No heightmap!' )
+            self.statusBar().showMessage('Error: No heightmap!')
             return
         if self.temperature is None:
-            self.statusBar().showMessage( 'Error: No heatmap!' )
+            self.statusBar().showMessage('Error: No heatmap!')
             return
-        weatherObject = Weather( self.elevation, self.temperature )
-        weatherObject.run( self.sb )
+        weatherObject = Weather(self.elevation, self.temperature)
+        weatherObject.run(self.sb)
         self.wind = weatherObject.windMap
         self.rainfall = weatherObject.rainMap
-        self.erosion += weatherObject.erosionMap
+        self.erosion = weatherObject.erosionMap
         del weatherObject
         self.viewWeatherMap()
-        self.statusBar().showMessage( 'Successfully generated weather!' )
+        self.statusBar().showMessage('Successfully generated weather!')
 
-    def viewWeatherMap( self ):
+    def viewWeatherMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'windandrainmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('windandrainmap')))
         self.viewState = VIEWER_RAINFALL
-        self.statusBar().showMessage( 'Viewing weathermap.' )
+        self.statusBar().showMessage('Viewing weathermap.')
 
-    def viewWindMap( self ):
+    def viewWindMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'windmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('windmap')))
         self.viewState = VIEWER_WIND
-        self.statusBar().showMessage( 'Viewing windmap.' )
+        self.statusBar().showMessage('Viewing windmap.')
 
-    def viewPrecipitation( self ):
+    def viewPrecipitation(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'rainmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('rainmap')))
         self.viewState = VIEWER_RAINFALL
-        self.statusBar().showMessage( 'Viewing rainmap.' )
+        self.statusBar().showMessage('Viewing rainmap.')
 
-    def genDrainageMap( self ):
+    def genDrainageMap(self):
         '''Generate a fractal drainage map'''
-        self.sb.showMessage( 'Generating drainage...' )
-        drainObject = HeightMap( self.mapSize )
-        drainObject.run( HM_DSA)
+        self.sb.showMessage('Generating drainage...')
+        drainObject = HeightMap(self.mapSize)
+        drainObject.run(HM_DSA)
         self.drainage = drainObject.heightmap
         del drainObject
         self.viewDrainageMap()
-        self.statusBar().showMessage( 'Successfully generated drainage!' )
+        self.statusBar().showMessage('Successfully generated drainage!')
 
-    def viewDrainageMap( self ):
+    def viewDrainageMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'drainagemap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('drainagemap')))
         self.viewState = VIEWER_DRAINAGE
-        self.statusBar().showMessage( 'Viewing drainmap.' )
+        self.statusBar().showMessage('Viewing drainmap.')
 
-    def genBiomeMap( self ):
+    def genBiomeMap(self):
         '''Generate a biome map'''
-        self.sb.showMessage( 'Generating biomes...' )
+        self.sb.showMessage('Generating biomes...')
         if self.elevation is None:
-            self.statusBar().showMessage( 'Error: No heightmap!' )
+            self.statusBar().showMessage('Error: No heightmap!')
             return
         if self.temperature is None:
-            self.statusBar().showMessage( 'Error: No heatmap!' )
+            self.statusBar().showMessage('Error: No heatmap!')
             return
         if self.drainage is None:
-            self.statusBar().showMessage( 'Error: No drainage!' )
+            self.statusBar().showMessage('Error: No drainage!')
             return
         if self.wind.sum is None or self.rainfall is None:
-            self.statusBar().showMessage( 'Error: No weather!' )
+            self.statusBar().showMessage('Error: No weather!')
             return
-        biomeObject = Biomes( self.elevation, self.rainfall, self.drainage, self.temperature )
+        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
         biomeObject.run()
         self.biome = biomeObject.biome
         self.biomeColour = biomeObject.biomeColourCode
         del biomeObject
         self.viewBiomeMap()
-        self.statusBar().showMessage( 'Successfully generated biomes!' )
+        self.statusBar().showMessage('Successfully generated biomes!')
 
-    def viewBiomeMap( self ):
+    def viewBiomeMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'biomemap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('biomemap')))
         self.viewState = VIEWER_BIOMES
-        self.statusBar().showMessage( 'Viewing biomes.' )
+        self.statusBar().showMessage('Viewing biomes.')
 
-    def genRiverMap( self ):
+    def genRiverMap(self):
         '''Generate a river map'''
-        self.sb.showMessage( 'Generating rivers and lakes...' )
+        self.sb.showMessage('Generating rivers and lakes...')
         if self.elevation is None:
-            self.statusBar().showMessage( 'Error: No heightmap!' )
+            self.statusBar().showMessage('Error: No heightmap!')
             return
         if self.wind is None or self.rainfall is None:
-            self.statusBar().showMessage( 'Error: No weather!' )
+            self.statusBar().showMessage('Error: No weather!')
             return
         if self.drainage is None:
-            self.statusBar().showMessage( 'Error: No drainage!' )
+            self.statusBar().showMessage('Error: No drainage!')
             return
         riversObject = Rivers()
-        riversObject.generate( self.elevation, self.rainfall, self.sb )
+        riversObject.generate(self.elevation, self.rainfall, self.sb)
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         self.erosion += riversObject.erosionMap
         del riversObject
         self.viewRiverMap()
-        self.statusBar().showMessage( 'Successfully generated rivers and lakes!' )
+        self.statusBar().showMessage('Successfully generated rivers and lakes!')
 
-    def viewRiverMap( self ):
+    def viewRiverMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'rivermap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('rivermap')))
         self.viewState = VIEWER_RIVERS
-        self.statusBar().showMessage( 'Viewing rivers and lakes.' )
+        self.statusBar().showMessage('Viewing rivers and lakes.')
 
-    def viewErosionMap( self ):
+    def viewErosionMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'erosionmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('erosionmap')))
         self.viewState = VIEWER_EROSION
-        self.statusBar().showMessage( 'Viewing raw erosion.' )
+        self.statusBar().showMessage('Viewing raw erosion.')
     
-    def viewErosionAppliedMap( self ):
+    def viewErosionAppliedMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage( Render( self.world ).convert( 'erosionappliedmap' ) ) )
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('erosionappliedmap')))
         self.viewState = VIEWER_EROSIONAPP
-        self.statusBar().showMessage( 'Viewing applied erosion map.' )
+        self.statusBar().showMessage('Viewing applied erosion map.')
     
-    def updateWorld( self ):
+    def updateWorld(self):
         # update and package up our world data
         self.world = {
           'elevation': self.elevation,
@@ -458,34 +440,68 @@ class MapGen( QtGui.QMainWindow ):
           'temperature': self.temperature,
           'drainage': self.drainage,
           'rivers': self.rivers,
-          'lakes': self.lakes,          
-          'erosion': self.erosion,          
+          'lakes': self.lakes,
+          'erosion': self.erosion,
           'biome': self.biome,
           'biomeColour': self.biomeColour,
           }
         self.mapSize = self.elevation.shape
-        #self.resizeEvent(e)
-        #self.viewHeightMap()
 
-
-    def newWorld( self, size = 256 ):
-        width = height = size
-        self.mapSize = ( size, size )
-        self.elevation = numpy.zeros( self.mapSize )
-        self.wind = None
-        self.rainfall = None
-        self.temperature = None
-        self.drainage = None
-        self.rivers = None
-        self.lakes = None
-        self.erosion = numpy.zeros( self.mapSize )        
-        self.biome = None
-        self.biomeColour = None
+    def resetDatasets(self):
+        self.elevation      = None
+        self.wind           = None
+        self.rainfall       = None
+        self.temperature    = None
+        self.drainage       = None
+        self.rivers         = None
+        self.lakes          = None
+        self.erosion        = None        
+        self.biome          = None
+        self.biomeColour    = None
         
-        self.mainImage.setPixmap( QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)) )
-        self.updateWorld()
+    def newWorld(self):
+        self.dNewWorld.show()
 
-    def saveWorld( self ):
+    def acceptNewWorld(self):
+        #size = 2 ** (self.dNewWorld.cSymmetricSize.currentIndex() + 5)
+        #if self.mapSize[0] != size:
+        #    self.newWorld(size)
+        # local
+        width = int(self.dNewWorld.leWidth.text())
+        height = int(self.dNewWorld.leHeight.text())
+        
+        # global
+        self.algorithm      = self.getAlgorithm()
+        self.roughness      = self.dNewWorld.sbRoughness.value()
+        self.avgLandmass    = self.dNewWorld.cbAvgLandmass.isChecked()
+        self.avgElevation   = self.dNewWorld.cbAvgElevation.isChecked()
+        self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
+        self.hemisphere     = self.getHemisphere()
+
+        self.resetDatasets()
+        self.mapSize        = (width, height)
+        self.elevation      = numpy.zeros(self.mapSize)
+        
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)))
+        self.updateWorld()            
+        self.statusBar().showMessage(' Created New World!')
+
+    def rejectNewWorld(self):
+        #size = 2 ** (self.dNewWorld.cSize.currentIndex() + 5)
+        #if self.mapSize[0] != size:
+        #    self.dNewWorld.cSize.setCurrentIndex(math.log(self.mapSize[0], 2) - 5)
+        self.statusBar().showMessage(' Canceled New World! ')
+
+    def editWorldSettings(self):
+        self.dNewWorld.cSize.setCurrentIndex(math.log(self.mapSize[0], 2) - 5)       
+        self.dNewWorld.sbRoughness.setValue(int(settings['roughness']))
+        self.dNewWorld.cbAvgLandmass.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgLandmass']])
+        self.dNewWorld.cbAvgElevation.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgElevation']])
+        self.dNewWorld.cbMountains.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['hasMountains']])
+        self.setAlgorithm(settings['algorithm'])
+        self.setHemisphere(settings['hemisphere'])
+        
+    def saveWorld(self):
         '''TODO: check if we are currently working on a world, save it.
         if not, we ignore the command. '''
         self.updateWorld()
@@ -494,15 +510,15 @@ class MapGen( QtGui.QMainWindow ):
             alreadyTried = True
             self.saveWorldAs()
         else:
-            h5Filter = tables.Filters( complevel = 9, complib = 'zlib', shuffle = True, fletcher32 = True )
-            h5file = tables.openFile( self.fileLocation, mode = 'w', title = "worldData", filters = h5Filter )
+            h5Filter = tables.Filters(complevel=9, complib='zlib', shuffle=True, fletcher32=True)
+            h5file = tables.openFile(self.fileLocation, mode='w', title="worldData", filters=h5Filter)
             
             # store our numpy datasets
             for k in self.world:
                 if self.world[k] is not None:
-                    atom = tables.Atom.from_dtype( self.world[k].dtype )
+                    atom = tables.Atom.from_dtype(self.world[k].dtype)
                     shape = self.world[k].shape
-                    cArray = h5file.createCArray( h5file.root, k, atom, shape )
+                    cArray = h5file.createCArray(h5file.root, k, atom, shape)
                     cArray[:] = self.world[k]
         
             # store our world settings
@@ -513,110 +529,126 @@ class MapGen( QtGui.QMainWindow ):
             settingsTable = h5file.createTable('/', 'settings', pyDict)
             
             settings = dict(
+                            width=self.mapSize[0],                            
                             height=self.mapSize[1],
-                            width=self.mapSize[0],
-                            algorithm=self.getAlgorithm(),
-                            roughness = self.dWorldConf.sbRoughness.value(),
-                            avgLandmass = self.dWorldConf.cbAvgLandmass.isChecked(),
-                            avgElevation = self.dWorldConf.cbAvgElevation.isChecked(),
-                            hasMountains = self.dWorldConf.cbMountains.isChecked(),
-                            hemisphere = self.getHemisphere(),
+                            algorithm=self.algorithm,
+                            roughness=self.roughness,
+                            avgLandmass=self.avgLandmass,
+                            avgElevation=self.avgElevation,
+                            hasMountains=self.hasMountains,
+                            hemisphere=self.hemisphere,
                             )
             
             settingsTable.append(settings.items())
-            settingsTable.cols.key.createIndex() # create an index
+            settingsTable.cols.key.createIndex()  # create an index
             
             h5file.close()
             del h5file, h5Filter            
 
-    def saveWorldAs( self ):
+    def saveWorldAs(self):
         '''Present a save world dialog'''
-        self.fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Save world as...' )
+        self.fileLocation, _ = QtGui.QFileDialog.getSaveFileName(self, 'Save world as...')
         if self.fileLocation:
             self.saveWorld()
         else:
-            self.statusBar().showMessage( 'Canceled save world as.' )
+            self.statusBar().showMessage('Canceled save world as.')
 
-    def openWorld( self ):
+    def openWorld(self):
         '''Open existing world project'''
-        fileLocation, _ = QtGui.QFileDialog.getOpenFileName( self, 'Open file' )
+        fileLocation, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
         if not fileLocation:
-            self.statusBar().showMessage( 'Canceled open world.' )
+            self.statusBar().showMessage('Canceled open world.')
             return
 
-        if tables.isHDF5File( fileLocation ) < 0 :
-            self.statusBar().showMessage( fileLocation + ' does not exist' )
+        if tables.isHDF5File(fileLocation) < 0 :
+            self.statusBar().showMessage(fileLocation + ' does not exist')
             return
-        elif tables.isHDF5File( fileLocation ) == 0 :
-            self.statusBar().showMessage( fileLocation + ' is not valid' )
+        elif tables.isHDF5File(fileLocation) == 0 :
+            self.statusBar().showMessage(fileLocation + ' is not valid')
             return
 
-        h5file = tables.openFile( fileLocation, mode = 'r' )
+        h5file = tables.openFile(fileLocation, mode='r')
         
         # restore our world settings
         settings = dict(h5file.root.settings.read())
-        self.newWorld(int(settings['width'])) # reset data 
-        self.mapSize = (int(settings['width']),int(settings['height']))
-        self.dWorldConf.cSize.setCurrentIndex( math.log( self.mapSize[0], 2 ) - 5 )       
-        self.dWorldConf.sbRoughness.setValue(int(settings['roughness']))
-        self.dWorldConf.cbAvgLandmass.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgLandmass']])
-        self.dWorldConf.cbAvgElevation.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgElevation']])
-        self.dWorldConf.cbMountains.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['hasMountains']])
-        self.setAlgorithm(settings['algorithm'])
-        self.setHemisphere(settings['hemisphere'])
+        #self.newWorld(int(settings['width']))  # reset data 
+        self.mapSize = (int(settings['width']), int(settings['height']))
+        self.algorithm=settings['algorithm']
+        self.roughness=settings['roughness']
+        self.hemisphere=settings['hemisphere']         
+        self.avgLandmass=settings['avgLandmass']
+        self.avgElevation=settings['avgElevation']
+        self.hasMountains=settings['hasMountains']
         
         # restore our numpy datasets
+        self.resetDatasets()
         for array in h5file.walkNodes("/", "Array"):
-            exec( 'self.' + array.name + '= array.read()')
+            exec('self.' + array.name + '= array.read()')
         
-        #print h5file
-        #print dict(h5file.root.settings.read())
+        # print h5file
+        # print dict(h5file.root.settings.read())
         
         h5file.close()
         self.fileLocation = fileLocation
         del h5file
         
         self.updateWorld()
-        self.statusBar().showMessage( 'Imported world.' )
+        self.statusBar().showMessage('Imported world.')
         self.viewHeightMap()
 
-    def importWorld( self ):
-        pass
+    def importWorld(self):
+        '''Eventually allow importing from all formats, but initially only heightmap
+        from greyscale png'''
+        import png, itertools
+        fileLocation, _ = QtGui.QFileDialog.getOpenFileName(self, 'Import world from...')
+        print fileLocation
+        width, height, pixels, meta = png.Reader(str(fileLocation)).asFloat(1.0)
+        print width, height, meta
+        print pixels
+        #heightmap = numpy.flipud(numpy.rot90(numpy.vstack(itertools.imap(numpy.float64, pixels)).reshape((width, height))))
+        heightmap = numpy.vstack(itertools.imap(numpy.float64, pixels)).reshape((width, height))
 
-    def exportWorld( self ):
+        print heightmap
+        self.elevation = heightmap.copy()
+        print type(self.elevation)
+        self.viewHeightMap()
+        self.statusBar().showMessage('Successfully imported a heightmap!')        
+        
+
+    def exportWorld(self):
         '''Eventually allow exporting to all formats, but initially only heightmap
         as 16-bit greyscale png'''
         import png
-        fileLocation, _ = QtGui.QFileDialog.getSaveFileName( self, 'Export heightmap as...' )
+        fileLocation, _ = QtGui.QFileDialog.getSaveFileName(self, 'Export heightmap as...')
         width, height = self.mapSize
         heightmap = self.elevation.copy() * 65535
         
         # png heightmap
-        pngObject = png.Writer( width, height, greyscale = True, bitdepth = 16 )
-        fileObject = open( fileLocation+'.png', 'wb' )
-        pngObject.write( fileObject, heightmap )
+        pngObject = png.Writer(width, height, greyscale=True, bitdepth=16)
+        fileObject = open(fileLocation + '.png', 'wb')
+        pngObject.write(fileObject, heightmap)
         fileObject.close()
 
         # raw heightmap
-        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( fileLocation+'.raw', format = 'C' )
-        #heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.raw', format = 'F' )
+        heightmap.astype('uint16').flatten('C').tofile(fileLocation + '.raw', format='C')
+        # heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.raw', format = 'F' )
 
         # csv heightmap
-        heightmap.astype( 'uint16' ).flatten( 'C' ).tofile( fileLocation+'.csv', sep = "," )
-        #heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.csv', sep = "," )
+        heightmap.astype('uint16').flatten('C').tofile(fileLocation + '.csv', sep=",")
+        # heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.csv', sep = "," )
 
-    def aboutApp( self ):
+    def aboutApp(self):
         '''All about the application'''
         pass
 
 def main():
     from sys import argv, exit
-    app = QtGui.QApplication( argv )
+    app = QtGui.QApplication(argv)
     ex = MapGen()
     ex
-    exit( app.exec_() )
+    exit(app.exec_())
 
 if __name__ == '__main__':
-    #import cProfile
-    #cProfile.run('main()')    
+    # import cProfile
+    # cProfile.run('main()')    
     main()
