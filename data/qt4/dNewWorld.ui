@@ -52,81 +52,185 @@
     <attribute name="title">
      <string>General</string>
     </attribute>
-    <widget class="QComboBox" name="cSize">
+    <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
       <rect>
-       <x>100</x>
+       <x>20</x>
        <y>20</y>
-       <width>78</width>
-       <height>27</height>
+       <width>311</width>
+       <height>161</height>
       </rect>
      </property>
-     <item>
-      <property name="text">
-       <string>32</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>64</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>128</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>256</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>512</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>1024</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>2048</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>4096</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="lSize">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>81</width>
-       <height>21</height>
-      </rect>
+     <property name="title">
+      <string>Details</string>
      </property>
-     <property name="text">
-      <string>World Size:</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="pbResize">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>20</y>
-       <width>81</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Resize</string>
-     </property>
+     <widget class="QLineEdit" name="leWorldName">
+      <property name="geometry">
+       <rect>
+        <x>72</x>
+        <y>30</y>
+        <width>141</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>New World</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lSize_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Name:</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>60</y>
+        <width>291</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Size</string>
+      </property>
+      <widget class="QLabel" name="lSize_3">
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>60</y>
+         <width>51</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Height</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lSize">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>41</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Width</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lSize_4">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>30</y>
+         <width>16</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>x</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="leHeight">
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>30</y>
+         <width>51</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>32</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="leWidth">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>51</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>32</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lSize_5">
+       <property name="geometry">
+        <rect>
+         <x>190</x>
+         <y>60</y>
+         <width>101</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Symmetric Size</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="cSymmetricSize">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>30</y>
+         <width>78</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>64</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>128</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>256</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>512</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>1024</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2048</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4096</string>
+        </property>
+       </item>
+      </widget>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="wsHeightmap">
@@ -510,6 +614,38 @@
     <hint type="destinationlabel">
      <x>322</x>
      <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cSymmetricSize</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>leWidth</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>290</x>
+     <y>174</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>87</x>
+     <y>174</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cSymmetricSize</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>leHeight</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>290</x>
+     <y>174</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>167</x>
+     <y>174</y>
     </hint>
    </hints>
   </connection>

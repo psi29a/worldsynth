@@ -62,11 +62,11 @@ class Menu():
         fileMenu.addSeparator()
         fileMenu.addAction( fileExitAction )
         
-        editWorldAction = QtGui.QAction( 'World Settings', mapGen )
-        editWorldAction.setStatusTip( 'Configure your world settings.' )
-        editWorldAction.triggered.connect( mapGen.confWorld )  
-        editMenu = menuBar.addMenu( '&Edit' )      
-        editMenu.addAction( editWorldAction )
+        #editWorldAction = QtGui.QAction( 'World Settings', mapGen )
+        #editWorldAction.setStatusTip( 'Configure your world settings.' )
+        #editWorldAction.triggered.connect( mapGen.newWorld )  
+        #editMenu = menuBar.addMenu( '&Edit' )      
+        #editMenu.addAction( editWorldAction )
         
         # Generate actions
         genHeightMapAction = QtGui.QAction( 'Heightmap', mapGen )
