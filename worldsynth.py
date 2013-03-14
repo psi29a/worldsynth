@@ -592,6 +592,8 @@ class MapGen(QtGui.QMainWindow):
         self.fileLocation = fileLocation
         del h5file
         
+        print self.elevation[0]
+        
         self.updateWorld()
         self.statusBar().showMessage('Imported world.')
         self.viewHeightMap()
@@ -599,18 +601,29 @@ class MapGen(QtGui.QMainWindow):
     def importWorld(self):
         '''Eventually allow importing from all formats, but initially only heightmap
         from greyscale png'''
-        import png, itertools
-        fileLocation, _ = QtGui.QFileDialog.getOpenFileName(self, 'Import world from...')
-        print fileLocation
-        width, height, pixels, meta = png.Reader(str(fileLocation)).asFloat(1.0)
-        print width, height, meta
-        print pixels
-        #heightmap = numpy.flipud(numpy.rot90(numpy.vstack(itertools.imap(numpy.float64, pixels)).reshape((width, height))))
-        heightmap = numpy.vstack(itertools.imap(numpy.float64, pixels)).reshape((width, height))
+        files = "Images ("
+        for file in QtGui.QImageReader.supportedImageFormats():
+            files += "*."+str(file)+" "
+        files += ")"
+        fileLocation, _ = QtGui.QFileDialog.getOpenFileName(self, caption='Import world from...', filter=files)
+        if not fileLocation:
+            self.statusBar().showMessage('Aborted.') 
+            return
+        image = QtGui.QImageReader(fileLocation)
+        heightmap = image.read()
+        print fileLocation, heightmap.depth()
+        width, height = heightmap.size().width(), heightmap.size().height()
+        imgarr = numpy.ndarray(shape=(width,height), dtype=numpy.uint8, buffer=heightmap.bits())
+        heightmap = imgarr.astype(numpy.float) / (2 ** heightmap.depth())
+        
+        #import png, itertools
+        #width, height, pixels, meta = png.Reader(str(fileLocation)).asFloat(1.0)
+        #print width, height, meta
+        #print pixels
+        #heightmap = numpy.vstack(itertools.imap(numpy.float64, pixels)).reshape((width, height))
 
-        print heightmap
-        self.elevation = heightmap.copy()
-        print type(self.elevation)
+        #print heightmap[0]
+        self.elevation = numpy.flipud(numpy.rot90(heightmap.copy())) # massage data back into place
         self.viewHeightMap()
         self.statusBar().showMessage('Successfully imported a heightmap!')        
         
@@ -622,6 +635,9 @@ class MapGen(QtGui.QMainWindow):
         fileLocation, _ = QtGui.QFileDialog.getSaveFileName(self, 'Export heightmap as...')
         width, height = self.mapSize
         heightmap = self.elevation.copy() * 65535
+        heightmap = numpy.flipud(numpy.rot90(heightmap)).astype(numpy.uint16) # massage data
+        
+        print heightmap[0]
         
         # png heightmap
         pngObject = png.Writer(width, height, greyscale=True, bitdepth=16)
@@ -630,12 +646,12 @@ class MapGen(QtGui.QMainWindow):
         fileObject.close()
 
         # raw heightmap
-        heightmap.astype('uint16').flatten('C').tofile(fileLocation + '.raw', format='C')
-        # heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.raw', format = 'F' )
+        heightmap.flatten('C').tofile(fileLocation + '.raw', format='C')
+        # heightmap.flatten( 'F' ).tofile( fileLocation+'.raw', format = 'F' )
 
         # csv heightmap
-        heightmap.astype('uint16').flatten('C').tofile(fileLocation + '.csv', sep=",")
-        # heightmap.astype( 'uint16' ).flatten( 'F' ).tofile( fileLocation+'.csv', sep = "," )
+        heightmap.flatten('C').tofile(fileLocation + '.csv', sep=",")
+        # heightmap.flatten( 'F' ).tofile( fileLocation+'.csv', sep = "," )
 
     def aboutApp(self):
         '''All about the application'''
