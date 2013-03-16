@@ -610,12 +610,60 @@ class MapGen(QtGui.QMainWindow):
             self.statusBar().showMessage('Aborted.') 
             return
         image = QtGui.QImageReader(fileLocation)
-        heightmap = image.read()
-        print fileLocation, heightmap.depth()
-        width, height = heightmap.size().width(), heightmap.size().height()
-        imgarr = numpy.ndarray(shape=(width,height), dtype=numpy.uint8, buffer=heightmap.bits())
-        heightmap = imgarr.astype(numpy.float) / (2 ** heightmap.depth())
+        heightmapImage = image.read()
+        print fileLocation, heightmapImage.format(), heightmapImage.depth(), heightmapImage.isGrayscale()
         
+        #test = heightmapImage.copy()
+        #for x in xrange(0, heightmapImage.size().width()-1):
+        #    for y in xrange(0, heightmapImage.size().height()-1):
+        #        gValue = QtGui.QColor.red(test.pixel(x, y))
+        #        test.setPixel(x, y, QtGui.Qcolor.qRgb(gValue, gValue, gValue))
+        
+        #test = heightmapImage.convertToFormat(QtGui.QImage.Format.Format_Indexed8)#QtCore.Qt.MonoColor)
+        #print test.format(), test.depth(), heightmap.isGrayscale()
+        
+        #self.mainImage.setPixmap(QtGui.QPixmap.fromImage(test))
+        #return
+        #print "stop"
+        if heightmapImage.depth() == 8:
+            imageDtype = numpy.uint8
+        elif heightmapImage.depth() == 16:
+            imageDtype = numpy.uint16
+        elif heightmapImage.depth() == 32:
+            imageDtype = numpy.uint32
+        else:
+            print "bad depth"
+        #imageDtype = numpy.uint8
+        
+        
+        width, height = heightmapImage.size().width(), heightmapImage.size().height()
+        imgarr = numpy.ndarray(shape=(width,height), dtype=imageDtype, buffer=heightmapImage.bits())
+        
+        heightmap = imgarr.astype(imageDtype)
+        print hex(heightmap[1][8])
+        pixel = QtGui.QColor(heightmap[1][8])
+        print pixel.red(), pixel.green(), pixel.blue()
+        print hex(pixel.rgba())
+        pixelGrey = 0.299 * pixel.red() + 0.587 * pixel.green() + 0.114 * pixel.blue()
+        print pixelGrey, pixelGrey/256.0
+        #print QtGui.QColor.
+        
+        greyHeightmap = numpy.zeros((width, height))
+        for x in xrange(0, width-1):
+            for y in xrange(0, height-1):
+                pixel = QtGui.QColor(heightmap[x][y])
+                # use luminance and perception  trick to convert image to greyscale
+                pixelGrey = 0.299 * pixel.red() + 0.587 * pixel.green() + 0.114 * pixel.blue()
+                greyHeightmap[x,y] = pixelGrey / 256
+        
+        print greyHeightmap
+        heightmap = greyHeightmap.copy()
+        
+        #heightmap = imgarr.astype(numpy.float) / (2 ** heightmapImage.depth())
+        #print heightmap[0]
+        
+        #self.mainImage.setPixmap(QtGui.QPixmap.fromImage(heightmap))
+        #return
         #import png, itertools
         #width, height, pixels, meta = png.Reader(str(fileLocation)).asFloat(1.0)
         #print width, height, meta
