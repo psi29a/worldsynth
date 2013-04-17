@@ -47,7 +47,7 @@ class MapGen(QtGui.QMainWindow):
 
         # setup our working directories
         self.fileLocation = None 
-        self.homeDir = os.environ['HOME'] + os.sep + '.mapGen'
+        self.homeDir = os.path.expanduser('~') + os.sep + '.mapGen'
         if not os.path.exists(self.homeDir):
             os.makedirs(self.homeDir)
 
