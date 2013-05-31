@@ -46,7 +46,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="wsGeneral">
     <attribute name="title">
@@ -316,8 +316,8 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>40</y>
-        <width>151</width>
+        <y>30</y>
+        <width>171</width>
         <height>22</height>
        </rect>
       </property>
@@ -332,8 +332,8 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>90</y>
-        <width>121</width>
+        <y>70</y>
+        <width>171</width>
         <height>22</height>
        </rect>
       </property>
@@ -348,13 +348,26 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>140</y>
-        <width>111</width>
+        <y>110</y>
+        <width>171</width>
         <height>22</height>
        </rect>
       </property>
       <property name="text">
        <string>Sphere Cutting</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="rPRL">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>150</y>
+        <width>171</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Perlin Noise</string>
       </property>
      </widget>
     </widget>
@@ -548,8 +561,8 @@
      <y>175</y>
     </hint>
     <hint type="destinationlabel">
-     <x>336</x>
-     <y>104</y>
+     <x>338</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -560,8 +573,8 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>92</x>
-     <y>214</y>
+     <x>94</x>
+     <y>174</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -576,8 +589,8 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>82</x>
-     <y>171</y>
+     <x>84</x>
+     <y>134</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -592,8 +605,8 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>115</x>
-     <y>102</y>
+     <x>117</x>
+     <y>94</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -608,8 +621,8 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>309</x>
-     <y>101</y>
+     <x>311</x>
+     <y>99</y>
     </hint>
     <hint type="destinationlabel">
      <x>322</x>
@@ -624,12 +637,12 @@
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>290</x>
-     <y>174</y>
+     <x>292</x>
+     <y>169</y>
     </hint>
     <hint type="destinationlabel">
-     <x>87</x>
-     <y>174</y>
+     <x>89</x>
+     <y>169</y>
     </hint>
    </hints>
   </connection>
@@ -640,12 +653,28 @@
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>290</x>
-     <y>174</y>
+     <x>292</x>
+     <y>169</y>
     </hint>
     <hint type="destinationlabel">
-     <x>167</x>
-     <y>174</y>
+     <x>169</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rPRL</sender>
+   <signal>clicked()</signal>
+   <receiver>gbRoughness</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>97</x>
+     <y>203</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>332</x>
+     <y>143</y>
     </hint>
    </hints>
   </connection>

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #from noise import pnoise2
 import numpy, sys
 from noise.perlin import SimplexNoise
+from noise import pnoise2, snoise2
 
 def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
     # compress the range while maintaining ratio
@@ -46,19 +47,24 @@ class Perlin():
     def run( self ):
         noiseMap = numpy.zeros((self.width, self.height))
         
-        sn = SimplexNoise()
-        
-        octaves = 1
-        for octaves in xrange (1,17):
-            sn.randomize()
-            print octaves
-            freq = 128.0 * octaves
-            for y in xrange(self.width):
-                for x in xrange(self.height):
-                    fn = sn.noise2( x/freq, y/freq )
-                    noiseMap[x,y] += fn
+        #sn = SimplexNoise()
+        #octaves = 1
+        #for octaves in xrange (1,17):
+        #    sn.randomize()
+        #    print octaves
+        #    freq = 128.0 * octaves
+        #    for y in xrange(self.width):
+        #        for x in xrange(self.height):
+        #            fn = sn.noise2( x/freq, y/freq )
+        #            noiseMap[x,y] += fn
             #break
         #print noiseMap
+        octaves = 7
+        freq = 16.0 * octaves
+        for y in range(256):
+            for x in range(256):
+                noiseMap[x,y] = int(snoise2(x / freq, y / freq, octaves) * 127.0 + 128.0)
+                       
         self.heightmap = compressHeightmap(noiseMap)
         #print self.heightmap        
 
