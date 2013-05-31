@@ -69,12 +69,9 @@ class MapGen(QtGui.QMainWindow):
         # Our debug / autopilot / crash dummy
         if debug:
             print "Going on full autopilot..."
-            self.createHeightmap()
-            # self.createTemperature()
-            # self.createWindAndRain()
-            # self.createRiversAndLakes()
-            # self.createDrainage()
-            # self.createBiomes()          
+            self.dNewWorld.rPRL.click()
+            self.genHeightMap()
+       
 
     def initUI(self):
         '''Initialize the GUI for usage'''
@@ -184,7 +181,7 @@ class MapGen(QtGui.QMainWindow):
             method = HM_DSA
         elif self.dNewWorld.rSPH.isChecked():
             method = HM_SPH
-        elif self.dNewWorld.rPerlin.isChecked():
+        elif self.dNewWorld.rPRL.isChecked():
             method = HM_PERLIN         
         else:
             method = None
@@ -200,7 +197,7 @@ class MapGen(QtGui.QMainWindow):
         elif method == HM_SPH:
             self.dNewWorld.rSPH.click()
         elif method == HM_PERLIN:
-            self.dNewWorld.rPerlin.click()
+            self.dNewWorld.rPRL.click()
         else:
             print "Error: no heightmap algo selected."
             
@@ -658,13 +655,33 @@ class MapGen(QtGui.QMainWindow):
         pass
 
 def main():
-    from sys import argv, exit
+    from sys import argv
+    
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--profile", help="profile/benchmark process", 
+                        action="store_true")
+    parser.add_argument("-d", "--debug", help="debug mode",
+                        action="store_true")
+    parser.add_argument("-v", "--verbosity", help="increase output verbosity",
+                        action="store_true")
+    args = parser.parse_args()
+    
+    if args.verbosity:
+        print "verbosity turned on"
+    if args.debug:
+        print "debug turned on"
+        debug=True
+    else:
+        debug=False
+    
     app = QtGui.QApplication(argv)
-    ex = MapGen()
-    ex
+    if args.profile:
+        import cProfile
+        cProfile.run('ex = MapGen()')
+    else:
+        ex = MapGen(debug=debug)
     exit(app.exec_())
 
 if __name__ == '__main__':
-    # import cProfile
-    # cProfile.run('main()')    
     main()
