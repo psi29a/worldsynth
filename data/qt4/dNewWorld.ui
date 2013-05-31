@@ -46,7 +46,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="wsGeneral">
     <attribute name="title">
@@ -55,10 +55,10 @@
     <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>311</width>
-       <height>161</height>
+       <x>10</x>
+       <y>10</y>
+       <width>321</width>
+       <height>181</height>
       </rect>
      </property>
      <property name="title">
@@ -315,9 +315,9 @@
      <widget class="QRadioButton" name="rMDA">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>40</y>
-        <width>181</width>
+        <width>151</width>
         <height>22</height>
        </rect>
       </property>
@@ -331,9 +331,9 @@
      <widget class="QRadioButton" name="rDSA">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>90</y>
-        <width>181</width>
+        <width>121</width>
         <height>22</height>
        </rect>
       </property>
@@ -347,9 +347,9 @@
      <widget class="QRadioButton" name="rSPH">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>140</y>
-        <width>181</width>
+        <width>111</width>
         <height>22</height>
        </rect>
       </property>
@@ -367,9 +367,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>10</y>
        <width>201</width>
-       <height>171</height>
+       <height>181</height>
       </rect>
      </property>
      <property name="title">
@@ -443,7 +443,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
+       <y>10</y>
        <width>331</width>
        <height>91</height>
       </rect>
