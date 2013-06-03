@@ -235,6 +235,7 @@ class Rivers():
                         return path  # skip the rest, return path
 
             # found a sea?
+            #print "Flowing to...",x,y
             if self.heightmap[x, y] <= constants.WGEN_SEA_LEVEL:
                 break
 
@@ -325,6 +326,9 @@ class Rivers():
             else: # can't find any other path, make it a lake
                 self.lakeList.append(currentLocation)
                 break # end of river
+            
+            if self.isOutOfBounds(currentLocation):
+                print "Why are we here:",currentLocation   
 
         return path
 
@@ -427,14 +431,15 @@ class Rivers():
             tx, ty = overflow(tx, self.worldW), overflow(ty, self.worldH)      
 
             elevation = self.heightmap[tx, ty]
-
+            
             # print river, direction, tempDir, elevation, direction[0], direction[1]
 
             if elevation < lowestElevation:
                 if self.isOutOfBounds(tempDir):
-                    print tempDir, tx, ty                
+                    #print "Lower OOB:",tempDir, "Corrected:", tx, ty
+                    pass          
                 lowestElevation = elevation
-                newPath = tempDir
+                newPath = [tx,ty]
 
         # print newPath, lowestDirection, elevation
         # sys.exit()
