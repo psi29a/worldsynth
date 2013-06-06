@@ -19,25 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-#from noise import pnoise2
-import numpy, sys
+import numpy, utilities
 from noise.perlin import SimplexNoise
 from noise import snoise2
-
-def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
-    # compress the range while maintaining ratio
-    oldMin = sys.float_info.max; oldMax = sys.float_info.min;
-    width,height = heightmap.shape
-    for x in xrange(0,width):
-        for y in xrange(0,height):
-            if heightmap[x,y] < oldMin:
-                oldMin = heightmap[x,y]
-            if heightmap[x,y] > oldMax:
-                oldMax = heightmap[x,y]
-    for x in xrange(0,width):
-        for y in xrange(0,height):
-            heightmap[x,y] = (((heightmap[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin    
-    return heightmap
 
 class Perlin():
     def __init__( self, size ):
@@ -50,15 +34,14 @@ class Perlin():
         # pure python version
         sn = SimplexNoise(period = self.width)
         persistance = 0.5
-        octaves = [16, 8, 4, 2, 1]
+        octaves = [1, 2, 4, 8, 16]
         for octave in octaves:
             freq = 16.0 * octave
             for y in xrange(self.height):
                 for x in xrange(self.width):
                     fn = sn.noise2( x/freq, y/freq )
                     noiseMap[x,y] += fn * persistance
-            persistance /= 2
-            print persistance
+            persistance *= 2
 
 #        octaves = 5
 #        freq = 16.0 * octaves
@@ -67,8 +50,10 @@ class Perlin():
 #                fn = snoise2(x / freq, y / freq, octaves=octaves, persistence=0.5, lacunarity=2.0, repeatx=self.width, repeaty=self.height, base=0.0)
 #                noiseMap[x,y] = fn
         
-
-        self.heightmap = compressHeightmap(noiseMap)
+        print noiseMap
+        #noiseMap = numpy.gradient(noiseMap).shape((self.width, self.height))
+        #print noiseMap
+        self.heightmap = noiseMap
         #print self.heightmap        
 
 # runs the program

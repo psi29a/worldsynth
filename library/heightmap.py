@@ -19,17 +19,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import constants
+import constants, utilities, numpy
 
 class HeightMap():
     '''An heightmap generator with various backends'''
-    def __init__( self, size, roughness = 0.5 ):
+    def __init__( self, size, roughness = 0.5, islands = False ):
         self.size = size
         self.width, self.height = self.size
         self.roughness = roughness
         self.heightmap = None
+        self.islands = islands
 
-    def run(self, method = None):
+    def run(self, method = None):      
         if method == constants.HM_MDA:
             from midpointDisplacement import MDA            
             heightObject = MDA(self.size, self.roughness)
@@ -46,7 +47,14 @@ class HeightMap():
             print "No method for generating heightmap found!"
         
         heightObject.run()
-        self.heightmap = heightObject.heightmap
+        
+        if self.islands:
+            gradient = utilities.radialGradient(self.size, True)
+            self.heightmap = heightObject.heightmap * gradient
+        else:
+            self.heightmap = heightObject.heightmap
+        
+        self.heightmap = utilities.normalize(self.heightmap)
         del heightObject
 
     def landMassPercent( self ):
@@ -81,4 +89,4 @@ class HeightMap():
                 result = True
                 break
 
-        return result            
+        return result
