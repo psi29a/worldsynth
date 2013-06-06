@@ -36,13 +36,6 @@ class MDA():
         c4 = random.random()    # left
         self.divideRect( 0, 0, self.width, self.height, c1, c2, c3, c4 )
 
-    def normalize( self, point ): # +/- infinity are reset to 1 and 1 values
-        if point < 0.0:
-            point = 0.0
-        elif point > 1.0:
-            point = 1.0
-        return point
-
     def displace( self, small_size ):
         maxd = small_size / self.size * self.roughness
         return ( random.random() - 0.5 ) * maxd
@@ -52,14 +45,14 @@ class MDA():
         new_height = math.floor( height / 2 )
 
         if ( width > 1 or height > 1 ):
-            # average of all the points and normalize in case of "out of bounds" during displacement
-            mid = self.normalize( self.normalize( ( ( c1 + c2 + c3 + c4 ) / 4 ) + self.displace( new_width + new_height ) ) )
+            # average of all the points during displacement
+            mid = ( ( c1 + c2 + c3 + c4 ) / 4 ) + self.displace( new_width + new_height ) 
 
             # midpoint of the edges is the average of its two end points
-            edge1 = self.normalize( ( c1 + c2 ) / 2 )
-            edge2 = self.normalize( ( c2 + c3 ) / 2 )
-            edge3 = self.normalize( ( c3 + c4 ) / 2 )
-            edge4 = self.normalize( ( c4 + c1 ) / 2 )
+            edge1 = ( c1 + c2 ) / 2
+            edge2 = ( c2 + c3 ) / 2
+            edge3 = ( c3 + c4 ) / 2
+            edge4 = ( c4 + c1 ) / 2
 
             # recursively go down the rabbit hole
             self.divideRect( x, y, new_width, new_height, c1, edge1, mid, edge4 )

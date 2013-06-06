@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import math, random, numpy, aStar, constants
+import math, random, numpy, aStar, constants, utilities
 from PySide import QtGui
 
 overflow = lambda value, maxValue: value % maxValue
@@ -180,7 +180,7 @@ class Rivers():
                             # try not to create seeds around other seeds
                             for seed in riverSourceList:
                                 sx, sy = seed
-                                if self.inCircle(9, cx, cy, sx, sy):
+                                if utilities.inCircle(9, cx, cy, sx, sy):
                                     neighbourSeedFound = True
                             if neighbourSeedFound:
                                 break  # we do not want seeds for neighbors
@@ -199,10 +199,6 @@ class Rivers():
                         self.waterFlow[nx, ny] += rainFall
                         cx, cy = nx, ny  # set current cell to next cell 
         return riverSourceList
-
-    def inCircle(self, radius, center_x, center_y, x, y):
-        square_dist = (center_x - x) ** 2 + (center_y - y) ** 2
-        return square_dist <= radius ** 2
 
     def riverFlow(self, source):
         '''simulate fluid dynamics by using starting point and flowing to the
@@ -270,7 +266,7 @@ class Rivers():
                     print "BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation
                     break
                 
-                if not self.inCircle(maxRadius, cx, cy, lx, cy):
+                if not utilities.inCircle(maxRadius, cx, cy, lx, cy):
                     # are we wrapping on x axis?
                     #print "We found wrapping along x-axis"
                     if cx-lx < 0:
@@ -280,7 +276,7 @@ class Rivers():
                         lx = self.worldW-1 # move to right edge
                         nx = 0 # next step is wrapped around
                     ly = ny = int( (cy+ly)/2 ) # move halfway
-                elif not self.inCircle(maxRadius, cx, cy, cx, ly):
+                elif not utilities.inCircle(maxRadius, cx, cy, cx, ly):
                     # are we wrapping on y axis?
 #                    print "We found wrapping along y-axis"
                     if cy-ly < 0:
@@ -379,7 +375,7 @@ class Rivers():
                         continue
                     if self.heightmap[x, y] <= self.heightmap[rx, ry]:  # ignore areas lower than river itself
                         continue
-                    if not self.inCircle(radius, rx, ry, x, y):  # ignore things outside a circle
+                    if not utilities.inCircle(radius, rx, ry, x, y):  # ignore things outside a circle
                         continue
 
                     adx, ady = math.fabs(rx - x), math.fabs(ry - y)
@@ -476,7 +472,7 @@ class Rivers():
                         continue     
 
                     # are we within a circle?
-                    if not self.inCircle(currentRadius, x, y, rx, ry):
+                    if not utilities.inCircle(currentRadius, x, y, rx, ry):
                         continue
                     
                     rx, ry = overflow(rx, self.worldW), overflow(ry, self.worldH)
@@ -563,7 +559,7 @@ class Rivers():
                     continue
 
                 # are we within a circle?
-                if not self.inCircle(radius, tryX, tryY, tryX + x, tryY + y):
+                if not utilities.inCircle(radius, tryX, tryY, tryX + x, tryY + y):
                     continue
 
                 # found a river?

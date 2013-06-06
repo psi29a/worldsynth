@@ -86,7 +86,9 @@ class MapGen(QtGui.QMainWindow):
         Menu(self)
 
         self.mainImage = QtGui.QLabel(self)
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)))
+        blank = QtGui.QImage(width, height, QtGui.QImage.Format_Indexed8)
+        blank.fill(QtGui.QColor(0,0,0))
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(blank))
         self.scrollArea = QtGui.QScrollArea(self)
         self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
         self.scrollArea.setWidget(self.mainImage)
@@ -217,7 +219,7 @@ class MapGen(QtGui.QMainWindow):
         # method = 3 #testing
         while not found:  # loop until we have something workable
             heightObject.run(method)
-            # break #testing
+            break #testing
             if self.dNewWorld.cbAvgLandmass.isChecked() and heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage('Too little land mass')
             elif self.dNewWorld.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:

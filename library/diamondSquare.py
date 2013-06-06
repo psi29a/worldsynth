@@ -28,32 +28,11 @@ import numpy, sys
 def avg(*args):
     return sum(args)/len(args)    
 
-def trimHeightmap(heightmap):
-    '''trim up heightmap to be power of 2'''
-    heightmap = numpy.delete(heightmap,1,0)
-    heightmap = numpy.delete(heightmap,1,1)  
-    return heightmap
-
-def compressHeightmap(heightmap, newMin=0.0, newMax=1.0):
-    # compress the range while maintaining ratio
-    oldMin = sys.float_info.max; oldMax = sys.float_info.min;
-    width,height = heightmap.shape
-    for x in xrange(0,width):
-        for y in xrange(0,height):
-            if heightmap[x,y] < oldMin:
-                oldMin = heightmap[x,y]
-            if heightmap[x,y] > oldMax:
-                oldMax = heightmap[x,y]
-    for x in xrange(0,width):
-        for y in xrange(0,height):
-            heightmap[x,y] = (((heightmap[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin    
-    return heightmap
-
 class DSA():
     def __init__(self, size):
         ''' Create our initial heightmap '''
         self.size = map(lambda x: x+1, size)
-        self.space = numpy.zeros(self.size)
+        self.heightmap = numpy.zeros(self.size)
         self.noise_min = -1.0
         self.noise_max = 1.0
         
@@ -65,12 +44,12 @@ class DSA():
         ''' Square Diamond Algo '''
 
         corner = self.randomHeightGen(0.0)
-        self.space[0,0]   = corner
-        self.space[0,-1]  = corner
-        self.space[-1,0]  = corner
-        self.space[-1,-1] = corner
+        self.heightmap[0,0]   = corner
+        self.heightmap[0,-1]  = corner
+        self.heightmap[-1,0]  = corner
+        self.heightmap[-1,-1] = corner
                 
-        x_max,y_max = self.space.shape
+        x_max,y_max = self.heightmap.shape
         x_min = y_min = 0
         x_max -= 1; y_max -= 1
     
@@ -94,11 +73,11 @@ class DSA():
                     ym = y_top + dy
     
                     #Diamond step- create center avg for each square
-                    self.space[xm,ym] = avg(self.space[x_left, y_top],
-                    self.space[x_left, y_bottom],
-                    self.space[x_right, y_top],
-                    self.space[x_right, y_bottom])
-                    self.space[xm,ym] += self.randomHeightGen(i)
+                    self.heightmap[xm,ym] = avg(self.heightmap[x_left, y_top],
+                    self.heightmap[x_left, y_bottom],
+                    self.heightmap[x_right, y_top],
+                    self.heightmap[x_right, y_bottom])
+                    self.heightmap[xm,ym] += self.randomHeightGen(i)
     
                     #Square step- create squares for each diamond
                     #Top Square
@@ -106,68 +85,68 @@ class DSA():
                         temp = y_max - dy
                     else:
                         temp = y_top - dy
-                    self.space[xm,y_top] = avg(self.space[x_left,y_top],
-                                          self.space[x_right,y_top],
-                                          self.space[xm,ym],
-                                          self.space[xm,temp])
-                    self.space[xm,y_top] += self.randomHeightGen(i)
+                    self.heightmap[xm,y_top] = avg(self.heightmap[x_left,y_top],
+                                          self.heightmap[x_right,y_top],
+                                          self.heightmap[xm,ym],
+                                          self.heightmap[xm,temp])
+                    self.heightmap[xm,y_top] += self.randomHeightGen(i)
     
                     #Top Wrapping
                     if y_top == y_min:
-                        self.space[xm,y_max] = self.space[xm,y_top]
+                        self.heightmap[xm,y_max] = self.heightmap[xm,y_top]
     
                     #Bottom Square
                     if (y_bottom + dy) > y_max:
                         temp = y_top + dy
                     else:
                         temp = y_bottom - dy
-                    self.space[xm, y_bottom] = avg(self.space[x_left,y_bottom],
-                                              self.space[x_right,y_bottom],
-                                              self.space[xm,ym],
-                                              self.space[xm,temp])
-                    self.space[xm, y_bottom] += self.randomHeightGen(i)
+                    self.heightmap[xm, y_bottom] = avg(self.heightmap[x_left,y_bottom],
+                                              self.heightmap[x_right,y_bottom],
+                                              self.heightmap[xm,ym],
+                                              self.heightmap[xm,temp])
+                    self.heightmap[xm, y_bottom] += self.randomHeightGen(i)
     
                     #Bottom Wrapping
                     if y_bottom == y_max:
-                        self.space[xm,y_min] = self.space[xm,y_bottom]
+                        self.heightmap[xm,y_min] = self.heightmap[xm,y_bottom]
     
                     #Left Square
                     if (x_left - dx) < x_min:
                         temp = x_max - dx
                     else:
                         temp = x_left - dx
-                    self.space[x_left, ym] = avg(self.space[x_left,y_top],
-                                            self.space[x_left,y_bottom],
-                                            self.space[xm,ym],
-                                            self.space[temp,ym])
-                    self.space[x_left, ym] += self.randomHeightGen(i)
+                    self.heightmap[x_left, ym] = avg(self.heightmap[x_left,y_top],
+                                            self.heightmap[x_left,y_bottom],
+                                            self.heightmap[xm,ym],
+                                            self.heightmap[temp,ym])
+                    self.heightmap[x_left, ym] += self.randomHeightGen(i)
     
                     #Left Wrapping
                     if x_left == x_min:
-                        self.space[x_max,ym] = self.space[x_left,ym]
+                        self.heightmap[x_max,ym] = self.heightmap[x_left,ym]
     
                     #Right Square
                     if (x_right + dx) > x_max:
                         temp = x_min + dx
                     else:
                         temp = x_right + dx
-                    self.space[x_right, ym] = avg(self.space[x_right,y_top],
-                                             self.space[x_right,y_bottom],
-                                             self.space[xm,ym],
-                                             self.space[temp,ym])
-                    self.space[x_right, ym] += self.randomHeightGen(i)
+                    self.heightmap[x_right, ym] = avg(self.heightmap[x_right,y_top],
+                                             self.heightmap[x_right,y_bottom],
+                                             self.heightmap[xm,ym],
+                                             self.heightmap[temp,ym])
+                    self.heightmap[x_right, ym] += self.randomHeightGen(i)
     
                     #Right Wrapping
                     if x_right == x_max:
-                        self.space[x_min,ym] = self.space[x_right,ym]
+                        self.heightmap[x_min,ym] = self.heightmap[x_right,ym]
     
             #Refine the pass
             side /= 2
             squares *= 2
             i += 1
-        
-        self.heightmap = trimHeightmap(self.space)
-        self.heightmap = compressHeightmap(self.heightmap, 0.0, 1.0)    
+            
+        #trim up heightmap to be power of 2
+        self.heightmap = numpy.delete(numpy.delete(self.heightmap,1,0),1,1) 
 
 # runs the program
 if __name__ == '__main__':
