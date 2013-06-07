@@ -42,18 +42,10 @@ class Sphere():
             self.xrand = lambda ms = self.mapSize * 3: int( self.randType( 0, ms ) )
             self.yrand = lambda ms = self.mapSize * 2: int( self.randType( 0 - ( ms / 2 ), ms ) )
 
-
     def normalizeImage( self, image ):
         image = image.filter( ImageFilter.BLUR )
         picture = ImageChops.blend( ImageOps.equalize( image ), image, .5 )
         return ImageChops.multiply( picture, picture )
-
-    def normalizeArray( self, sphereObject ):
-        xArray,yArray = numpy.where(sphereObject > 1.0)
-        gtone = zip(xArray,yArray)
-        for x,y in gtone:
-            sphereObject[x,y] = 1
-        return sphereObject
 
     def drawPieSlices( self, oval, orig, action ):
         fl = action[1]
@@ -117,7 +109,6 @@ class Sphere():
         sphere = self.normalizeImage( sphere ) # normal image
         self.heightmap = numpy.array( sphere.getdata(), float ) #convert image to numpy array
         self.heightmap = self.heightmap.reshape( self.mapSize, self.mapSize ) / 100
-        self.heightmap = self.normalizeArray( self.heightmap )
         del sphere
 
 if __name__ == '__main__':

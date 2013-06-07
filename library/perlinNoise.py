@@ -50,7 +50,7 @@ class Perlin():
 #                fn = snoise2(x / freq, y / freq, octaves=octaves, persistence=0.5, lacunarity=2.0, repeatx=self.width, repeaty=self.height, base=0.0)
 #                noiseMap[x,y] = fn
         
-        print noiseMap
+        #print noiseMap
         #noiseMap = numpy.gradient(noiseMap).shape((self.width, self.height))
         #print noiseMap
         self.heightmap = noiseMap
