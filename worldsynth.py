@@ -70,6 +70,7 @@ class MapGen(QtGui.QMainWindow):
         if debug:
             print "Going on full autopilot..."
             self.dNewWorld.rPRL.click()
+            #self.mapSize = [1024,1024]
             self.genHeightMap()
        
 
@@ -214,7 +215,7 @@ class MapGen(QtGui.QMainWindow):
         method = self.getAlgorithm()
 
         # create our heightmap
-        heightObject = HeightMap(self.mapSize, roughness)
+        heightObject = HeightMap(self.mapSize, roughness, True)
         found = False
         # method = 3 #testing
         while not found:  # loop until we have something workable
@@ -591,7 +592,7 @@ class MapGen(QtGui.QMainWindow):
         self.fileLocation = fileLocation
         del h5file
         
-        print self.elevation[0]
+        #print self.elevation[0]
         
         self.updateWorld()
         self.statusBar().showMessage('Imported world.')

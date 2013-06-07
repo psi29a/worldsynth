@@ -47,15 +47,16 @@ class HeightMap():
             print "No method for generating heightmap found!"
         
         heightObject.run()
+        self.heightmap = utilities.normalize(heightObject.heightmap)
         
         if self.islands:
-            gradient = utilities.radialGradient(self.size, True)
-            self.heightmap = heightObject.heightmap * gradient
-        else:
-            self.heightmap = heightObject.heightmap
-        
-        self.heightmap = utilities.normalize(self.heightmap)
+            gradient = utilities.radialGradient(self.size, True, True)
+            self.heightmap = self.heightmap * gradient
+
         del heightObject
+        
+        self.heightmap = utilities.frameGradient(self.size)
+        print self.heightmap
 
     def landMassPercent( self ):
         return self.heightmap.sum() / ( self.width * self.height )
