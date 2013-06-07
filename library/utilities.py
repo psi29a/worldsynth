@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import sys, numpy
+import numpy
 
 def inCircle(radius, center_x, center_y, x, y):
     squareDist = ( (center_x - x) ** 2 + (center_y - y) ** 2 )
@@ -27,13 +27,13 @@ def inCircle(radius, center_x, center_y, x, y):
 
 def normalize(data, newMin=0.0, newMax=1.0):
     # compress the range while maintaining ratio
-    width,height = data.shape
     oldMin = numpy.amin(data)
-    oldMax = numpy.amax(data)    
-    for x in xrange(0,width):
-        for y in xrange(0,height):
-            data[x,y] = (((data[x,y] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin    
-    return data
+    oldMax = numpy.amax(data)
+    orgShape = data.shape
+    data = numpy.reshape(data, data.size)
+    for x in xrange(data.size):
+            data[x] = (((data[x] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin
+    return numpy.reshape(data, orgShape)
 
 def roof( data, limit ):
     xArray,yArray = numpy.where(data > limit)
@@ -50,7 +50,7 @@ def floor( data, limit ):
     return data
 
 
-def radialGradient( size, fitEdges=True, invert=False ):
+def radialGradient( size, fitEdges=True, invert=True ):
     ''' Creates a radial gradient (half-sphere) to be used for masking images so
     that the edges have a curving sloop. You can specify the inverse as well as
     fitting to the edges or corners of a 2D array. '''
@@ -74,24 +74,86 @@ def radialGradient( size, fitEdges=True, invert=False ):
       
     return normalize(gradient)
   
-def frameGradient ( size, border=.10 ):
+def frameGradient ( size, border=.1 ):
     width, height = size
-    gradient = numpy.zeros(( size ))
+    gradient = numpy.ones(( size ))
     borderSize = int(width*border)
-    
-    #top border
-    target = 250
-    beta = 1.0/target
-    Y = numpy.random.exponential(beta, borderSize)
-    Y = normalize(Y) #TODO: make normalize accept 1D arrays
-    
-    print Y
+    gBorder = numpy.linspace(0.0,1.0,borderSize)
     
     for x in xrange(width):
-        for y in xrange(0,borderSize):
-            gradient[x,y] = 1
+        for y in xrange(borderSize):
+            value = gBorder[y]
             
-    print borderSize
+            # top and bottom
+            gradient[x,y] = value
+            gradient[x,abs(y-height)-1] = value
+            
+            # left
+            if (gradient[y,x] > value):
+                gradient[y,x] = value
+            
+    for x in xrange(width):
+        for y in xrange(borderSize):
+            value = gBorder[y]
+            # right   
+            if (gradient[abs(y-height)-1,x] > value):
+                gradient[abs(y-height)-1,x] = value
+                pass
+            
     return gradient
-    return normalize(gradient)
+
+def rollingParticleGradient( size, centerBias=True ):
+    import random
+    width, height = size
+    gradient = numpy.ones(( size ))
     
+    PARTICLE_ITERATIONS = 3000
+    PARTICLE_LENGTH = 50
+    EDGE_BIAS = 12
+    OUTER_BLUR = 0.75
+    INNER_BLUR = 0.88
+    
+    for iterations in xrange(PARTICLE_ITERATIONS):
+        # Start nearer the center
+        if centerBias:
+            sourceX = int(random.random() * (width-(EDGE_BIAS*2)) + EDGE_BIAS)
+            sourceY = int(random.random() * (height-(EDGE_BIAS*2)) + EDGE_BIAS)
+        # Random starting location
+        else:
+            sourceX = int(random.random() * (width - 1))
+            sourceY = int(random.random() * (height - 1))
+                
+        for length in xrange(PARTICLE_LENGTH):
+            sourceX += round(random.random() * 2 - 1)
+            sourceY += round(random.random() * 2 - 1)
+                                                        
+            if sourceX < 1 or sourceX > width -2 or sourceY < 1 or sourceY > height - 2:
+                break
+                
+            hood = mooreNeighborhood(size, sourceX, sourceY);
+                
+            for i in xrange(len(hood)):
+                x,y = hood[i]
+                if gradient[x,y] < gradient[sourceX,sourceY]:
+                    sourceX,sourceY = hood[i]
+                    break
+                            
+            gradient[sourceX,sourceY] += 1
+
+    return normalize(gradient)
+
+def mooreNeighborhood(size, x, y):
+    '''Get the Moore neighborhood (3x3, 8 surrounding tiles, minus the center tile).'''
+    import random
+    result = []
+    width, height = size
+    
+    for a in xrange(-1,2):
+        for b in xrange(-1, 2):
+            if a or b:
+                if x + a >= 0 and x + a < width and y + b >= 0 and y + b < height:
+                    result.append([int(x + a), int(y + b)])
+
+    # Return the neighborhood in no particular order
+    random.shuffle(result)                        
+    return result
