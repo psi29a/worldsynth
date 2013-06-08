@@ -39,6 +39,7 @@ class Rivers():
             sb.addPermanentWidget(progress)
             progress.setValue(0)
         self.heightmap = heightmap.copy()
+        self.size = heightmap.shape
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.riverMap = numpy.zeros((self.worldW, self.worldH))
@@ -62,7 +63,7 @@ class Rivers():
         if sb:
             progress.setValue(progressValue)
             progressValue += 1
-
+        print riverSources
         # step three: for each source, find a path to sea
         for source in riverSources:
             river = self.riverFlow(source)
@@ -134,7 +135,7 @@ class Rivers():
                     sources = []
                     for sx in range(x, x + square):
                         for sy in range(y, y + square):
-                            if not self.wrap and self.isOutOfBounds([sx, sy]):
+                            if not self.wrap and utilities.outOfBounds([sx, sy], self.size):
                                 continue
                             # convert to wrap around
                             sx, sy = overflow(sx, self.worldW), overflow(sy, self.worldH)
@@ -323,7 +324,7 @@ class Rivers():
                 self.lakeList.append(currentLocation)
                 break # end of river
             
-            if self.isOutOfBounds(currentLocation):
+            if utilities.outOfBounds(currentLocation, self.size):
                 print "Why are we here:",currentLocation   
 
         return path
@@ -365,7 +366,7 @@ class Rivers():
             radius = 2
             for x in range(rx - radius, rx + radius):
                 for y in range(ry - radius, ry + radius):
-                    if not self.wrap and self.isOutOfBounds([x, y]):  # ignore edges of map
+                    if not self.wrap and utilities.outOfBounds([x, y], self.size):  # ignore edges of map
                         continue
                     x, y = overflow(x, self.worldW), overflow(y, self.worldH)
                     curve = 1.0
@@ -417,11 +418,11 @@ class Rivers():
         lowestElevation = self.heightmap[x, y]
         # lowestDirection = [0, 0]
 
-        for dx, dy in constants.DIR_NEIGHBORS:
+        for dx, dy in constants.DIR_ALL:
             tempDir = [x + dx, y + dy]
             tx, ty = tempDir
 
-            if not self.wrap and self.isOutOfBounds(tempDir):
+            if not self.wrap and utilities.outOfBounds(tempDir, self.size):
                 continue
 
             tx, ty = overflow(tx, self.worldW), overflow(ty, self.worldH)      
@@ -431,7 +432,7 @@ class Rivers():
             # print river, direction, tempDir, elevation, direction[0], direction[1]
 
             if elevation < lowestElevation:
-                if self.isOutOfBounds(tempDir):
+                if utilities.outOfBounds(tempDir, self.size):
                     #print "Lower OOB:",tempDir, "Corrected:", tx, ty
                     pass          
                 lowestElevation = elevation
@@ -468,7 +469,7 @@ class Rivers():
                     rx, ry = x + cx, y + cy
                     
                     # are we within bounds?
-                    if not self.wrap and self.isOutOfBounds([rx, ry]):
+                    if not self.wrap and utilities.outOfBounds([rx, ry], self.size):
                         continue     
 
                     # are we within a circle?
@@ -477,7 +478,7 @@ class Rivers():
                     
                     rx, ry = overflow(rx, self.worldW), overflow(ry, self.worldH)
 
-#                    if self.isOutOfBounds([x+cx, y+cy]):
+#                    if utilities.outOfBounds([x+cx, y+cy], self.size):
 #                        print "Fixed:",x ,y,  rx, ry
 
                     elevation = self.heightmap[rx, ry]
@@ -485,7 +486,7 @@ class Rivers():
                         lowestElevation = elevation
                         destination = [rx, ry]
                         notFound = False
-                        if self.isOutOfBounds([x+cx, y+cy]):
+                        if utilities.outOfBounds([x+cx, y+cy], self.size):
                             wrapped.append(destination)                        
 
             currentRadius += 1
@@ -502,7 +503,7 @@ class Rivers():
         adjacent area that is under the elevation.'''
 
         # are we in bounds of world
-        if self.isOutOfBounds({'x': x, 'y': y}):
+        if utilities.outOfBounds({'x': x, 'y': y}, self.size):
             return
 
         # Base case. If the current [x, y] elevation is greater then do nothing.
@@ -530,7 +531,7 @@ class Rivers():
             x, y = theStack.pop()
 
             # are we in bounds of world
-            if self.isOutOfBounds({'x': x, 'y': y}):
+            if utilities.outOfBounds({'x': x, 'y': y}, self.size):
                 continue
 
             # Base case. If the current [x, y] elevation is greater then do nothing.
@@ -555,7 +556,7 @@ class Rivers():
             for y in range(-radius, radius + 1):
 
                 # are we within bounds?
-                if self.isOutOfBounds({'x': tryX + x, 'y': tryY + y}):
+                if utilities.outOfBounds({'x': tryX + x, 'y': tryY + y}, self.size):
                     continue
 
                 # are we within a circle?

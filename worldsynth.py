@@ -215,7 +215,7 @@ class MapGen(QtGui.QMainWindow):
         method = self.getAlgorithm()
 
         # create our heightmap
-        heightObject = HeightMap(self.mapSize, roughness, True)
+        heightObject = HeightMap(self.mapSize, roughness)
         found = False
         # method = 3 #testing
         while not found:  # loop until we have something workable
