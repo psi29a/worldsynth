@@ -19,7 +19,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import numpy
+import numpy, random
+import constants
 
 def inCircle(radius, center_x, center_y, x, y):
     squareDist = ( (center_x - x) ** 2 + (center_y - y) ** 2 )
@@ -107,13 +108,13 @@ def rollingParticleGradient( size, centerBias=True ):
     width, height = size
     gradient = numpy.ones(( size ))
     
-    PARTICLE_ITERATIONS = 3000
-    PARTICLE_LENGTH = 50
+    PARTICLEITERATIONS = width ** 2 #3000*5
+    PARTICLELIFE = 50*1
     EDGE_BIAS = 12
     OUTER_BLUR = 0.75
     INNER_BLUR = 0.88
     
-    for iterations in xrange(PARTICLE_ITERATIONS):
+    for iterations in xrange(PARTICLEITERATIONS):
         # Start nearer the center
         if centerBias:
             sourceX = int(random.random() * (width-(EDGE_BIAS*2)) + EDGE_BIAS)
@@ -123,14 +124,20 @@ def rollingParticleGradient( size, centerBias=True ):
             sourceX = int(random.random() * (width - 1))
             sourceY = int(random.random() * (height - 1))
                 
-        for length in xrange(PARTICLE_LENGTH):
+        for p in xrange(PARTICLELIFE):
             sourceX += round(random.random() * 2 - 1)
             sourceY += round(random.random() * 2 - 1)
                                                         
             if sourceX < 1 or sourceX > width -2 or sourceY < 1 or sourceY > height - 2:
                 break
                 
-            hood = mooreNeighborhood(size, sourceX, sourceY);
+            hood = []
+            for dx, dy in constants.DIR_NEIGHBORS:
+                direction = [sourceX + dx, sourceY + dy]
+                if not outOfBounds(direction, size):
+                    hood.append(direction)
+
+            random.shuffle(hood)
                 
             for i in xrange(len(hood)):
                 x,y = hood[i]
@@ -142,18 +149,11 @@ def rollingParticleGradient( size, centerBias=True ):
 
     return normalize(gradient)
 
-def mooreNeighborhood(size, x, y):
-    '''Get the Moore neighborhood (3x3, 8 surrounding tiles, minus the center tile).'''
-    import random
-    result = []
-    width, height = size
-    
-    for a in xrange(-1,2):
-        for b in xrange(-1, 2):
-            if a or b:
-                if x + a >= 0 and x + a < width and y + b >= 0 and y + b < height:
-                    result.append([int(x + a), int(y + b)])
+def outOfBounds(source, size):
+    ''' verify that we do not go over the edge of map '''
+    x, y = source
+    w, h = size
+    if x < 0 or y < 0 or x >= w or y >= h:
+        return True
 
-    # Return the neighborhood in no particular order
-    random.shuffle(result)                        
-    return result
+    return False

@@ -51,19 +51,18 @@ class HeightMap():
         
         if self.islands:
             gradient = utilities.radialGradient(self.size, True, True)
-            #gradient = utilities.frameGradient(self.size)
+            #gradient = utilities.rollingParticleGradient(self.size)
             self.heightmap = self.heightmap * gradient
 
         del heightObject
         
-        self.heightmap = utilities.rollingParticleGradient(self.size)
+        #self.heightmap = utilities.rollingParticleGradient(self.size)
         print self.heightmap
 
     def landMassPercent( self ):
         return self.heightmap.sum() / ( self.width * self.height )
 
     def averageElevation( self ):
-        import numpy
         return numpy.average( self.heightmap )
 
     def hasNoMountains( self ):
