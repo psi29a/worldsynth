@@ -39,7 +39,7 @@ class Rivers():
             sb.addPermanentWidget(progress)
             progress.setValue(0)
         self.heightmap = heightmap.copy()
-        self.size = heightmap.shape
+        self.size = list(heightmap.shape)
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
         self.riverMap = numpy.zeros((self.worldW, self.worldH))
@@ -63,7 +63,7 @@ class Rivers():
         if sb:
             progress.setValue(progressValue)
             progressValue += 1
-        print riverSources
+
         # step three: for each source, find a path to sea
         for source in riverSources:
             river = self.riverFlow(source)
@@ -418,7 +418,7 @@ class Rivers():
         lowestElevation = self.heightmap[x, y]
         # lowestDirection = [0, 0]
 
-        for dx, dy in constants.DIR_ALL:
+        for dx, dy in constants.DIR_NEIGHBORS:
             tempDir = [x + dx, y + dy]
             tx, ty = tempDir
 
@@ -442,14 +442,6 @@ class Rivers():
         # sys.exit()
 
         return newPath
-
-    def isOutOfBounds(self, source):
-        ''' verify that we do not go over the edge of map '''
-        x, y = source
-        if x < 0 or y < 0 or x >= self.worldW or y >= self.worldH:
-            return True
-
-        return False
 
     def findLowerElevation(self, source):
         '''Try to find a lower elevation with in a range of an increasing
