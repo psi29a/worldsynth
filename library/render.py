@@ -31,8 +31,7 @@ class Render():
         for k in self.world:
             exec( 'self.' + k + ' = self.world[k]' )
 
-        self.width = len( self.elevation )
-        self.height = self.width
+        self.width, self.height = self.elevation.shape
         self.image = QImage( self.width, self.height, QImage.Format_RGB32 )
 
     def hex2rgb( self, hexcolor ):
