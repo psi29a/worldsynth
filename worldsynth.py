@@ -612,11 +612,27 @@ class MapGen(QtGui.QMainWindow):
             self.statusBar().showMessage('Aborted.') 
             return
         
+        # handle 16-bit greyscale PNGs with PyPNG, Qt doesn't handle this important case
+        _, fileExtension = os.path.splitext(fileLocation)
+        if fileExtension.lower() == ".png":
+            import png
+            width, height, pixels, meta = png.Reader(str(fileLocation)).asDirect()
+            
+            print meta
+            if meta['greyscale'] == True:
+                pass
+            
+            for pixel in pixels:
+                print  pixel[0], pixel[0] / float(2**meta['bitdepth'])
+                break
+        
+        return
         # Read image from file
         image = QtGui.QImageReader(fileLocation).read()
         
         # Gather information about the image
         width, height = image.size().width(), image.size().height()
+        
         
         # Do we support the proper bit-depth?
         if image.depth() == 8 or image.depth() ==  16 or image.depth() == 32:
@@ -626,8 +642,9 @@ class MapGen(QtGui.QMainWindow):
             return
         
         # Debug
-        #print "Debug: ", fileLocation, image.format(), image.depth(), image.isGrayscale()
-        #print "Image Pixel info: ",QtGui.QColor(image.pixel(32,32)), image.pixel(32,32)
+        print "Debug: ", fileLocation, image.format(), image.depth(), image.isGrayscale()
+        test = QtGui.QColor(image.pixel(0,0))
+        print "Image Pixel info: ",test , test.red()
         
         
         # take current color image and convert to greyscale
@@ -650,12 +667,6 @@ class MapGen(QtGui.QMainWindow):
         #print "min/max: ",numpy.amin(greyHeightmap), numpy.amax(greyHeightmap)
         #return
         
-        # PyPNG method of reading in image data
-        #import png, itertools
-        #width, height, pixels, meta = png.Reader(str(fileLocation)).asFloat(1.0)
-        #print width, height, meta
-        #print pixels
-
         # massage data back into place
         self.elevation = greyHeightmap.copy()
         self.mapSize = self.elevation.shape
@@ -673,13 +684,14 @@ class MapGen(QtGui.QMainWindow):
         heightmap = self.elevation.copy() * 65535
         heightmap = numpy.flipud(numpy.rot90(heightmap)).astype(numpy.uint16) # massage data
         
-        print heightmap[0]
+        #print heightmap[0]
         
         # png heightmap
         pngObject = png.Writer(width, height, greyscale=True, bitdepth=16)
         fileObject = open(fileLocation + '.png', 'wb')
         pngObject.write(fileObject, heightmap)
         fileObject.close()
+
 
         # raw heightmap
         heightmap.flatten('C').tofile(fileLocation + '.raw', format='C')
