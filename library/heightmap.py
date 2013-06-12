@@ -51,13 +51,9 @@ class HeightMap():
         
         if self.islands:
             gradient = utilities.radialGradient(self.size, True, True)
-            #gradient = utilities.rollingParticleGradient(self.size)
             self.heightmap = self.heightmap * gradient
 
         del heightObject
-        
-        #self.heightmap = utilities.rollingParticleGradient(self.size)
-        print self.heightmap
 
     def landMassPercent( self ):
         return self.heightmap.sum() / ( self.width * self.height )
