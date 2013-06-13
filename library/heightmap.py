@@ -61,10 +61,10 @@ class HeightMap():
     def averageElevation( self ):
         return numpy.average( self.heightmap )
 
-    def hasNoMountains( self ):
+    def hasMountains( self ):
         if self.heightmap.max() > constants.BIOME_ELEVATION_MOUNTAIN:
-            return False
-        return True
+            return True
+        return False
 
     def landTouchesEastWest( self ):
         for x in range( 0, 1 ):
