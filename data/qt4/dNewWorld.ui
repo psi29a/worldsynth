@@ -46,7 +46,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="wsGeneral">
     <attribute name="title">
@@ -507,6 +507,22 @@
       </property>
       <property name="text">
        <string>Average Elevation</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbIslands">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>60</y>
+        <width>131</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Is an Island</string>
       </property>
       <property name="checked">
        <bool>true</bool>

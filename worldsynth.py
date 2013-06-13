@@ -116,6 +116,7 @@ class MapGen(QtGui.QMainWindow):
         self.avgLandmass    = self.dNewWorld.cbAvgLandmass.isChecked()
         self.avgElevation   = self.dNewWorld.cbAvgElevation.isChecked()
         self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
+        self.isIsland       = self.dNewWorld.cbIslands.isChecked()
         self.hemisphere     = self.getHemisphere()        
 
     def resizeEvent(self, e):
@@ -210,26 +211,22 @@ class MapGen(QtGui.QMainWindow):
         '''Generate our heightmap'''
         self.sb.showMessage('Generating heightmap...')
 
-        # grab our values from config
-        roughness = self.dNewWorld.sbRoughness.value()
-        method = self.getAlgorithm()
-
         # create our heightmap
-        heightObject = HeightMap(self.mapSize, roughness)
+        heightObject = HeightMap(self.mapSize, self.roughness, self.isIsland)
         found = False
         # method = 3 #testing
         while not found:  # loop until we have something workable
-            heightObject.run(method)
-            break #testing
-            if self.dNewWorld.cbAvgLandmass.isChecked() and heightObject.landMassPercent() < 0.15:
+            heightObject.run( self.getAlgorithm() )
+            #break #testing
+            if self.avgLandmass and heightObject.landMassPercent() < 0.15:
                 self.statusBar().showMessage('Too little land mass')
-            elif self.dNewWorld.cbAvgLandmass.isChecked() and  heightObject.landMassPercent() > 0.85:
+            elif self.avgLandmass and  heightObject.landMassPercent() > 0.85:
                 self.statusBar().showMessage('Too much land mass')
-            elif self.dNewWorld.cbAvgElevation.isChecked() and heightObject.averageElevation() < 0.2:
+            elif self.avgElevation and heightObject.averageElevation() < 0.2:
                 self.statusBar().showMessage('Average elevation is too low')
-            elif self.dNewWorld.cbAvgElevation.isChecked() and heightObject.averageElevation() > 0.8:
+            elif self.avgElevation and heightObject.averageElevation() > 0.8:
                 self.statusBar().showMessage('Average elevation is too high')
-            elif self.dNewWorld.cbMountains.isChecked() and heightObject.hasNoMountains():
+            elif self.hasMountains and heightObject.hasMountains():
                 self.statusBar().showMessage('Not enough mountains')
             else:
                 found = True
@@ -476,6 +473,7 @@ class MapGen(QtGui.QMainWindow):
         self.avgLandmass    = self.dNewWorld.cbAvgLandmass.isChecked()
         self.avgElevation   = self.dNewWorld.cbAvgElevation.isChecked()
         self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
+        self.isIsland       = self.dNewWorld.cbIslands.isChecked()
         self.hemisphere     = self.getHemisphere()
 
         self.resetDatasets()
@@ -498,6 +496,7 @@ class MapGen(QtGui.QMainWindow):
         self.dNewWorld.cbAvgLandmass.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgLandmass']])
         self.dNewWorld.cbAvgElevation.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgElevation']])
         self.dNewWorld.cbMountains.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['hasMountains']])
+        self.dNewWorld.cbMountains.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['isIsland']])
         self.setAlgorithm(settings['algorithm'])
         self.setHemisphere(settings['hemisphere'])
         
@@ -537,6 +536,7 @@ class MapGen(QtGui.QMainWindow):
                             avgElevation=self.avgElevation,
                             hasMountains=self.hasMountains,
                             hemisphere=self.hemisphere,
+                            isIsland=self.isIsland,
                             )
             
             settingsTable.append(settings.items())
@@ -579,6 +579,7 @@ class MapGen(QtGui.QMainWindow):
         self.avgLandmass=settings['avgLandmass']
         self.avgElevation=settings['avgElevation']
         self.hasMountains=settings['hasMountains']
+        self.isIsland=settings['isIsland']
         
         # restore our numpy datasets
         self.resetDatasets()
@@ -612,65 +613,45 @@ class MapGen(QtGui.QMainWindow):
             self.statusBar().showMessage('Aborted.') 
             return
         
-        # handle 16-bit greyscale PNGs with PyPNG, Qt doesn't handle this important case
-        _, fileExtension = os.path.splitext(fileLocation)
-        if fileExtension.lower() == ".png":
-            import png
-            width, height, pixels, meta = png.Reader(str(fileLocation)).asDirect()
-            
-            print meta
-            if meta['greyscale'] == True:
-                pass
-            
-            for pixel in pixels:
-                print  pixel[0], pixel[0] / float(2**meta['bitdepth'])
-                break
-        
-        return
         # Read image from file
         image = QtGui.QImageReader(fileLocation).read()
         
         # Gather information about the image
-        width, height = image.size().width(), image.size().height()
-        
-        
-        # Do we support the proper bit-depth?
-        if image.depth() == 8 or image.depth() ==  16 or image.depth() == 32:
-            pass
-        else:
-            print "bad depth: ", image.depth()
-            return
+        width, height, isGreyscale = image.size().width(), image.size().height(), image.isGrayscale()
+        self.elevation = numpy.zeros((width, height))
         
         # Debug
-        print "Debug: ", fileLocation, image.format(), image.depth(), image.isGrayscale()
-        test = QtGui.QColor(image.pixel(0,0))
-        print "Image Pixel info: ",test , test.red()
+        #print "Debug: ", fileLocation, image.format(), image.depth(), image.isGrayscale()
+        #test = QtGui.QColor(image.pixel(0,0))
+        #print "Image Pixel info: ",test, test.value(), test.valueF(), test.redF(), QtGui.qGray(test.Rgb), QtGui.qGray(test.red(),test.green(),test.blue())           
         
+        # handle 16-bit greyscale PNGs with PyPNG, Qt doesn't handle this important case
+        _, fileExtension = os.path.splitext(fileLocation)
+        foundGrey16 = False
+        if isGreyscale and fileExtension.lower() == ".png":
+            import png, itertools
+            width, height, pixels, meta = png.Reader(str(fileLocation)).asDirect()
+            
+            if meta['bitdepth'] == 16:
+                foundGrey16 = True
+                greyImage16 = numpy.vstack(itertools.imap(numpy.uint16, pixels))
+                self.elevation = numpy.flipud(numpy.rot90(greyImage16.reshape((width,height)) / float(2**meta['bitdepth'])))
         
-        # take current color image and convert to greyscale
-        greyHeightmap = numpy.zeros((width, height))
-        for x in xrange(width):
-            for y in xrange(height):
-                pixel = QtGui.QColor(image.pixel(x,y))
-                
-                if image.depth() == 8:
-                    # rgb should be the same, but you never know... lets sum and divide by 3
-                    greyHeightmap[x,y] = ( pixel.red() + pixel.green() + pixel.blue() ) / 3.0  / 256.0
-                  #print "Pixel:", pixelGrey
-                else:
-                    # use luminance and perception  trick to convert image to greyscale
-                    pixelGrey = 0.299 * pixel.red() + 0.587 * pixel.green() + 0.114 * pixel.blue()
-                    greyHeightmap[x,y] = pixelGrey / 256.0
-        
-        # Debug output
-        #print greyHeightmap
-        #print "min/max: ",numpy.amin(greyHeightmap), numpy.amax(greyHeightmap)
-        #return
-        
-        # massage data back into place
-        self.elevation = greyHeightmap.copy()
+        if not foundGrey16:
+            # take current image and convert to greyscale
+            for x in xrange(width):
+                for y in xrange(height):
+                    pixel = QtGui.QColor(image.pixel(x,y))
+                    
+                    if isGreyscale:
+                        # just grab the value which is usually the first value (red)
+                        self.elevation[x,y] = pixel.valueF()
+                    else:
+                        # use luminance and perception  trick to convert image to greyscale
+                        pixelGrey = 0.299 * pixel.redF() + 0.587 * pixel.greenF() + 0.114 * pixel.blueF()
+                        self.elevation[x,y] = pixelGrey
+                    
         self.mapSize = self.elevation.shape
-        print self.elevation.shape
         self.viewHeightMap()
         self.statusBar().showMessage('Successfully imported a heightmap!')        
         
