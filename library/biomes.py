@@ -19,8 +19,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import sys, constants
+import sys
 from numpy import zeros
+
+if __name__ == '__main__': # handle multiple entry points
+    import constants
+else:
+    from . import constants
 
 class Biomes():
 
@@ -40,8 +45,8 @@ class Biomes():
 
     def run(self):
         # calculate biome -- from scale of 0-400 ((oldValue-0) * (100-0)) / (400-0) + 0
-        for x in xrange(self.worldW):
-            for y in xrange(self.worldH):
+        for x in range(self.worldW):
+            for y in range(self.worldH):
                 
                 # new way
                 # for debugging, all areas are set to undefined
@@ -148,4 +153,4 @@ class Biomes():
 
 if __name__ == '__main__':
     biomes = Biomes()
-    print biomes
+    print(biomes)

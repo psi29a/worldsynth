@@ -76,13 +76,13 @@ class MDA():
 if __name__ == '__main__':
     import sys
     if len( sys.argv ) != 3:
-        print "You must pass the size and roughness of the map you wish to make!"
+        print("You must pass the size and roughness of the map you wish to make!")
         sys.exit()
 
     size = int( sys.argv[1] )
     roughness = int( sys.argv[2] )
 
     mda = MDA( (size,size), roughness )
-    print "Thinking..."
+    print("Thinking...")
     import cProfile
     cProfile.run( 'mda.run()' )

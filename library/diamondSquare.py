@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # A simple implementation of the diamond-square fractal algorithm for
 # random terrain generation.
 
-from random import uniform #,gauss,random
+from random import uniform
 import numpy, sys
 
 def avg(*args):
@@ -31,7 +31,7 @@ def avg(*args):
 class DSA():
     def __init__(self, size):
         ''' Create our initial heightmap '''
-        self.size = map(lambda x: x+1, size)
+        self.size = [x+1 for x in size]
         self.heightmap = numpy.zeros(self.size)
         self.noise_min = -1.0
         self.noise_max = 1.0
@@ -58,8 +58,8 @@ class DSA():
         i = 0
     
         while side > 1:
-            for x in xrange(squares):
-                for y in xrange(squares):
+            for x in range(squares):
+                for y in range(squares):
                     #Locations
                     x_left = x*side
                     x_right = (x+1)*side

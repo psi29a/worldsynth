@@ -68,7 +68,7 @@ class MapGen(QtGui.QMainWindow):
 
         # Our debug / autopilot / crash dummy
         if debug:
-            print "Going on full autopilot..."
+            print("Going on full autopilot...")
             self.dNewWorld.rPRL.click()
             #self.mapSize = [1024,1024]
             self.genHeightMap()
@@ -189,7 +189,7 @@ class MapGen(QtGui.QMainWindow):
             method = HM_PERLIN         
         else:
             method = None
-            print "Error: no heightmap algo selected."
+            print("Error: no heightmap algo selected.")
         
         return method
 
@@ -203,7 +203,7 @@ class MapGen(QtGui.QMainWindow):
         elif method == HM_PERLIN:
             self.dNewWorld.rPRL.click()
         else:
-            print "Error: no heightmap algo selected."
+            print("Error: no heightmap algo selected.")
             
         return
 
@@ -539,7 +539,7 @@ class MapGen(QtGui.QMainWindow):
                             isIsland=self.isIsland,
                             )
             
-            settingsTable.append(settings.items())
+            settingsTable.append(list(settings.items()))
             settingsTable.cols.key.createIndex()  # create an index
             
             h5file.close()
@@ -570,16 +570,15 @@ class MapGen(QtGui.QMainWindow):
         h5file = tables.openFile(fileLocation, mode='r')
         
         # restore our world settings
-        settings = dict(h5file.root.settings.read())
-        #self.newWorld(int(settings['width']))  # reset data 
-        self.mapSize = (int(settings['width']), int(settings['height']))
-        self.algorithm=settings['algorithm']
-        self.roughness=settings['roughness']
-        self.hemisphere=settings['hemisphere']         
-        self.avgLandmass=settings['avgLandmass']
-        self.avgElevation=settings['avgElevation']
-        self.hasMountains=settings['hasMountains']
-        self.isIsland=settings['isIsland']
+        settings = dict(h5file.root.settings.read()) 
+        self.mapSize = (int(settings[b'width']), int(settings[b'height']))
+        self.algorithm=settings[b'algorithm']
+        self.roughness=settings[b'roughness']
+        self.hemisphere=settings[b'hemisphere']         
+        self.avgLandmass=settings[b'avgLandmass']
+        self.avgElevation=settings[b'avgElevation']
+        self.hasMountains=settings[b'hasMountains']
+        self.isIsland=settings[b'isIsland']
         
         # restore our numpy datasets
         self.resetDatasets()
@@ -634,13 +633,13 @@ class MapGen(QtGui.QMainWindow):
             
             if meta['bitdepth'] == 16:
                 foundGrey16 = True
-                greyImage16 = numpy.vstack(itertools.imap(numpy.uint16, pixels))
+                greyImage16 = numpy.vstack(map(numpy.uint16, pixels))
                 self.elevation = numpy.flipud(numpy.rot90(greyImage16.reshape((width,height)) / float(2**meta['bitdepth'])))
         
         if not foundGrey16:
             # take current image and convert to greyscale
-            for x in xrange(width):
-                for y in xrange(height):
+            for x in range(width):
+                for y in range(height):
                     pixel = QtGui.QColor(image.pixel(x,y))
                     
                     if isGreyscale:
@@ -700,9 +699,9 @@ def main():
     args = parser.parse_args()
     
     if args.verbosity:
-        print "verbosity turned on"
+        print("verbosity turned on")
     if args.debug:
-        print "debug turned on"
+        print("debug turned on")
         debug=True
     else:
         debug=False
