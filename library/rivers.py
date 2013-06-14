@@ -19,10 +19,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import math, random, numpy, aStar, constants, utilities
+import math, random, numpy
 from PySide import QtGui
 
-overflow = lambda value, maxValue: value % maxValue
+if __name__ == '__main__': # handle multiple entry points
+    import aStar, constants, utilities
+else:
+    from . import aStar, constants, utilities
 
 class Rivers():
     '''Generates fresh water sources, rivers and lakes either randomly or with 
@@ -105,8 +108,8 @@ class Rivers():
     def findWaterFlow(self):
         '''Find the flow direction for each cell in heightmap'''
         # iterate through each cell
-        for x in xrange(self.worldW - 1):
-            for y in xrange(self.worldH - 1):
+        for x in range(self.worldW - 1):
+            for y in range(self.worldH - 1):
                 # search around cell for a direction
                 path = self.findQuickPath([x, y])
                 if path:
@@ -138,7 +141,7 @@ class Rivers():
                             if not self.wrap and utilities.outOfBounds([sx, sy], self.size):
                                 continue
                             # convert to wrap around
-                            sx, sy = overflow(sx, self.worldW), overflow(sy, self.worldH)
+                            sx, sy = utilities.overflow(sx, self.worldW), utilities.overflow(sy, self.worldH)
                             if self.heightmap[sx, sy] < constants.BIOME_ELEVATION_HILLS or \
                                 self.heightmap[sx, sy] > constants.BIOME_ELEVATION_MOUNTAIN_LOW:
                                 continue
@@ -217,7 +220,7 @@ class Rivers():
             for dx, dy in constants.DIR_NEIGHBORS:  # is there a river nearby, flow into it
                 ax, ay = x + dx, y + dy
                 if self.wrap:
-                    ax, ay = overflow(ax, self.worldW), overflow(ay, self.worldH)
+                    ax, ay = utilities.overflow(ax, self.worldW), utilities.overflow(ay, self.worldH)
                     
                 for river in self.riverList:
                     if [ax, ay] in river:
@@ -264,7 +267,7 @@ class Rivers():
                 nx,ny = lowerElevation
                 
                 if (x < 0 or y < 0 or x > self.worldW or y > self.worldH):
-                    print "BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation
+                    print("BUG: fix me... we shouldn't be here:", currentLocation, lowerElevation)
                     break
                 
                 if not utilities.inCircle(maxRadius, cx, cy, lx, cy):
@@ -325,7 +328,7 @@ class Rivers():
                 break # end of river
             
             if utilities.outOfBounds(currentLocation, self.size):
-                print "Why are we here:",currentLocation   
+                print("Why are we here:",currentLocation)
 
         return path
 
@@ -368,7 +371,7 @@ class Rivers():
                 for y in range(ry - radius, ry + radius):
                     if not self.wrap and utilities.outOfBounds([x, y], self.size):  # ignore edges of map
                         continue
-                    x, y = overflow(x, self.worldW), overflow(y, self.worldH)
+                    x, y = utilities.overflow(x, self.worldW), utilities.overflow(y, self.worldH)
                     curve = 1.0
                     if [x, y] == [0, 0]:  # ignore center
                         continue
@@ -388,7 +391,7 @@ class Rivers():
                     diff = self.heightmap[rx, ry] - self.heightmap[x, y]
                     newElevation = self.heightmap[x, y] + (diff * curve)
                     if newElevation <= self.heightmap[rx, ry]:
-                        print 'newElevation is <= than river, fix me...'
+                        print('newElevation is <= than river, fix me...')
                         newElevation = self.heightmap[x, y]
                     self.heightmap[x, y] = newElevation
         return
@@ -425,7 +428,7 @@ class Rivers():
             if not self.wrap and utilities.outOfBounds(tempDir, self.size):
                 continue
 
-            tx, ty = overflow(tx, self.worldW), overflow(ty, self.worldH)      
+            tx, ty = utilities.overflow(tx, self.worldW), utilities.overflow(ty, self.worldH)      
 
             elevation = self.heightmap[tx, ty]
             
@@ -468,7 +471,7 @@ class Rivers():
                     if not utilities.inCircle(currentRadius, x, y, rx, ry):
                         continue
                     
-                    rx, ry = overflow(rx, self.worldW), overflow(ry, self.worldH)
+                    rx, ry = utilities.overflow(rx, self.worldW), utilities.overflow(ry, self.worldH)
 
 #                    if utilities.outOfBounds([x+cx, y+cy], self.size):
 #                        print "Fixed:",x ,y,  rx, ry
@@ -504,7 +507,7 @@ class Rivers():
 
         # Flood area and mark on map
         self.lakeMap[x, y] = 1
-        print 'lake at: ', x, y
+        print('lake at: ', x, y)
 
         # Recursive calls.
         self.simulateFlood(x - 1, y, elevation)  # left
@@ -532,7 +535,7 @@ class Rivers():
 
             # Flood area and mark on map
             self.lakeMap[x, y] = 1
-            print 'lake at: ', x, y
+            print('lake at: ', x, y)
 
             theStack.append((x - 1, y))  # left
             theStack.append((x, y - 1))  # up
@@ -596,13 +599,13 @@ class Rivers():
                                             isSea = False
 
                             if isSea:
-                                print "River at source:", river.x, river.y, " found the sea at: ", river.x + x, river.y + y
+                                print("River at source:", river.x, river.y, " found the sea at: ", river.x + x, river.y + y)
                                 return {'x': river.x + x, 'y': river.y + y}
 
             radius += 1  # increase searchable area
 
-        print "Could not find sea."
+        print("Could not find sea.")
         return {}
 
 if __name__ == '__main__':
-    print "hello!"
+    print("hello!")

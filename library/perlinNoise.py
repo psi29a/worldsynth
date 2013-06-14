@@ -19,9 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import numpy, utilities
+import numpy 
 from noise.perlin import SimplexNoise
 from noise import snoise2
+
+if __name__ == '__main__': # handle multiple entry points
+    import utilities
+else:
+    from . import utilities
+
 
 class Perlin():
     def __init__( self, size ):
@@ -37,8 +43,8 @@ class Perlin():
         octaves = [1, 2, 4, 8, 16]
         for octave in octaves:
             freq = 16.0 * octave
-            for y in xrange(self.height):
-                for x in xrange(self.width):
+            for y in range(self.height):
+                for x in range(self.width):
                     fn = sn.noise2( x/freq, y/freq )
                     noiseMap[x,y] += fn * persistance
             persistance *= 2

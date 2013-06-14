@@ -19,7 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import constants, utilities, numpy
+import numpy
+
+if __name__ == '__main__': # handle multiple entry points
+    from constants import *
+    import utilities
+else:
+    #from . import constants, utilities
+    from .constants import * 
+    from . import utilities
 
 class HeightMap():
     '''An heightmap generator with various backends'''
@@ -31,20 +39,20 @@ class HeightMap():
         self.islands = islands
 
     def run(self, method = None):      
-        if method == constants.HM_MDA:
-            from midpointDisplacement import MDA            
+        if method == HM_MDA:
+            from .midpointDisplacement import MDA            
             heightObject = MDA(self.size, self.roughness)
-        elif method == constants.HM_DSA:
-            from diamondSquare import DSA
+        elif method == HM_DSA:
+            from .diamondSquare import DSA
             heightObject = DSA(self.size)
-        elif method == constants.HM_SPH:
-            from sphere import Sphere
+        elif method == HM_SPH:
+            from .sphere import Sphere
             heightObject = Sphere(self.size, self.roughness)
-        elif method == constants.HM_PERLIN:
-            from perlinNoise import Perlin
+        elif method == HM_PERLIN:
+            from .perlinNoise import Perlin
             heightObject = Perlin(self.size)
         else:
-            print "No method for generating heightmap found!"
+            print("No method for generating heightmap found!")
         
         heightObject.run()
         self.heightmap = utilities.normalize(heightObject.heightmap)
@@ -62,27 +70,27 @@ class HeightMap():
         return numpy.average( self.heightmap )
 
     def hasMountains( self ):
-        if self.heightmap.max() > constants.BIOME_ELEVATION_MOUNTAIN:
+        if self.heightmap.max() > BIOME_ELEVATION_MOUNTAIN:
             return True
         return False
 
     def landTouchesEastWest( self ):
         for x in range( 0, 1 ):
             for y in range( 0, self.height ):
-                if self.heightmap[x, y] > constants.WGEN_SEA_LEVEL or \
-                    self.heightmap[self.width - 1 - x, y] > constants.WGEN_SEA_LEVEL:
+                if self.heightmap[x, y] > WGEN_SEA_LEVEL or \
+                    self.heightmap[self.width - 1 - x, y] > WGEN_SEA_LEVEL:
                     return True
         return False
 
     def landTouchesMapEdge( self ):
         result = False
         for x in range( 4, self.width - 4 ):
-            if self.heightmap[x, 4] > constants.WGEN_SEA_LEVEL or self.heightmap[x, self.height - 4] > constants.WGEN_SEA_LEVEL:
+            if self.heightmap[x, 4] > WGEN_SEA_LEVEL or self.heightmap[x, self.height - 4] > WGEN_SEA_LEVEL:
                 result = True
                 break
 
         for y in range( 4, self.height - 4 ):
-            if self.heightmap[4, y] > constants.WGEN_SEA_LEVEL or self.heightmap[self.width - 4, y] > constants.WGEN_SEA_LEVEL:
+            if self.heightmap[4, y] > WGEN_SEA_LEVEL or self.heightmap[self.width - 4, y] > WGEN_SEA_LEVEL:
                 result = True
                 break
 

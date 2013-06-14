@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # Original code written by Shea Kauffman based on work by Hugo Elias
 # Refactored and modified to to be generic by Bret Curtis
 
-import Image, ImageDraw, ImageChops, ImageOps, ImageFilter
+from PIL import Image, ImageDraw, ImageChops, ImageOps, ImageFilter
 import random, math, numpy
 
 class Sphere():

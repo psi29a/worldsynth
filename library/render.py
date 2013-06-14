@@ -19,9 +19,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
-import constants
 from PySide import QtGui
 from PySide.QtGui import QImage
+
+if __name__ == '__main__': # handle multiple entry points
+    import constants
+else:
+    from . import constants
 
 class Render():
     '''Transform the numpy data into a renderable image suitable for screen'''
@@ -49,14 +53,14 @@ class Render():
         background = []
         if mapType == "heightmap":
             heightmap = self.elevation * 255 # convert to greyscale
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = heightmap[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == "sealevel":
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     elevation = self.elevation[x, y]
                     gValue = elevation * 255
                     if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
@@ -65,8 +69,8 @@ class Render():
                         self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == "elevation":
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     elevation = self.elevation[x, y]
                     if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, 128 ).rgb() )
@@ -78,47 +82,47 @@ class Render():
                         self.image.setPixel( x, y, QtGui.QColor( 255, 255, 255 ).rgb() )
 
         elif mapType == "heatmap":
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = self.temperature[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue * 255, gValue * 128, ( 1 - gValue ) * 255 ).rgb() )
 
         elif mapType == "rawheatmap":
             temperature = self.temperature * 255 # convert to greyscale
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = temperature[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == 'windmap':
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = self.wind[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( 0, gValue * 255, 0 ).rgb() )
 
         elif mapType == 'rainmap':
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = self.rainfall[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue * 100, gValue * 100, gValue * 255 ).rgb() )
 
         elif mapType == 'windandrainmap':
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     rain = int( 255 * min( self.wind[x, y], 1.0 ) )
                     wind = int( 255 * min( self.rainfall[x, y], 1.0 ) )
                     self.image.setPixel( x, y, QtGui.QColor( 0, wind, rain ).rgb() )
 
         elif mapType == 'drainagemap':
             drainage = self.drainage * 255 # convert to greyscale
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = drainage[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == 'rivermap':
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = self.elevation[x, y] * 255
                     if self.elevation[x, y] <= constants.WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
@@ -131,27 +135,27 @@ class Render():
                         self.image.setPixel( x, y, rgb )
 
         elif mapType == 'biomemap':
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     self.image.setPixel( x, y, self.biomeColour[x, y] )
 
         elif mapType == "erosionmap":
             erosion = self.erosion * 255 # convert to greyscale
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = erosion[x, y] 
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         elif mapType == "erosionappliedmap":
             erosion = ( self.elevation - self.erosion ) *  255 # convert to greyscale
-            for x in xrange( self.width ):
-                for y in xrange( self.height ):
+            for x in range( self.width ):
+                for y in range( self.height ):
                     gValue = erosion[x, y]
                     self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
 
         else: # something bad happened...
-            print "did not get a valid map type, check your bindings programmer man!"
-            print len( background ), background, mapType
+            print("did not get a valid map type, check your bindings programmer man!")
+            print(len( background ), background, mapType)
             from numpy import zeros
             background = zeros( ( self.width, self.height ), dtype = "int32" )
 

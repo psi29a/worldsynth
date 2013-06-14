@@ -30,12 +30,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #        Sqrt(worldW^2+worldH^2) away
 #    The wind travels in direction of worldWinDir
 
-import math, random, constants
-from numpy import zeros
+import math, random, numpy
 from PySide import QtGui
 
+if __name__ == '__main__': # handle multiple entry points
+    from constants import *
+else:
+    from .constants import *
+
 class Weather():
-    def __init__( self, heightmap = zeros( 1 ), temperature = zeros( 1 ) ):
+    def __init__( self, heightmap, temperature ):
         self.heightmap = heightmap
         self.temperature = temperature
 
@@ -51,21 +55,21 @@ class Weather():
             progress.setRange( 0, r )
             sb.addPermanentWidget( progress )
             progress.setValue( 0 )
-        self.windMap = zeros( ( worldW, worldH ) )
-        self.rainMap = zeros( ( worldW, worldH ) )
-        self.erosionMap = zeros( ( worldW, worldH ) )
+        self.windMap = numpy.zeros( ( worldW, worldH ) )
+        self.rainMap = numpy.zeros( ( worldW, worldH ) )
+        self.erosionMap = numpy.zeros( ( worldW, worldH ) )
         worldWindDir = random.randint( 0, 360 )
-        theta1 = worldWindDir * constants.WIND_PARITY + constants.WIND_OFFSET
-        theta2 = 180 - 90 - ( worldWindDir * constants.WIND_PARITY + constants.WIND_OFFSET )
+        theta1 = worldWindDir * WIND_PARITY + WIND_OFFSET
+        theta2 = 180 - 90 - ( worldWindDir * WIND_PARITY + WIND_OFFSET )
         sinT1 = math.sin( theta1 )
         sinT2 = math.sin( theta2 )
         mapsqrt = math.sqrt( worldW * worldW + worldH * worldH )
-        rainAmount = ( ( rainFall * mapsqrt ) / constants.WGEN_WIND_RESOLUTION ) * constants.WGEN_RAIN_FALLOFF
-        rainMap = zeros( ( worldW, worldH ) )
+        rainAmount = ( ( rainFall * mapsqrt ) / WGEN_WIND_RESOLUTION ) * WGEN_RAIN_FALLOFF
+        rainMap = numpy.zeros( ( worldW, worldH ) )
         rainMap.fill( rainAmount )
 
         # cast wind and rain
-        for d in xrange( r , -1, -constants.WGEN_WIND_RESOLUTION ):
+        for d in range( r , -1, -WGEN_WIND_RESOLUTION ):
             windx = int( d * sinT1 )
             windy = int( d * sinT2 )
 
@@ -95,15 +99,15 @@ class Weather():
             #print windx, xBegin, xEnd#windy, yBegin
             #print windy, yBegin, yEnd
 
-            for x in xrange( xBegin, xEnd ):
+            for x in range( xBegin, xEnd ):
                 windxX = windx + x
 
-                for y in xrange( yBegin, yEnd ):
+                for y in range( yBegin, yEnd ):
                     windyY = windy + y
 
                     # set our wind
                     windz = self.heightmap[windxX , windyY ]
-                    self.windMap[x, y] = max( self.windMap[x, y] * constants.WGEN_WIND_GRAVITY, windz )
+                    self.windMap[x, y] = max( self.windMap[x, y] * WGEN_WIND_GRAVITY, windz )
 
                     # calculate how much rain is remaining
                     rainRemaining = rainMap[x, y] / rainAmount * ( 1.0 - ( self.temperature[x, y] / 2.0 ) )
@@ -122,14 +126,14 @@ class Weather():
 
             if sb != None:
                 progress.setValue( progressValue )
-                progressValue += constants.WGEN_WIND_RESOLUTION
+                progressValue += WGEN_WIND_RESOLUTION
         if sb != None:
             sb.removeWidget( progress )
             del progress
 
 if __name__ == '__main__':
-    heightMap = zeros( ( 128, 128 ) )
-    tempMap = zeros( ( 128, 128 ) )
+    heightMap = numpy.zeros( ( 128, 128 ) )
+    tempMap = numpy.zeros( ( 128, 128 ) )
     warObject = Weather( heightMap, tempMap )
     import cProfile
     cProfile.run( 'warObject.run()' )

@@ -20,8 +20,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 
-import math, random, numpy, constants
+import math, random, numpy
 from PySide import QtGui
+
+if __name__ == '__main__': # handle multiple entry points
+    import constants
+else:
+    from . import constants
 
 class Temperature():
     def __init__( self, heightmap = numpy.zeros( 1 ), hemisphere = 2, resolution = constants.TEMPERATURE_BAND_RESOLUTION ):
@@ -41,7 +46,7 @@ class Temperature():
             sb.addPermanentWidget( progress )
             progress.setValue( 0 )
 
-        for i in xrange( 0, self.worldH, self.resolution ):
+        for i in range( 0, self.worldH, self.resolution ):
             if sb != None:
                 progress.setValue( progressValue )
                 progressValue += 1
@@ -64,7 +69,7 @@ class Temperature():
                     # 1, 0.5, 0
                     bandtemp = 1.0 - float( i ) / self.worldH
             else:
-                print "Whoops: no hemisphere chosen."
+                print("Whoops: no hemisphere chosen.")
                 exit()
 
             #print bandtemp,i,self.worldH
@@ -75,7 +80,7 @@ class Temperature():
             diradj = 1
             dirsin = random.randint( 1, 8 )
             band = numpy.zeros( self.worldW )
-            for x in xrange( self.worldW ):
+            for x in range( self.worldW ):
                 band[x] = bandy
                 band[x] += direction
                 direction = direction + random.uniform( 0.0, math.sin( dirsin * x ) * diradj )
@@ -88,9 +93,9 @@ class Temperature():
 
 
             # create temperature map
-            for x in xrange( self.worldW ):
+            for x in range( self.worldW ):
                 bandx = int( band[x] )
-                for y in xrange(bandx+1, self.worldH ):
+                for y in range(bandx+1, self.worldH ):
                     if self.heightmap[x, y] <= constants.WGEN_SEA_LEVEL: # typical temp at sea level
                             self.temperature[x, y] = bandtemp * 0.7
                     else: # typical temp at elevation

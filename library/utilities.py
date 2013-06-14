@@ -20,7 +20,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 02110-1301 USA
 """
 import numpy, random
-import constants
+
+if __name__ == '__main__': # handle multiple entry points
+    from constants import *
+else:
+    from .constants import *
+
+overflow = lambda value, maxValue: value % maxValue
 
 def inCircle(radius, center_x, center_y, x, y):
     squareDist = ( (center_x - x) ** 2 + (center_y - y) ** 2 )
@@ -32,20 +38,20 @@ def normalize(data, newMin=0.0, newMax=1.0):
     oldMax = numpy.amax(data)
     orgShape = data.shape
     data = numpy.reshape(data, data.size)
-    for x in xrange(data.size):
+    for x in range(data.size):
             data[x] = (((data[x] - oldMin) * (newMax-newMin)) / (oldMax-oldMin)) + newMin
     return numpy.reshape(data, orgShape)
 
 def roof( data, limit ):
     xArray,yArray = numpy.where(data > limit)
-    spikes = zip(xArray,yArray)
+    spikes = list(zip(xArray,yArray))
     for x,y in spikes:
         data[x,y] = limit
     return data
 
 def floor( data, limit ):
     xArray,yArray = numpy.where(data < limit)
-    spikes = zip(xArray,yArray)
+    spikes = list(zip(xArray,yArray))
     for x,y in spikes:
         data[x,y] = limit
     return data
@@ -59,10 +65,10 @@ def radialGradient( size, fitEdges=True, invert=True ):
     width, height = size
     gradient = numpy.zeros(( size ))
     center_x, center_y = [width/2, height/2]
-    midEdge = (center_x - center_x) ** 2 + (center_y - 0) ** 2
-    for x in xrange( width ):
-        for y in xrange( height ):
-            squareDist = (center_x - x) ** 2 + (center_y - y) ** 2
+    midEdge = int((center_x - center_x) ** 2 + (center_y - 0) ** 2)
+    for x in range( width ):
+        for y in range( height ):
+            squareDist = int((center_x - x) ** 2 + (center_y - y) ** 2)
             if invert:
                 gradient[x,y] = ~squareDist
             else:
@@ -81,8 +87,8 @@ def frameGradient ( size, border=.1 ):
     borderSize = int(width*border)
     gBorder = numpy.linspace(0.0,1.0,borderSize)
     
-    for x in xrange(width):
-        for y in xrange(borderSize):
+    for x in range(width):
+        for y in range(borderSize):
             value = gBorder[y]
             
             # top and bottom
@@ -93,8 +99,8 @@ def frameGradient ( size, border=.1 ):
             if (gradient[y,x] > value):
                 gradient[y,x] = value
             
-    for x in xrange(width):
-        for y in xrange(borderSize):
+    for x in range(width):
+        for y in range(borderSize):
             value = gBorder[y]
             # right   
             if (gradient[abs(y-height)-1,x] > value):
@@ -114,7 +120,7 @@ def rollingParticleGradient( size, centerBias=True ):
     OUTER_BLUR = 0.75
     INNER_BLUR = 0.88
     
-    for iterations in xrange(PARTICLEITERATIONS):
+    for iterations in range(PARTICLEITERATIONS):
         # Start nearer the center
         if centerBias:
             sourceX = int(random.random() * (width-(EDGE_BIAS*2)) + EDGE_BIAS)
@@ -124,7 +130,7 @@ def rollingParticleGradient( size, centerBias=True ):
             sourceX = int(random.random() * (width - 1))
             sourceY = int(random.random() * (height - 1))
                 
-        for p in xrange(PARTICLELIFE):
+        for p in range(PARTICLELIFE):
             sourceX += round(random.random() * 2 - 1)
             sourceY += round(random.random() * 2 - 1)
                                                         
@@ -139,7 +145,7 @@ def rollingParticleGradient( size, centerBias=True ):
 
             random.shuffle(hood)
                 
-            for i in xrange(len(hood)):
+            for i in range(len(hood)):
                 x,y = hood[i]
                 if gradient[x,y] < gradient[sourceX,sourceY]:
                     sourceX,sourceY = hood[i]
