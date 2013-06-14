@@ -23,9 +23,9 @@ from PySide import QtGui
 from PySide.QtGui import QImage
 
 if __name__ == '__main__': # handle multiple entry points
-    import constants
+    from constants import *
 else:
-    from . import constants
+    from .constants import *
 
 class Render():
     '''Transform the numpy data into a renderable image suitable for screen'''
@@ -63,7 +63,7 @@ class Render():
                 for y in range( self.height ):
                     elevation = self.elevation[x, y]
                     gValue = elevation * 255
-                    if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
+                    if elevation <= WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
@@ -72,11 +72,11 @@ class Render():
             for x in range( self.width ):
                 for y in range( self.height ):
                     elevation = self.elevation[x, y]
-                    if elevation <= constants.WGEN_SEA_LEVEL: # sealevel
+                    if elevation <= WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, 128 ).rgb() )
-                    elif elevation < constants.BIOME_ELEVATION_HILLS: # grasslands
+                    elif elevation < BIOME_ELEVATION_HILLS: # grasslands
                         self.image.setPixel( x, y, QtGui.QColor( 128, 255, 0 ).rgb() )
-                    elif elevation < constants.BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
+                    elif elevation < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
                         self.image.setPixel( x, y, QtGui.QColor( 90, 128, 90 ).rgb() )
                     else:
                         self.image.setPixel( x, y, QtGui.QColor( 255, 255, 255 ).rgb() )
@@ -124,14 +124,14 @@ class Render():
             for x in range( self.width ):
                 for y in range( self.height ):
                     gValue = self.elevation[x, y] * 255
-                    if self.elevation[x, y] <= constants.WGEN_SEA_LEVEL: # sealevel
+                    if self.elevation[x, y] <= WGEN_SEA_LEVEL: # sealevel
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         rgb = QtGui.QColor( gValue, gValue, gValue ).rgb()
                         if self.rivers[x, y] > 0.0:
-                            rgb = constants.COLOR_COBALT
+                            rgb = COLOR_COBALT
                         if self.lakes[x, y] > 0.0:
-                            rgb = constants.COLOR_AZURE
+                            rgb = COLOR_AZURE
                         self.image.setPixel( x, y, rgb )
 
         elif mapType == 'biomemap':

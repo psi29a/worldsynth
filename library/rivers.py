@@ -23,9 +23,11 @@ import math, random, numpy
 from PySide import QtGui
 
 if __name__ == '__main__': # handle multiple entry points
-    import aStar, constants, utilities
+    import aStar, utilities
+    from constants import *
 else:
-    from . import aStar, constants, utilities
+    from . import aStar, utilities
+    from .constants import *
 
 class Rivers():
     '''Generates fresh water sources, rivers and lakes either randomly or with 
@@ -74,7 +76,7 @@ class Rivers():
                 self.riverList.append(river)
                 self.cleanUpFlow(river)
                 rx, ry = river[-1]  # find last cell in river                
-                if (self.heightmap[rx, ry] > constants.WGEN_SEA_LEVEL):
+                if (self.heightmap[rx, ry] > WGEN_SEA_LEVEL):
                     self.lakeList.append(river[-1])  # river flowed into a lake         
         if sb:
             progress.setValue(progressValue)
@@ -116,7 +118,7 @@ class Rivers():
                     tx, ty = path
                     flowDir = [tx - x, ty - y]
                     key = 0
-                    for direction in constants.DIR_NEIGHBORS_CENTER:
+                    for direction in DIR_NEIGHBORS_CENTER:
                         if direction == flowDir:
                             self.waterPath[x, y] = key
                         key += 1
@@ -142,8 +144,8 @@ class Rivers():
                                 continue
                             # convert to wrap around
                             sx, sy = utilities.overflow(sx, self.worldW), utilities.overflow(sy, self.worldH)
-                            if self.heightmap[sx, sy] < constants.BIOME_ELEVATION_HILLS or \
-                                self.heightmap[sx, sy] > constants.BIOME_ELEVATION_MOUNTAIN_LOW:
+                            if self.heightmap[sx, sy] < BIOME_ELEVATION_HILLS or \
+                                self.heightmap[sx, sy] > BIOME_ELEVATION_MOUNTAIN_LOW:
                                 continue
                             sources.append([sx, sy])
                     # print len(sources), sources
@@ -177,8 +179,8 @@ class Rivers():
                     while not neighbourSeedFound:  # follow flow path to where it may lead
 
                         # have we found a seed?
-                        if self.heightmap[cx, cy] >= constants.BIOME_ELEVATION_HILLS_LOW and \
-                            self.heightmap[cx, cy] <= constants.BIOME_ELEVATION_MOUNTAIN_LOW and \
+                        if self.heightmap[cx, cy] >= BIOME_ELEVATION_HILLS_LOW and \
+                            self.heightmap[cx, cy] <= BIOME_ELEVATION_MOUNTAIN_LOW and \
                             self.waterFlow[cx, cy] >= 10.0:
 
                             # try not to create seeds around other seeds
@@ -198,7 +200,7 @@ class Rivers():
                             break  # break out of loop
 
                         # follow path, add water flow from previous cell                            
-                        dx, dy = constants.DIR_NEIGHBORS_CENTER[self.waterPath[cx, cy]]
+                        dx, dy = DIR_NEIGHBORS_CENTER[self.waterPath[cx, cy]]
                         nx, ny = cx + dx, cy + dy  # calculate next cell
                         self.waterFlow[nx, ny] += rainFall
                         cx, cy = nx, ny  # set current cell to next cell 
@@ -217,7 +219,7 @@ class Rivers():
             quickSection = None            
             isWrapped = False
 
-            for dx, dy in constants.DIR_NEIGHBORS:  # is there a river nearby, flow into it
+            for dx, dy in DIR_NEIGHBORS:  # is there a river nearby, flow into it
                 ax, ay = x + dx, y + dy
                 if self.wrap:
                     ax, ay = utilities.overflow(ax, self.worldW), utilities.overflow(ay, self.worldH)
@@ -236,7 +238,7 @@ class Rivers():
 
             # found a sea?
             #print "Flowing to...",x,y
-            if self.heightmap[x, y] <= constants.WGEN_SEA_LEVEL:
+            if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
                 break
 
             # find our immediate lowest elevation and flow there
@@ -421,7 +423,7 @@ class Rivers():
         lowestElevation = self.heightmap[x, y]
         # lowestDirection = [0, 0]
 
-        for dx, dy in constants.DIR_NEIGHBORS:
+        for dx, dy in DIR_NEIGHBORS:
             tempDir = [x + dx, y + dy]
             tx, ty = tempDir
 
@@ -586,7 +588,7 @@ class Rivers():
                         # if elevation > BIOME_ELEVATION_MOUNTAIN:
                         #     break # we hit the watershed, do not continue
 
-                        if elevation < constants.WGEN_SEA_LEVEL:
+                        if elevation < WGEN_SEA_LEVEL:
                             # possible sea, lets check it out...
                             # is the spot surrounded by sea?
                             isSea = True
@@ -595,7 +597,7 @@ class Rivers():
                                 for j in range(-seaRange, seaRange + 1):
                                     if river.x + x + i >= 0 and river.y + y + j >= 0 and \
                                     river.x + x + i < self.worldW and river.y + y + j < self.worldH:
-                                        if self.heightmap[river.x + x + i, river.y + y + j] > constants.WGEN_SEA_LEVEL:
+                                        if self.heightmap[river.x + x + i, river.y + y + j] > WGEN_SEA_LEVEL:
                                             isSea = False
 
                             if isSea:
