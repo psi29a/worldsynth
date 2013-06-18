@@ -46,7 +46,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="wsGeneral">
     <attribute name="title">
@@ -458,7 +458,7 @@
        <x>10</x>
        <y>10</y>
        <width>331</width>
-       <height>91</height>
+       <height>101</height>
       </rect>
      </property>
      <property name="title">
@@ -529,6 +529,75 @@
       </property>
      </widget>
     </widget>
+    <widget class="QGroupBox" name="gbSeaLevel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>110</y>
+       <width>331</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Sealevel</string>
+     </property>
+     <widget class="QSpinBox" name="sbSeaLevel">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>61</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="suffix">
+       <string/>
+      </property>
+      <property name="maximum">
+       <number>100</number>
+      </property>
+      <property name="singleStep">
+       <number>5</number>
+      </property>
+      <property name="value">
+       <number>25</number>
+      </property>
+     </widget>
+     <widget class="QSlider" name="vsSeaLevel">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>10</y>
+        <width>241</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <number>100</number>
+      </property>
+      <property name="singleStep">
+       <number>5</number>
+      </property>
+      <property name="value">
+       <number>25</number>
+      </property>
+      <property name="sliderPosition">
+       <number>25</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+      <property name="tickInterval">
+       <number>5</number>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
  </widget>
@@ -589,8 +658,8 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>94</x>
-     <y>174</y>
+     <x>96</x>
+     <y>196</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -605,8 +674,8 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>84</x>
-     <y>134</y>
+     <x>86</x>
+     <y>156</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -621,8 +690,8 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>117</x>
-     <y>94</y>
+     <x>119</x>
+     <y>116</y>
     </hint>
     <hint type="destinationlabel">
      <x>292</x>
@@ -685,12 +754,44 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>97</x>
-     <y>203</y>
+     <x>99</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>332</x>
      <y>143</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sbSeaLevel</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>vsSeaLevel</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>79</x>
+     <y>200</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>141</x>
+     <y>195</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>vsSeaLevel</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>sbSeaLevel</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>135</x>
+     <y>208</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>78</x>
+     <y>207</y>
     </hint>
    </hints>
   </connection>
