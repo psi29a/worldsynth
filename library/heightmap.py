@@ -60,6 +60,7 @@ class HeightMap():
         if self.islands:
             gradient = utilities.radialGradient(self.size, True, True)
             self.heightmap = self.heightmap * gradient
+            self.heightmap = utilities.normalize(self.heightmap)
 
         del heightObject
 
@@ -74,23 +75,23 @@ class HeightMap():
             return True
         return False
 
-    def landTouchesEastWest( self ):
+    def landTouchesEastWest( self, seaLevel ):
         for x in range( 0, 1 ):
             for y in range( 0, self.height ):
-                if self.heightmap[x, y] > WGEN_SEA_LEVEL or \
-                    self.heightmap[self.width - 1 - x, y] > WGEN_SEA_LEVEL:
+                if self.heightmap[x, y] > seaLevel or \
+                    self.heightmap[self.width - 1 - x, y] > seaLevel:
                     return True
         return False
 
-    def landTouchesMapEdge( self ):
+    def landTouchesMapEdge( self, seaLevel ):
         result = False
         for x in range( 4, self.width - 4 ):
-            if self.heightmap[x, 4] > WGEN_SEA_LEVEL or self.heightmap[x, self.height - 4] > WGEN_SEA_LEVEL:
+            if self.heightmap[x, 4] > seaLevel or self.heightmap[x, self.height - 4] > seaLevel:
                 result = True
                 break
 
         for y in range( 4, self.height - 4 ):
-            if self.heightmap[4, y] > WGEN_SEA_LEVEL or self.heightmap[self.width - 4, y] > WGEN_SEA_LEVEL:
+            if self.heightmap[4, y] > seaLevel or self.heightmap[self.width - 4, y] > seaLevel:
                 result = True
                 break
 

@@ -36,7 +36,7 @@ class Rivers():
     def __init__(self):
         pass
 
-    def generate(self, heightmap, rainmap=None, sb=None, wrap=True):
+    def generate(self, heightmap, seaLevel, rainmap=None, sb=None, wrap=True):
         if sb:
             progressValue = 0
             progress = QtGui.QProgressBar()
@@ -44,6 +44,7 @@ class Rivers():
             sb.addPermanentWidget(progress)
             progress.setValue(0)
         self.heightmap = heightmap.copy()
+        self.seaLevel = seaLevel / 100.0 # reduce to 0.0 - 1.0 range
         self.size = list(heightmap.shape)
         self.worldW = len(self.heightmap)
         self.worldH = len(self.heightmap[0])
@@ -76,7 +77,7 @@ class Rivers():
                 self.riverList.append(river)
                 self.cleanUpFlow(river)
                 rx, ry = river[-1]  # find last cell in river                
-                if (self.heightmap[rx, ry] > WGEN_SEA_LEVEL):
+                if (self.heightmap[rx, ry] > self.seaLevel):
                     self.lakeList.append(river[-1])  # river flowed into a lake         
         if sb:
             progress.setValue(progressValue)
@@ -238,7 +239,7 @@ class Rivers():
 
             # found a sea?
             #print "Flowing to...",x,y
-            if self.heightmap[x, y] <= WGEN_SEA_LEVEL:
+            if self.heightmap[x, y] <= self.seaLevel:
                 break
 
             # find our immediate lowest elevation and flow there
@@ -588,7 +589,7 @@ class Rivers():
                         # if elevation > BIOME_ELEVATION_MOUNTAIN:
                         #     break # we hit the watershed, do not continue
 
-                        if elevation < WGEN_SEA_LEVEL:
+                        if elevation < self.seaLevel:
                             # possible sea, lets check it out...
                             # is the spot surrounded by sea?
                             isSea = True
@@ -597,7 +598,7 @@ class Rivers():
                                 for j in range(-seaRange, seaRange + 1):
                                     if river.x + x + i >= 0 and river.y + y + j >= 0 and \
                                     river.x + x + i < self.worldW and river.y + y + j < self.worldH:
-                                        if self.heightmap[river.x + x + i, river.y + y + j] > WGEN_SEA_LEVEL:
+                                        if self.heightmap[river.x + x + i, river.y + y + j] > self.seaLevel:
                                             isSea = False
 
                             if isSea:
