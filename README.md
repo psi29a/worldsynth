@@ -2,7 +2,7 @@ WorldSynth: Synthesizing Worlds
 
 WorldSynth uses procedural techniques to simulate real world phenomenon and render usable maps in different formats.
 
-Version: 0.10  
+Version: 0.11  
 License: LGPL v2 (See COPYRIGHT for more information)  
 Website: http://www.mindwerks.net/projects/worldsynth  
 
@@ -16,7 +16,7 @@ FEATURES:
 * Biomes: taking into account everything above to give natural zones of nature
 
 REQUIREMENTS:
-* Python >= 2.7
+* Python:   >= 2.7
 * PySide:   http://qt-project.org/wiki/PySide
 * NumPy:    http://www.numpy.org/
 * PyTables: http://www.pytables.org/
@@ -28,6 +28,14 @@ INSTALLATION:
 * Untar/unzip and run worldsynth.py
 
 CHANGELOG:
+
+0.11.0
+* Improved New/Open/Save World.
+* Configuration is saved and can be read back from 'Open' World file.
+* Improved Import/Export: Open any image as heightmap, export as 16-bit greyscale PNG.
+* Introduce masks for various effects such as: islands.
+* Python3 compatibility.
+* De-couple application globals and make them configurable: sea-level can be adjusted.
 
 0.10.0  
 * Just-in-time library loading: lazy loading libraries as necessary
