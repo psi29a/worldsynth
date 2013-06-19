@@ -161,5 +161,4 @@ def outOfBounds(source, size):
     w, h = size
     if x < 0 or y < 0 or x >= w or y >= h:
         return True
-
     return False

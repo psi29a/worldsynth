@@ -29,13 +29,14 @@ else:
     from .constants import *     
 
 class Temperature():
-    def __init__( self, heightmap = numpy.zeros( 1 ), hemisphere = 2, resolution = TEMPERATURE_BAND_RESOLUTION ):
+    def __init__( self, heightmap, seaLevel, hemisphere = WGEN_HEMISPHERE_EQUATOR, resolution = TEMPERATURE_BAND_RESOLUTION):
         self.heightmap = heightmap
         self.hemisphere = hemisphere
         self.resolution = resolution
         self.worldW = len( self.heightmap )
         self.worldH = len( self.heightmap[0] )
         self.temperature = numpy.zeros( ( self.worldW, self.worldH ) )
+        self.seaLevel = seaLevel / 100.0 # reduce to 0.0 - 1.0 range
 
     def run( self, sb = None ):
         # setup or local variables
@@ -96,10 +97,10 @@ class Temperature():
             for x in range( self.worldW ):
                 bandx = int( band[x] )
                 for y in range(bandx+1, self.worldH ):
-                    if self.heightmap[x, y] <= WGEN_SEA_LEVEL: # typical temp at sea level
+                    if self.heightmap[x, y] <= self.seaLevel: # typical temp at sea level
                             self.temperature[x, y] = bandtemp * 0.7
                     else: # typical temp at elevation
-                            self.temperature[x, y] = bandtemp * ( 1.0 - ( self.heightmap[x, y] - WGEN_SEA_LEVEL ) )
+                            self.temperature[x, y] = bandtemp * ( 1.0 - ( self.heightmap[x, y] - self.seaLevel ) )
 
             #break # for profiling 
         if sb != None:

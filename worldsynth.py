@@ -85,11 +85,9 @@ class MapGen(QtGui.QMainWindow):
 
         self.menuBar = self.menuBar()
         Menu(self)
-
+        
         self.mainImage = QtGui.QLabel(self)
-        blank = QtGui.QImage(width, height, QtGui.QImage.Format_Indexed8)
-        blank.fill(QtGui.QColor(0,0,0))
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(blank))
+        self.mainImage.setPixmap(self.getBlankPixmap(width,height))
         self.scrollArea = QtGui.QScrollArea(self)
         self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
         self.scrollArea.setWidget(self.mainImage)
@@ -117,7 +115,13 @@ class MapGen(QtGui.QMainWindow):
         self.avgElevation   = self.dNewWorld.cbAvgElevation.isChecked()
         self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
         self.isIsland       = self.dNewWorld.cbIslands.isChecked()
-        self.hemisphere     = self.getHemisphere()        
+        self.hemisphere     = self.getHemisphere()   
+        self.seaLevel       = self.dNewWorld.sbSeaLevel.value()
+
+    def getBlankPixmap(self, width, height):
+        blank = QtGui.QImage(width, height, QtGui.QImage.Format_Indexed8)
+        blank.fill(QtGui.QColor(0,0,0))
+        return QtGui.QPixmap.fromImage(blank)
 
     def resizeEvent(self, e):
         # Capture resize event, and align to new layout
@@ -226,7 +230,7 @@ class MapGen(QtGui.QMainWindow):
                 self.statusBar().showMessage('Average elevation is too low')
             elif self.avgElevation and heightObject.averageElevation() > 0.8:
                 self.statusBar().showMessage('Average elevation is too high')
-            elif self.hasMountains and heightObject.hasMountains():
+            elif self.hasMountains and not heightObject.hasMountains():
                 self.statusBar().showMessage('Not enough mountains')
             else:
                 found = True
@@ -244,13 +248,13 @@ class MapGen(QtGui.QMainWindow):
 
     def viewElevation(self):
         self.updateWorld()
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('elevation')))
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('elevation', self.seaLevel)))
         self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage('Viewing elevation.')
 
     def viewSeaLevel(self):
         self.updateWorld()
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('sealevel')))
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('sealevel', self.seaLevel)))
         self.viewState = VIEWER_HEIGHTMAP
         self.statusBar().showMessage('Viewing sealevel.')
 
@@ -288,8 +292,7 @@ class MapGen(QtGui.QMainWindow):
             return
         
         self.statusBar().showMessage('Generating heatmap...')
-        hemisphere = self.getHemisphere()
-        tempObject = Temperature(self.elevation, hemisphere)
+        tempObject = Temperature(self.elevation, self.seaLevel, self.getHemisphere())
         tempObject.run(sb=self.sb)
         self.temperature = tempObject.temperature
         del tempObject
@@ -375,7 +378,7 @@ class MapGen(QtGui.QMainWindow):
         if self.wind.sum is None or self.rainfall is None:
             self.statusBar().showMessage('Error: No weather!')
             return
-        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature)
+        biomeObject = Biomes(self.elevation, self.rainfall, self.drainage, self.temperature, self.seaLevel)
         biomeObject.run()
         self.biome = biomeObject.biome
         self.biomeColour = biomeObject.biomeColourCode
@@ -402,7 +405,7 @@ class MapGen(QtGui.QMainWindow):
             self.statusBar().showMessage('Error: No drainage!')
             return
         riversObject = Rivers()
-        riversObject.generate(self.elevation, self.rainfall, self.sb)
+        riversObject.generate(self.elevation, self.seaLevel, self.rainfall, self.sb)
         self.rivers = riversObject.riverMap
         self.lakes = riversObject.lakeMap
         self.erosion += riversObject.erosionMap
@@ -412,7 +415,7 @@ class MapGen(QtGui.QMainWindow):
 
     def viewRiverMap(self):
         self.updateWorld()
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('rivermap')))
+        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(Render(self.world).convert('rivermap', self.seaLevel)))
         self.viewState = VIEWER_RIVERS
         self.statusBar().showMessage('Viewing rivers and lakes.')
 
@@ -475,12 +478,12 @@ class MapGen(QtGui.QMainWindow):
         self.hasMountains   = self.dNewWorld.cbMountains.isChecked()
         self.isIsland       = self.dNewWorld.cbIslands.isChecked()
         self.hemisphere     = self.getHemisphere()
-
+        self.seaLevel       = self.dNewWorld.sbSeaLevel.value()
         self.resetDatasets()
         self.mapSize        = (width, height)
         self.elevation      = numpy.zeros(self.mapSize)
         
-        self.mainImage.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)))
+        self.mainImage.setPixmap(self.getBlankPixmap(width, height))
         self.updateWorld()            
         self.statusBar().showMessage(' Created New World!')
 
@@ -491,6 +494,7 @@ class MapGen(QtGui.QMainWindow):
         self.statusBar().showMessage(' Canceled New World! ')
 
     def editWorldSettings(self):
+        # TODO: update this
         self.dNewWorld.cSize.setCurrentIndex(math.log(self.mapSize[0], 2) - 5)       
         self.dNewWorld.sbRoughness.setValue(int(settings['roughness']))
         self.dNewWorld.cbAvgLandmass.setCheckState((QtCore.Qt.Unchecked, QtCore.Qt.Checked)[settings['avgLandmass']])
@@ -523,7 +527,7 @@ class MapGen(QtGui.QMainWindow):
             # store our world settings
             pyDict = {
                 'key'         : tables.StringCol(itemsize=40),
-                'value'       : tables.IntCol(),
+                'value'       : tables.UInt16Col(),
             }
             settingsTable = h5file.createTable('/', 'settings', pyDict)
             
@@ -537,8 +541,9 @@ class MapGen(QtGui.QMainWindow):
                             hasMountains=self.hasMountains,
                             hemisphere=self.hemisphere,
                             isIsland=self.isIsland,
+                            seaLevel=self.seaLevel
                             )
-            
+
             settingsTable.append(list(settings.items()))
             settingsTable.cols.key.createIndex()  # create an index
             
@@ -579,6 +584,9 @@ class MapGen(QtGui.QMainWindow):
         self.avgElevation=settings[b'avgElevation']
         self.hasMountains=settings[b'hasMountains']
         self.isIsland=settings[b'isIsland']
+        self.seaLevel=settings[b'seaLevel']
+        
+        #TODO: apply to edit screen
         
         # restore our numpy datasets
         self.resetDatasets()

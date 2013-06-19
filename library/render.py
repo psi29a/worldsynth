@@ -37,6 +37,7 @@ class Render():
 
         self.width, self.height = self.elevation.shape
         self.image = QImage( self.width, self.height, QImage.Format_RGB32 )
+        self.image.fill(QtGui.QColor(0,0,0))
 
     def hex2rgb( self, hexcolor ):
         r = ( hexcolor >> 16 ) & 0xFF;
@@ -48,8 +49,10 @@ class Render():
         assert( len( rgb ) == 3 )
         return '#%02x%02x%02x' % rgb
 
-    def convert( self, mapType ):
-
+    def convert( self, mapType, seaLevel = None ):
+        if seaLevel:
+            seaLevel /= 100.0 # reduce to 0.0 to 1.0 range
+            
         background = []
         if mapType == "heightmap":
             heightmap = self.elevation * 255 # convert to greyscale
@@ -63,7 +66,7 @@ class Render():
                 for y in range( self.height ):
                     elevation = self.elevation[x, y]
                     gValue = elevation * 255
-                    if elevation <= WGEN_SEA_LEVEL: # sealevel
+                    if elevation <= seaLevel:
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         self.image.setPixel( x, y, QtGui.QColor( gValue, gValue, gValue ).rgb() )
@@ -72,14 +75,20 @@ class Render():
             for x in range( self.width ):
                 for y in range( self.height ):
                     elevation = self.elevation[x, y]
-                    if elevation <= WGEN_SEA_LEVEL: # sealevel
-                        self.image.setPixel( x, y, QtGui.QColor( 0, 0, 128 ).rgb() )
-                    elif elevation < BIOME_ELEVATION_HILLS: # grasslands
-                        self.image.setPixel( x, y, QtGui.QColor( 128, 255, 0 ).rgb() )
-                    elif elevation < BIOME_ELEVATION_MOUNTAIN_LOW: # mountains
-                        self.image.setPixel( x, y, QtGui.QColor( 90, 128, 90 ).rgb() )
+                    if elevation <= seaLevel:
+                        if elevation < seaLevel/4.0:
+                            self.image.setPixel( x, y, COLOR_DEEPSEA )
+                        elif elevation < seaLevel/2.0:
+                            self.image.setPixel( x, y, COLOR_SEA )
+                        else:
+                            self.image.setPixel( x, y, COLOR_BLUE )
                     else:
-                        self.image.setPixel( x, y, QtGui.QColor( 255, 255, 255 ).rgb() )
+                        if elevation < 0.65:
+                            self.image.setPixel( x, y, COLOR_GRASSLAND )
+                        elif elevation < 0.95:
+                            self.image.setPixel( x, y, COLOR_HILLS )
+                        else:
+                            self.image.setPixel( x, y, COLOR_WHITE )
 
         elif mapType == "heatmap":
             for x in range( self.width ):
@@ -124,7 +133,7 @@ class Render():
             for x in range( self.width ):
                 for y in range( self.height ):
                     gValue = self.elevation[x, y] * 255
-                    if self.elevation[x, y] <= WGEN_SEA_LEVEL: # sealevel
+                    if self.elevation[x, y] <= seaLevel: 
                         self.image.setPixel( x, y, QtGui.QColor( 0, 0, gValue ).rgb() )
                     else:
                         rgb = QtGui.QColor( gValue, gValue, gValue ).rgb()
