@@ -2,8 +2,10 @@ WorldSynth: Synthesizing Worlds
 
 WorldSynth uses procedural techniques to simulate real world phenomenon and render usable maps in different formats.
 
-Version: 0.11  
-License: LGPL v2 (See COPYRIGHT for more information)  
+NOTICE: As of 14 February 2015, WorldSynth will be merging with Lands to make a better world generation utility.
+
+Version: 0.12  
+License: MIT / Expat License (See COPYRIGHT for more information)  
 Website: http://www.mindwerks.net/projects/worldsynth  
 
 FEATURES:
@@ -28,6 +30,10 @@ INSTALLATION:
 * Untar/unzip and run worldsynth.py
 
 CHANGELOG:
+
+0.12.0
+* Relicensed to MIT / Expat License
+* Last official release before merge with Lands.
 
 0.11.0
 * Improved New/Open/Save World.
